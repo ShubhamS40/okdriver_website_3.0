@@ -13,19 +13,21 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="">
+    <main className="overflow-x-hidden">
       {/* Hero Section */}
-   <OkDriverHero/>
-    <WhyOkDriver/>
-   <Stats/>
-    <FeaturesComponent/>
-    {/* <OurVision/> */}
-    {/* <HowItWorks/> */}
-    <WhoIsItFor/>
-    {/* <UseCases/> */}
-    <Hardware/>
-
-   
+      <OkDriverHero/>
+      
+      {/* Main Content Sections with proper spacing */}
+      <div className="space-y-16 md:space-y-24 lg:space-y-0">
+        <WhyOkDriver/>
+        <Stats/>
+        <FeaturesComponent/>
+        {/* <OurVision/> */}
+        {/* <HowItWorks/> */}
+        <WhoIsItFor/>
+        {/* <UseCases/> */}
+        <Hardware/>
+      </div>
     </main>
   );
 }
