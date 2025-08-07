@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+  --primary-rgb: 0, 0, 0;
+  --secondary-rgb: 200, 200, 200;
+  --accent-rgb: 50, 50, 50;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-black px-6 py-2 rounded-md hover:bg-gray-300 transition-colors;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+}

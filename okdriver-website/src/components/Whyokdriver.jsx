@@ -1,0 +1,190 @@
+'use client'
+import React, { useState, useEffect } from 'react';
+import { Check, Car, Truck, Mic, Settings, Smartphone, Users, Phone } from 'lucide-react';
+
+const WhyOkDriver = () => {
+  const [activeCard, setActiveCard] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  const features = [
+    {
+      icon: <Smartphone className="w-6 h-6" />,
+      text: "No expensive setup — just your phone",
+      delay: "0ms"
+    },
+    {
+      icon: <Car className="w-6 h-6" />,
+      text: "Made for Indian roads and local driving behavior",
+      delay: "100ms"
+    },
+    {
+      icon: <Mic className="w-6 h-6" />,
+      text: "Human-like co-pilot with voice support",
+      delay: "200ms"
+    },
+    {
+      icon: <Users className="w-6 h-6" />,
+      text: "Built for both B2B fleets and B2C users",
+      delay: "300ms"
+    },
+    {
+      icon: <Settings className="w-6 h-6" />,
+      text: "OEM and logistics pilot ready",
+      delay: "400ms"
+    }
+  ];
+
+  const userTypes = [
+    {
+      icon: <Car className="w-12 h-12" />,
+      title: "Cab Drivers",
+      subtitle: "Safe long trips with AI support",
+      color: "bg-gray-100",
+      hoverColor: "hover:bg-gray-200"
+    },
+    {
+      icon: <Truck className="w-12 h-12" />,
+      title: "Delivery Riders",
+      subtitle: "Protection for every delivery",
+      color: "bg-black",
+      textColor: "text-white",
+      hoverColor: "hover:bg-gray-800"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white text-black p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className={`text-center mb-16 transition-all duration-1000 transform ${
+          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+        }`}>
+          <h1 className="text-5xl md:text-6xl font-bold mb-8 tracking-tight">
+            Safety Shouldn't Be a{' '}
+            <span className="relative">
+              Luxury
+              <div className="absolute -bottom-2 left-0 w-full h-1 bg-black transform origin-left transition-all duration-1000 delay-500 scale-x-0 animate-pulse"></div>
+            </span>
+            .
+          </h1>
+          
+          <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+            Every day, thousands of road accidents happen due to drowsy driving, distractions, or simply lack of 
+            awareness. High-end vehicles have safety tech — but what about the rest of us? That's where{' '}
+            <span className="font-semibold text-black">okDriver</span> steps in — designed for Indian roads, drivers, and conditions.
+          </p>
+        </div>
+
+        {/* Features Section */}
+        <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="space-y-6">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className={`flex items-center space-x-4 p-4 rounded-lg transition-all duration-700 transform hover:scale-105 hover:bg-gray-50 cursor-pointer ${
+                  isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'
+                }`}
+                style={{ transitionDelay: feature.delay }}
+                onMouseEnter={() => setActiveCard(index)}
+                onMouseLeave={() => setActiveCard(null)}
+              >
+                <div className={`p-3 rounded-full transition-all duration-300 ${
+                  activeCard === index ? 'bg-black text-white' : 'bg-gray-100'
+                }`}>
+                  <Check className="w-6 h-6" />
+                </div>
+                <div className="flex items-center space-x-3 flex-1">
+                  <div className={`transition-all duration-300 ${
+                    activeCard === index ? 'text-black scale-110' : 'text-gray-600'
+                  }`}>
+                    {feature.icon}
+                  </div>
+                  <span className={`text-lg transition-all duration-300 ${
+                    activeCard === index ? 'font-semibold' : 'font-medium'
+                  }`}>
+                    {feature.text}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* User Type Cards */}
+          <div className="space-y-6">
+            {userTypes.map((userType, index) => (
+              <div
+                key={index}
+                className={`${userType.color} ${userType.hoverColor} rounded-2xl p-8 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl cursor-pointer group ${
+                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                }`}
+                style={{ transitionDelay: `${600 + index * 200}ms` }}
+                onMouseEnter={() => setActiveCard(`card-${index}`)}
+                onMouseLeave={() => setActiveCard(null)}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-4 rounded-full transition-all duration-300 ${
+                    userType.color === 'bg-black' 
+                      ? 'bg-white text-black group-hover:scale-110' 
+                      : 'bg-black text-white group-hover:scale-110'
+                  }`}>
+                    {userType.icon}
+                  </div>
+                  <div className={`transition-all duration-300 transform ${
+                    activeCard === `card-${index}` ? 'rotate-12 scale-110' : ''
+                  }`}>
+                    <Phone className={`w-8 h-8 ${userType.textColor || 'text-black'}`} />
+                  </div>
+                </div>
+                
+                <h3 className={`text-2xl font-bold mb-2 ${userType.textColor || 'text-black'}`}>
+                  {userType.title}
+                </h3>
+                <p className={`text-lg ${userType.textColor ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {userType.subtitle}
+                </p>
+                
+                {/* Animated indicator */}
+                <div className={`mt-4 h-1 bg-gradient-to-r transition-all duration-500 ${
+                  userType.color === 'bg-black' 
+                    ? 'from-white to-gray-300' 
+                    : 'from-black to-gray-800'
+                } ${
+                  activeCard === `card-${index}` ? 'w-full' : 'w-0'
+                }`}></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className={`text-center transition-all duration-1000 transform ${
+          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+        }`} style={{ transitionDelay: '1000ms' }}>
+          <div className="inline-block relative group cursor-pointer">
+            <div className="absolute inset-0 bg-black rounded-full blur opacity-25 group-hover:opacity-75 transition-all duration-500 transform group-hover:scale-110"></div>
+            <button className="relative bg-black text-white px-12 py-4 rounded-full text-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+              Experience okDriver Safety
+              <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-10 transition-all duration-300"></div>
+            </button>
+          </div>
+          
+          <p className="mt-6 text-gray-500 text-lg">
+            Join thousands of drivers making Indian roads safer, one trip at a time.
+          </p>
+        </div>
+
+        {/* Floating Animation Elements */}
+        <div className="fixed top-20 right-20 w-4 h-4 bg-black rounded-full animate-bounce opacity-20" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+        <div className="fixed bottom-20 left-20 w-3 h-3 bg-gray-400 rounded-full animate-bounce opacity-30" style={{ animationDelay: '1s', animationDuration: '2s' }}></div>
+        <div className="fixed top-1/3 left-10 w-2 h-2 bg-black rounded-full animate-pulse opacity-25"></div>
+        <div className="fixed bottom-1/3 right-10 w-2 h-2 bg-gray-600 rounded-full animate-pulse opacity-25" style={{ animationDelay: '0.5s' }}></div>
+      </div>
+    </div>
+  );
+};
+
+export default WhyOkDriver;
