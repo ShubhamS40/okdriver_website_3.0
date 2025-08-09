@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Play, Shield, Smartphone, AlertTriangle, Mic, MapPin } from 'lucide-react';
+import HomeScreen from '../../public/assets/home_screen.jpeg'
+import Image from 'next/image';
 
 const OkDriverHero = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -23,7 +25,7 @@ const OkDriverHero = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-black via-gray-500 to-black overflow-hidden">
+    <div className="relative min-h-[110vh] bg-gradient-to-br from-black via-gray-500 to-black overflow-hidden">
       {/* Enhanced Grid Background */}
       <div className="absolute inset-0 opacity-20">
         <div 
@@ -84,9 +86,11 @@ const OkDriverHero = () => {
                   Drive Smart.
                 </span>
                 <br />
-                <span className="text-2xl lg:text-3xl text-gray-300">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
+              
                   With okDriver.
                 </span>
+             
               </h1>
               
               <p className="text-xl text-gray-300 leading-relaxed max-w-2xl">
@@ -97,7 +101,7 @@ const OkDriverHero = () => {
             </div>
 
             {/* Animated Features */}
-            <div className="flex flex-wrap items-center space-x-6">
+            <div className="flex flex-wrap  items-center  space-x-24">
               {features.map((Feature, index) => (
                 <div
                   key={index}
@@ -115,18 +119,18 @@ const OkDriverHero = () => {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
               <button className="group bg-gradient-to-r from-gray-800 to-black hover:from-gray-700 hover:to-gray-800 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center space-x-3 border border-gray-600">
                 <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span>Get Started Free</span>
+                <span>Download App</span>
               </button>
               
               <button className="border-2 border-gray-600 text-gray-200 hover:bg-gray-800/30 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm">
-                Watch Demo
+                Partner with us
               </button>
             </div>
 
                     </div>
 
           {/* Right Side - Enhanced Visual */}
-          <div className={`relative transform m-[10%] p-[10%] transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+          <div className={`relative transform m-[10%]  p-[10%] transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
             
             {/* Phone Mockup with Dashboard */}
             <div className="relative mt-[15%] p-[10%] max-w-md">
@@ -150,61 +154,26 @@ const OkDriverHero = () => {
               <div className="relative bg-gray-900 rounded-3xl p-3 shadow-2xl border border-gray-700">
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden">
                   
-                  {/* Mock Dashboard Interface */}
-                  <div className="aspect-[9/16] bg-gradient-to-b from-gray-900 to-black p-6 space-y-4">
-                    
-                    {/* Status Bar */}
-                    <div className="flex justify-between items-center text-xs text-gray-400">
-                      <span>okDriver</span>
-                      <div className="flex space-x-1">
-                        <div className="w-4 h-2 bg-white rounded-full"></div>
-                        <div className="w-4 h-2 bg-gray-400 rounded-full"></div>
-                      </div>
-                    </div>
-
-                    {/* Speed Display */}
-                    <div className="text-center py-8">
-                      <div className="text-4xl font-bold text-white mb-2">45</div>
-                      <div className="text-gray-400 text-sm">km/h</div>
-                      <div className="mt-4 bg-gray-700/50 text-white px-3 py-1 rounded-full text-xs inline-block border border-gray-600">
-                        Safe Speed
-                      </div>
-                    </div>
-
-                    {/* Feature Icons */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-800/30 border border-gray-600/50 rounded-xl p-3 text-center">
-                        <Shield className="w-6 h-6 text-white mx-auto mb-2" />
-                        <div className="text-xs text-gray-300">AI Monitor</div>
-                      </div>
-                      <div className="bg-gray-800/30 border border-gray-600/50 rounded-xl p-3 text-center">
-                        <Mic className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-                        <div className="text-xs text-gray-300">Voice AI</div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Navigation */}
-                    <div className="absolute bottom-4 left-6 right-6 bg-gray-800/50 backdrop-blur-sm rounded-xl p-3">
-                      <div className="flex justify-center space-x-8">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                        <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                        <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                      </div>
-                    </div>
+                  <Image
+                    src={HomeScreen}
+                    alt="okDriver Dashboard"
+                    className="w-[40vw] h-[65vh] rounded-2xl"
+                    style={{ objectFit: 'fill' }}
+                  />
                   </div>
-                </div>
-              </div>
-
+</div>
               {/* Floating Bottom Card */}
-              <div className="absolute -bottom-6 left-4 right-4 bg-gradient-to-r from-gray-800/70 to-gray-700/70 backdrop-blur-md border border-gray-500/50 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-white text-sm font-medium">Trip Active</div>
-                    <div className="text-gray-400 text-xs">15 min • 12.5 km</div>
-                  </div>
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                </div>
-              </div>
+             <div className="absolute -bottom-6 left-4 right-4 bg-gradient-to-r from-gray-800/70 to-gray-700/70 backdrop-blur-md border border-gray-500/50 rounded-xl p-4">
+  <div className="flex items-center justify-between">
+    <div>
+      <div className="text-white text-sm font-medium">OkDriver Assistant</div>
+      <div className="text-gray-400 text-xs">How can I assist you?</div>
+    </div>
+    <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+      <Mic className="w-4 h-4 text-white" />
+    </button>
+  </div>
+</div>
 
             </div>
           </div>

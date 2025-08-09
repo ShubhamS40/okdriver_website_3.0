@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Award, Users, Target, Lightbulb, ArrowUp, Mail, Linkedin, Twitter } from 'lucide-react';
+import { ChevronRight, Award, Users, Target, Lightbulb, ArrowUp, Mail, Linkedin } from 'lucide-react';
 import ceo from './../../../../public/assets/about_image/ceo.png';
 import { Import } from 'lucide-react';
 import Image from 'next/image';
@@ -69,6 +69,14 @@ const FounderProfile = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleEmailClick = () => {
+    window.open('mailto:info.okdriver@gmail.com', '_blank');
+  };
+
+  const handleLinkedInClick = () => {
+    window.open('https://www.linkedin.com/in/tushit-gupta-705453146/', '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white relative">
       {/* Scroll to Top Button */}
@@ -104,7 +112,7 @@ const FounderProfile = () => {
           
           <div className="text-center">
             <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent animate-pulse">
-              CEO & FOUNDER
+              CEO & MANAGING DIRECTOR
             </h1>
             <div className="flex justify-center items-center space-x-4">
               <div className="w-16 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full"></div>
@@ -131,7 +139,7 @@ const FounderProfile = () => {
                   <div className="absolute bottom-6 left-6 bg-white border-2 border-gray-100 px-6 py-3 rounded-full text-sm font-bold text-black shadow-2xl backdrop-blur-sm transform group-hover:scale-105 transition-all duration-300">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>CEO & Founder</span>
+                      <span>CEO & Managing Director</span>
                     </div>
                   </div>
                 </div>
@@ -143,7 +151,7 @@ const FounderProfile = () => {
               <div className="mb-8">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <p className="text-black font-bold text-lg opacity-80">CEO & Founder, OKDriver Technologies</p>
+                  <p className="text-black font-bold text-lg opacity-80">CEO & Managing Director, okDriver Smart Dashcams Private Limited</p>
                 </div>
                 <h2 className="text-4xl lg:text-6xl font-black text-black mb-6 bg-gradient-to-r from-black via-gray-800 to-black bg-clip-text text-transparent">
                   TUSHIT GUPTA
@@ -151,14 +159,17 @@ const FounderProfile = () => {
                 
                 {/* Social Links */}
                 <div className="flex space-x-4 mb-6">
-                  <button className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-blue-600 transform hover:scale-110 transition-all duration-300">
+                  <button 
+                    onClick={handleEmailClick}
+                    className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-blue-600 transform hover:scale-110 transition-all duration-300"
+                  >
                     <Mail size={16} />
                   </button>
-                  <button className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 transition-all duration-300">
+                  <button 
+                    onClick={handleLinkedInClick}
+                    className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-blue-700 transform hover:scale-110 transition-all duration-300"
+                  >
                     <Linkedin size={16} />
-                  </button>
-                  <button className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-blue-400 transform hover:scale-110 transition-all duration-300">
-                    <Twitter size={16} />
                   </button>
                 </div>
               </div>
@@ -166,10 +177,10 @@ const FounderProfile = () => {
               {/* Enhanced Bio Content */}
               <div className="space-y-8 text-gray-700 leading-relaxed">
                 <p className="text-lg font-medium">
-                  He is the CEO & Founder of OKDriver Technologies. Before founding this innovative company, 
+                  He is the CEO & Managing Director of okDriver Smart Dashcams Private Limited Before founding this innovative company, 
                   he gained extensive experience working with leading organizations including 
                   <span className="font-bold text-black px-2 py-1 bg-yellow-100 rounded ml-1"> TCS (Tata Consultancy Services)</span> and 
-                  <span className="font-bold text-black px-2 py-1 bg-blue-100 rounded ml-1"> Tikona Digital Networks</span>, bringing over 
+                  <span className="font-bold text-black px-2 py-1 bg-blue-100 rounded ml-1"> Tikona Infinet Ltd</span>, bringing over 
                   <span className="font-bold text-red-600"> 5+ years of industry expertise</span> in technology and business operations.
                 </p>
 
@@ -187,7 +198,7 @@ const FounderProfile = () => {
 
                 <div className="space-y-6">
                   <p className="font-medium">
-                    Tushit Gupta is the visionary CEO and Founder of OKDriver Technologies. He holds a 
+                    Tushit Gupta is the visionary CEO and Managing Director of okDriver Smart Dashcams Private Limited He holds a 
                     <span className="font-bold text-green-700 px-2 py-1 bg-green-50 rounded ml-1"> Bachelor's degree in Electronics & Communication Engineering (B.Tech ECE)</span> from 
                     <span className="font-bold text-blue-700 px-2 py-1 bg-blue-50 rounded ml-1"> Galgotias University</span>. His diverse educational background 
                     in engineering combined with his practical industry experience has positioned him as a leader 
@@ -196,7 +207,7 @@ const FounderProfile = () => {
 
                   <p>
                     With his extensive experience at multinational corporations and his deep understanding of 
-                    technology systems, Tushit has successfully led OKDriver Technologies to become a pioneering 
+                    technology systems, Tushit has successfully led okDriver Smart Dashcams Private Limited to become a pioneering 
                     force in the road safety and driver training industry. His leadership continues to drive 
                     innovation and excellence in developing solutions that make roads safer for everyone.
                   </p>
@@ -282,7 +293,7 @@ const FounderProfile = () => {
               </div>
               <h4 className="text-2xl font-bold mb-4 group-hover:text-green-300 transition-colors duration-300">Industry Experience</h4>
               <p className="text-gray-300 leading-relaxed font-medium">
-                5+ years of valuable experience with leading companies like TCS and Tikona.
+                5+ years of valuable experience with leading companies like TCS and Tikona Infinet Ltd.
               </p>
             </div>
             
@@ -292,7 +303,7 @@ const FounderProfile = () => {
               </div>
               <h4 className="text-2xl font-bold mb-4 group-hover:text-orange-300 transition-colors duration-300">Visionary Leadership</h4>
               <p className="text-gray-300 leading-relaxed font-medium">
-                Leading OKDriver Technologies towards innovative solutions in road safety.
+                Leading okDriver Smart Dashcams Private Limited towards innovative solutions in road safety.
               </p>
             </div>
           </div>

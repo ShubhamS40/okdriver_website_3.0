@@ -1,12 +1,10 @@
 'use client'
-
-import Image from 'next/image';
-import Link from 'next/link';
 import React, { useState } from 'react';
 import { 
   Truck, Building2, User, MapPin, AlertTriangle, Eye, Camera, 
   Headphones, Phone, Cloud, BarChart3, Shield, CheckCircle, 
-  ArrowRight, Play, Star, Users, Award 
+  ArrowRight, Play, Star, Users, Award, Smartphone, HardDrive,
+  Navigation, Mic, Battery, Monitor, Wifi, Zap, X
 } from 'lucide-react';
 
 const services = [
@@ -64,9 +62,147 @@ const featureChecklist = [
   'Improves long-distance driving safety and reduces accident risks'
 ];
 
+const mobileFeatures = [
+  {
+    icon: <Camera className="w-8 h-8" />,
+    title: "Smart Dashcam Recording",
+    description: "High-quality video recording with cloud storage and local backup options",
+    color: "from-blue-500 to-blue-600",
+    available: true
+  },
+  {
+    icon: <Eye className="w-8 h-8" />,
+    title: "Advanced Drowsiness Detection",
+    description: "Real-time facial recognition to detect driver fatigue and prevent accidents",
+    color: "from-purple-500 to-purple-600",
+    available: true
+  },
+  {
+    icon: <Mic className="w-8 h-8" />,
+    title: "OKDriver Voice Assistant",
+    description: "AI-powered driver companion for navigation, alerts, and hands-free operation",
+    color: "from-green-500 to-green-600",
+    available: true
+  },
+  {
+    icon: <AlertTriangle className="w-8 h-8" />,
+    title: "SOS & Emergency Alerts",
+    description: "Automatic accident detection with instant family and emergency service notifications",
+    color: "from-red-500 to-red-600",
+    available: true
+  },
+  {
+    icon: <Shield className="w-8 h-8" />,
+    title: "Face Recognition Security",
+    description: "Authorized driver verification and anti-theft protection",
+    color: "from-orange-500 to-orange-600",
+    available: true
+  },
+  {
+    icon: <Cloud className="w-8 h-8" />,
+    title: "Cloud Sync & Storage",
+    description: "Secure cloud backup of recordings and driving data across devices",
+    color: "from-cyan-500 to-cyan-600",
+    available: true
+  },
+  // Features not available in mobile app
+  {
+    icon: <HardDrive className="w-8 h-8" />,
+    title: "Dual Dashcam System",
+    description: "Front and rear camera setup with 4K recording capability",
+    color: "from-gray-400 to-gray-500",
+    available: false
+  },
+  {
+    icon: <Monitor className="w-8 h-8" />,
+    title: "Camera-based Distraction Monitoring",
+    description: "Real-time detection of phone usage, smoking, and other distractions",
+    color: "from-gray-400 to-gray-500",
+    available: false
+  },
+  {
+    icon: <Navigation className="w-8 h-8" />,
+    title: "Real-Time GPS Tracking",
+    description: "Precise vehicle location monitoring with geofencing capabilities",
+    color: "from-gray-400 to-gray-500",
+    available: false
+  },
+  {
+    icon: <BarChart3 className="w-8 h-8" />,
+    title: "Fleet Dashboard & Analytics",
+    description: "Centralized management system for fleet operators with detailed insights",
+    color: "from-gray-400 to-gray-500",
+    available: false
+  }
+];
+
+const hardwareFeatures = [
+  {
+    icon: <HardDrive className="w-8 h-8" />,
+    title: "Dual Dashcam System",
+    description: "Front and rear camera setup with 4K recording capability",
+    color: "from-blue-500 to-blue-600"
+  },
+  {
+    icon: <Eye className="w-8 h-8" />,
+    title: "AI-Powered Drowsiness Detection",
+    description: "Advanced ML algorithms for precise driver state monitoring",
+    color: "from-purple-500 to-purple-600"
+  },
+  {
+    icon: <Monitor className="w-8 h-8" />,
+    title: "Camera-based Distraction Monitoring",
+    description: "Real-time detection of phone usage, smoking, and other distractions",
+    color: "from-indigo-500 to-indigo-600"
+  },
+  {
+    icon: <Navigation className="w-8 h-8" />,
+    title: "Real-Time GPS Tracking",
+    description: "Precise vehicle location monitoring with geofencing capabilities",
+    color: "from-green-500 to-green-600"
+  },
+  {
+    icon: <BarChart3 className="w-8 h-8" />,
+    title: "Comprehensive Driver Reports",
+    description: "Detailed analytics on driving behavior, routes, and safety metrics",
+    color: "from-yellow-500 to-yellow-600"
+  },
+  {
+    icon: <MapPin className="w-8 h-8" />,
+    title: "Traffic Object Detection",
+    description: "AI recognition of vehicles, pedestrians, traffic signs, and road conditions",
+    color: "from-red-500 to-red-600"
+  },
+  {
+    icon: <AlertTriangle className="w-8 h-8" />,
+    title: "Pothole & Road Hazard Detection",
+    description: "Advanced computer vision for road surface analysis and hazard alerts",
+    color: "from-orange-500 to-orange-600"
+  },
+  {
+    icon: <BarChart3 className="w-8 h-8" />,
+    title: "Fleet Dashboard & Analytics",
+    description: "Centralized management system for fleet operators with detailed insights",
+    color: "from-teal-500 to-teal-600"
+  },
+  {
+    icon: <Shield className="w-8 h-8" />,
+    title: "Traffic Rules Violation Detection",
+    description: "Automatic detection of speed limits, signal violations, and unsafe driving",
+    color: "from-pink-500 to-pink-600"
+  },
+  {
+    icon: <BarChart3 className="w-8 h-8" />,
+    title: "Road Metrics Collection",
+    description: "Data gathering on traffic patterns, road conditions, and infrastructure",
+    color: "from-gray-500 to-gray-600"
+  }
+];
+
 export default function Services() {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
+  const [activeProductTab, setActiveProductTab] = useState('mobile');
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -254,7 +390,7 @@ export default function Services() {
                 </div>
                 <span className="text-sm font-semibold text-black uppercase tracking-wide">AI Assistant</span>
               </div>
-              <h3 className="text-4xl font-bold mb-6 text-black">OKDriver Voice Assistant (Convo AI)</h3>
+              <h3 className="text-4xl font-bold mb-6 text-black">OKDriver Voice Assistant </h3>
               <p className="text-lg mb-8 text-gray-700 leading-relaxed">
                 Our smart voice assistant enhances your driving experience by delivering real-time assistance. Whether you're looking for nearby locations or need help with general queries, OKDriver is always ready to guide you. In critical situations, the assistant can instantly contact emergency contacts or nearby hospitals.
               </p>
@@ -286,155 +422,198 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Service Categories Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+
+      {/* Product Showcase Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Product Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Tailored <span className="text-transparent bg-clip-text bg-gradient-to-r from-black to-gray-600">Solutions</span>
+              Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Products</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Smart driving safety solutions designed for your unique needs, powered by AI and built for real-world impact
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Comprehensive road safety solutions designed for individual drivers and fleet operators, 
+              powered by advanced AI technology to reduce accidents and enhance driving experience.
             </p>
+            
+            <div className="inline-block bg-gray-100 text-gray-800 px-6 py-3 rounded-full text-lg font-bold">
+              OKDriver's Product has Two Components
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {services.map((service, index) => {
-              const Icon = service.icon;
-              const isHovered = hoveredCard === service.id;
-              
-              return (
-                <div
-                  key={service.id}
-                  className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-2 ${
-                    isHovered ? 'ring-4 ring-black/10' : ''
-                  }`}
-                  onMouseEnter={() => setHoveredCard(service.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  onClick={() => setSelectedService(selectedService === service.id ? null : service.id)}
-                >
-                  {/* Gradient Background Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                  
-                  {/* Main Content */}
-                  <div className="relative p-8">
-                    {/* Icon */}
-                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${service.color} mb-6 transform transition-transform duration-300 group-hover:scale-110`}>
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
+          {/* Product Tab Navigation */}
+          <div className="flex justify-center mb-12">
+            <div className="bg-gray-100 p-2 rounded-2xl flex space-x-2">
+              <button
+                onClick={() => setActiveProductTab('mobile')}
+                className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center space-x-3 ${
+                  activeProductTab === 'mobile'
+                    ? 'bg-white text-black shadow-lg transform scale-105'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                <Smartphone className="w-5 h-5" />
+                <span>Mobile App Solution</span>
+              </button>
+              <button
+                onClick={() => setActiveProductTab('hardware')}
+                className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center space-x-3 ${
+                  activeProductTab === 'hardware'
+                    ? 'bg-white text-black shadow-lg transform scale-105'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                <HardDrive className="w-5 h-5" />
+                <span>Hardware + Cloud DMS</span>
+              </button>
+            </div>
+          </div>
 
-                    {/* Title */}
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-gray-800 transition-colors">
-                      {service.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-gray-600 mb-6 leading-relaxed">
-                      {service.description}
-                    </p>
-
-                    {/* Benefits Preview */}
-                    <div className="space-y-2 mb-6">
-                      {service.benefits.map((benefit, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 font-medium">{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Expand Button */}
-                    <button className="inline-flex items-center space-x-2 text-black font-semibold hover:text-gray-700 transition-colors">
-                      <span>Learn More</span>
-                      <ArrowRight className={`w-4 h-4 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
-                    </button>
+          {/* Product Comparison Table */}
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden mb-16">
+            <div className="grid lg:grid-cols-2">
+              {/* Mobile App Side */}
+              <div className={`p-8 transition-all duration-500 ${
+                activeProductTab === 'mobile' ? 'bg-gradient-to-br from-blue-50 to-white' : 'bg-gray-50'
+              }`}>
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                    <Smartphone className="w-10 h-10 text-white" />
                   </div>
-
-                  {/* Hover Effect Border */}
-                  <div className={`absolute inset-0 border-2 border-transparent rounded-2xl transition-all duration-300 ${
-                    isHovered ? 'border-black/20' : ''
-                  }`} />
+                  <h3 className="text-3xl font-black text-gray-900 mb-3">
+                    OKDriver Mobile App
+                  </h3>
+                  <p className="text-lg text-gray-600 font-medium">
+                    Individual Driver Solution
+                  </p>
+                  <div className="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold mt-4">
+                    Mobile-Only Version
+                  </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Expanded Details Modal */}
-          {selectedService && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                {(() => {
-                  const service = services.find(s => s.id === selectedService);
-                  const Icon = service.icon;
-                  
-                  return (
-                    <div className="p-8">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-4">
-                          <div className={`p-3 rounded-xl bg-gradient-to-r ${service.color}`}>
-                            <Icon className="w-8 h-8 text-white" />
+                <div className="space-y-4">
+                  {mobileFeatures.map((feature, index) => (
+                    <div key={index} className={`flex items-start space-x-4 p-4 rounded-xl transition-all duration-300 ${
+                      feature.available 
+                        ? 'hover:bg-white hover:shadow-lg' 
+                        : 'opacity-60 hover:bg-red-50'
+                    }`}>
+                      <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg relative`}>
+                        <div className="text-white">{feature.icon}</div>
+                        {!feature.available && (
+                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                            <X className="w-4 h-4 text-white" />
                           </div>
-                          <h3 className="text-3xl font-bold text-gray-900">{service.title}</h3>
-                        </div>
-                        <button
-                          onClick={() => setSelectedService(null)}
-                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                        )}
                       </div>
-
-                      {/* Description */}
-                      <p className="text-lg text-gray-600 mb-8">{service.description}</p>
-
-                      {/* Features Grid */}
-                      <div className="grid md:grid-cols-2 gap-6 mb-8">
-                        <div>
-                          <h4 className="text-xl font-semibold mb-4">Key Features</h4>
-                          <div className="space-y-3">
-                            {service.features.map((feature, idx) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <div key={idx} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                  <FeatureIcon className="w-5 h-5 text-gray-700" />
-                                  <span className="text-gray-800">{feature.text}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xl font-semibold mb-4">Benefits</h4>
-                          <div className="space-y-3">
-                            {service.benefits.map((benefit, idx) => (
-                              <div key={idx} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                                <span className="text-gray-800 font-medium">{benefit}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* CTA */}
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <button className={`px-6 py-3 rounded-lg text-white font-semibold bg-gradient-to-r ${service.color} hover:opacity-90 transition-opacity`}>
-                          Get Started
-                        </button>
-                        <button className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
-                          Schedule Demo
-                        </button>
+                      <div className="flex-1">
+                        <h4 className={`font-bold mb-2 ${feature.available ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {feature.title}
+                        </h4>
+                        <p className={`text-sm ${feature.available ? 'text-gray-600' : 'text-gray-400'}`}>
+                          {feature.available ? feature.description : 'Not available in mobile app - Hardware device provides this benefit'}
+                        </p>
                       </div>
                     </div>
-                  );
-                })()}
+                  ))}
+                </div>
+
+                <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-blue-100">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center">
+                    <Star className="w-5 h-5 text-yellow-500 mr-2" />
+                    Perfect For:
+                  </h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Individual drivers</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Personal vehicle safety</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Cost-effective solution</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Easy smartphone integration</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Hardware Side */}
+              <div className={`p-8 transition-all duration-500 border-l border-gray-200 ${
+                activeProductTab === 'hardware' ? 'bg-gradient-to-br from-purple-50 to-white' : 'bg-gray-50'
+              }`}>
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                    <HardDrive className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-black text-gray-900 mb-3">
+                    OKDriver Hardware + Cloud DMS
+                  </h3>
+                  <p className="text-lg text-gray-600 font-medium">
+                    Professional Fleet Solution
+                  </p>
+                  <div className="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-bold mt-4">
+                    For B2B Fleets
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {hardwareFeatures.map((feature, index) => (
+                    <div key={index} className="flex items-start space-x-4 p-3 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300">
+                      <div className={`w-10 h-10 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                        <div className="text-white text-sm">{feature.icon}</div>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 mb-1 text-sm">{feature.title}</h4>
+                        <p className="text-gray-600 text-xs">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-purple-100">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center">
+                    <Users className="w-5 h-5 text-purple-500 mr-2" />
+                    Ideal For:
+                  </h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Fleet operators</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Commercial vehicles</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Enterprise-grade monitoring</li>
+                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Advanced analytics</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Key Product Benefits */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <div className="text-center p-8 bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl shadow-xl border border-red-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
+              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Accident Prevention</h3>
+              <p className="text-gray-600">
+                Advanced AI algorithms designed specifically to reduce road accidents in India through real-time monitoring and alerts.
+              </p>
+            </div>
+
+            <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl shadow-xl border border-blue-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Real-Time Monitoring</h3>
+              <p className="text-gray-600">
+                Continuous surveillance of driver behavior, vehicle performance, and road conditions for maximum safety.
+              </p>
+            </div>
+
+            <div className="text-center p-8 bg-gradient-to-br from-green-50 to-teal-50 rounded-3xl shadow-xl border border-green-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Data-Driven Insights</h3>
+              <p className="text-gray-600">
+                Comprehensive analytics and reporting to improve driving habits and optimize fleet operations.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -456,7 +635,7 @@ export default function Services() {
             </div>
             <div className="flex items-center space-x-2">
               <Users className="w-5 h-5 text-blue-400" />
-              <span className="text-sm">10K+ Users</span>
+              <span className="text-sm">100+ Users</span>
             </div>
             <div className="flex items-center space-x-2">
               <Award className="w-5 h-5 text-green-400" />
@@ -465,11 +644,13 @@ export default function Services() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <button className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors">
-              Start Free Trial
+            <button className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center">
+              <Smartphone className="w-5 h-5 mr-2" />
+              Download Mobile App
             </button>
-            <button className="border-2 border-white text-white px-10 py-5 rounded-lg text-lg font-semibold hover:bg-white hover:text-black transition-colors">
-              Schedule Demo
+            <button className="border-2 border-white text-white px-10 py-5 rounded-lg text-lg font-semibold hover:bg-white hover:text-black transition-colors flex items-center justify-center">
+              <HardDrive className="w-5 h-5 mr-2" />
+              Get Hardware Solution
             </button>
           </div>
         </div>

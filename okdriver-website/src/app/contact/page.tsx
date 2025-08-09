@@ -50,19 +50,19 @@ export default function Contact() {
     {
       icon: MapPin,
       title: 'Our Office',
-      details: '123 Driver Street, Tech City, India',
+      details: 'L16-A, Dilshad Garden, New Delhi - 110095',
       color: 'from-blue-600 to-blue-800'
     },
     {
       icon: Mail,
       title: 'Email Us',
-      details: 'info@okdriver.com',
+      details: 'hello@okdriver.com',
       color: 'from-green-600 to-green-800'
     },
     {
       icon: Phone,
       title: 'Call Us',
-      details: '+1 (123) 456-7890',
+      details: '+91-9319500121',
       color: 'from-purple-600 to-purple-800'
     },
     {
@@ -340,7 +340,7 @@ export default function Contact() {
                 <Users className="w-6 h-6 text-blue-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">10K+</div>
+                <div className="text-2xl font-bold">100+</div>
                 <div className="text-sm text-gray-400">Active Users</div>
               </div>
             </div>
@@ -358,10 +358,10 @@ export default function Contact() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <button className="bg-white text-black px-10 py-4 rounded-xl text-lg font-semibold hover:bg-gray-200 transition-all duration-300 transform hover:scale-105">
-              Start Free Trial
+              <Link href="https://play.google.com/store/apps/details?id=app.dash.okDriver&pli=1">Download Now</Link>
             </button>
             <button className="border-2 border-white text-white px-10 py-4 rounded-xl text-lg font-semibold hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105">
-              Schedule Demo
+              Email us
             </button>
           </div>
         </div>

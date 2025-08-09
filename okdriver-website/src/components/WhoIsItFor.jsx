@@ -139,8 +139,8 @@ const WhoIsItFor = () => {
         {/* CTA Section */}
         <div className="text-center mb-12">
           <div className="relative inline-block">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-3xl shadow-2xl shadow-blue-500/20 border border-blue-500/20">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur-xl opacity-20 animate-pulse"></div>
+            <div className=" p-8 rounded-3xl shadow-2xl shadow-blue-500/20 border border-blue-500/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-500 to-black  rounded-3xl blur-xl opacity-20 animate-pulse"></div>
               <div className="relative">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
                   If you're on Indian roads — okDriver is for you.
@@ -151,41 +151,7 @@ const WhoIsItFor = () => {
           </div>
         </div>
 
-        {/* Bottom Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center group cursor-pointer">
-            <div className="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 transition-all duration-300 hover:border-gray-600 hover:shadow-xl">
-              <div className="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">
-                2M+
-              </div>
-              <div className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
-                Active Drivers
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center group cursor-pointer">
-            <div className="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 transition-all duration-300 hover:border-gray-600 hover:shadow-xl">
-              <div className="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">
-                50+
-              </div>
-              <div className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
-                Cities Covered
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center group cursor-pointer">
-            <div className="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 transition-all duration-300 hover:border-gray-600 hover:shadow-xl">
-              <div className="text-3xl font-bold text-white mb-2 group-hover:scale-110 transition-transform duration-300">
-                24/7
-              </div>
-              <div className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
-                AI Monitoring
-              </div>
-            </div>
-          </div>
-        </div>
+     
       </div>
     </div>
   );

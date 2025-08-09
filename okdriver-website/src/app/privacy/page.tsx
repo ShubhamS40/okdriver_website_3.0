@@ -239,21 +239,21 @@ export default function PrivacyPolicy() {
                   <Mail className="w-8 h-8 text-blue-400" />
                 </div>
                 <div className="font-semibold mb-2">Email Us</div>
-                <div className="text-gray-300">privacy@okdriver.com</div>
+                <div className="text-gray-300">support@okdriver.in</div>
               </div>
               <div className="text-center">
                 <div className="p-3 bg-white/10 rounded-xl w-fit mx-auto mb-4">
                   <Phone className="w-8 h-8 text-green-400" />
                 </div>
                 <div className="font-semibold mb-2">Call Us</div>
-                <div className="text-gray-300">+1 (123) 456-7890</div>
+                <div className="text-gray-300">+91-9319500121 </div>
               </div>
               <div className="text-center">
                 <div className="p-3 bg-white/10 rounded-xl w-fit mx-auto mb-4">
                   <MapPin className="w-8 h-8 text-purple-400" />
                 </div>
                 <div className="font-semibold mb-2">Visit Us</div>
-                <div className="text-gray-300">123 Driver Street, Tech City, India</div>
+                <div className="text-gray-300">L16-A, Dilshad Garden New Delhi - 110095</div>
               </div>
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function PrivacyPolicy() {
           <div className="text-center mt-12">
             <div className="inline-flex items-center space-x-3 bg-white rounded-xl px-6 py-3 shadow-lg">
               <FileText className="w-5 h-5 text-gray-600" />
-              <span className="text-gray-800 font-semibold">Last Updated: May 1, 2023</span>
+              <span className="text-gray-800 font-semibold">Last Updated: August 10, 2025</span>
             </div>
           </div>
         </div>
@@ -281,7 +281,7 @@ export default function PrivacyPolicy() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex flex-col md:flex-row justify-center items-center space-y-8 md:space-y-0 md:space-x-12 mb-12">
+          {/* <div className="flex flex-col md:flex-row justify-center items-center space-y-8 md:space-y-0 md:space-x-12 mb-12">
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-yellow-500/20 rounded-full">
                 <Star className="w-6 h-6 text-yellow-400" />
@@ -309,7 +309,7 @@ export default function PrivacyPolicy() {
                 <div className="text-sm text-gray-400">First Approach</div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Related Links */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center">

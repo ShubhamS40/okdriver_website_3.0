@@ -3,6 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo_white from '../../public/assets/OKDriverWhite_logo.png'; 
+import logo_text_white from '../../public/assets/OkD- white_text.png'; 
+import logo_text_black from '../../public/assets/okdriver_logo_text_black.png'; 
+import logo_black from '../../public/assets/okdriverblack_logo.png'; 
+import Image from 'next/image';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,7 +77,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-20">
           
-          {/* Logo - Enhanced for hero section visibility */}
+          {/* Logo - Enhanced for hero section visibility with dynamic logo switching */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center group">
               <div className="relative">
@@ -81,18 +86,24 @@ export default function Header() {
                     ? 'bg-black shadow-lg' 
                     : 'bg-white/20 backdrop-blur-md border border-white/30 shadow-lg'
                 }`}>
-                  <span className={`font-bold text-lg transition-colors duration-300 ${
-                    isScrolled ? 'text-white' : 'text-white'
-                  }`}>
-                    OK
-                  </span>
+                  {/* Dynamic logo based on scroll state */}
+                  <Image 
+                    src={isScrolled ? logo_white : logo_white} 
+                    alt="OKDriver" 
+                    width={40} 
+                    height={40} 
+                  />
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-300 blur-sm"></div>
               </div>
-              <span className={`ml-3 text-2xl font-bold tracking-tight transition-colors duration-300 ${
-                isScrolled ? 'text-black' : 'text-white drop-shadow-lg'
-              }`}>
-                OKDriver
+              {/* Dynamic logo text based on scroll state */}
+              <span className={`ml-3 text-2xl font-bold tracking-tight transition-colors duration-300`}>
+                <Image 
+                  src={isScrolled ? logo_text_black : logo_text_white} 
+                  alt="OKDriver" 
+                  width={100} 
+                  height={40} 
+                />
               </span>
             </Link>
           </div>
@@ -131,7 +142,7 @@ export default function Header() {
               whileTap={{ scale: 0.95 }}
             >
               <Link 
-                href="/admin/login" 
+                href="/contact" 
                 className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 overflow-hidden hover:shadow-lg ${
                   isScrolled 
                     ? 'bg-black text-white hover:bg-gray-800' 

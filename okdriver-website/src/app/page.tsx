@@ -9,6 +9,8 @@ import HowItWorks from '@/components/HowItWorks';
 import OurVision from '@/components/OurVision';
 import Image from 'next/image';
 import Link from 'next/link';
+import TailoredSolution from '@/components/TailoredSolution';
+import Product from '@/components/Product';
 
 
 export default function Home() {
@@ -19,14 +21,16 @@ export default function Home() {
       
       {/* Main Content Sections with proper spacing */}
       <div className="space-y-16 md:space-y-24 lg:space-y-0">
+        <FeaturesComponent/>
         <WhyOkDriver/>
         <Stats/>
-        <FeaturesComponent/>
+        <TailoredSolution/>
+        {/* <Product></Product> */}
         {/* <OurVision/> */}
         {/* <HowItWorks/> */}
         <WhoIsItFor/>
         {/* <UseCases/> */}
-        <Hardware/>
+        {/* <Hardware/> */}
       </div>
     </main>
   );

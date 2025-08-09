@@ -1,6 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Check, Car, Truck, Mic, Settings, Smartphone, Users, Phone } from 'lucide-react';
+import saftey_luxry from './../../public/assets/saftey_should_not_beluxry.jpeg'
+import Image from 'next/image';
+import Link from 'next/link';
 
 const WhyOkDriver = () => {
   const [activeCard, setActiveCard] = useState(null);
@@ -64,12 +67,7 @@ const WhyOkDriver = () => {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
           <h1 className="text-5xl md:text-6xl font-bold mb-8 tracking-tight">
-            Safety Shouldn't Be a{' '}
-            <span className="relative">
-              Luxury
-              <div className="absolute -bottom-2 left-0 w-full h-1 bg-black transform origin-left transition-all duration-1000 delay-500 scale-x-0 animate-pulse"></div>
-            </span>
-            .
+          "SAFETY” Shouldn't Be a “LUXURY"
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
@@ -114,49 +112,8 @@ const WhyOkDriver = () => {
           </div>
 
           {/* User Type Cards */}
-          <div className="space-y-6">
-            {userTypes.map((userType, index) => (
-              <div
-                key={index}
-                className={`${userType.color} ${userType.hoverColor} rounded-2xl p-8 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl cursor-pointer group ${
-                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-                }`}
-                style={{ transitionDelay: `${600 + index * 200}ms` }}
-                onMouseEnter={() => setActiveCard(`card-${index}`)}
-                onMouseLeave={() => setActiveCard(null)}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-4 rounded-full transition-all duration-300 ${
-                    userType.color === 'bg-black' 
-                      ? 'bg-white text-black group-hover:scale-110' 
-                      : 'bg-black text-white group-hover:scale-110'
-                  }`}>
-                    {userType.icon}
-                  </div>
-                  <div className={`transition-all duration-300 transform ${
-                    activeCard === `card-${index}` ? 'rotate-12 scale-110' : ''
-                  }`}>
-                    <Phone className={`w-8 h-8 ${userType.textColor || 'text-black'}`} />
-                  </div>
-                </div>
-                
-                <h3 className={`text-2xl font-bold mb-2 ${userType.textColor || 'text-black'}`}>
-                  {userType.title}
-                </h3>
-                <p className={`text-lg ${userType.textColor ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {userType.subtitle}
-                </p>
-                
-                {/* Animated indicator */}
-                <div className={`mt-4 h-1 bg-gradient-to-r transition-all duration-500 ${
-                  userType.color === 'bg-black' 
-                    ? 'from-white to-gray-300' 
-                    : 'from-black to-gray-800'
-                } ${
-                  activeCard === `card-${index}` ? 'w-full' : 'w-0'
-                }`}></div>
-              </div>
-            ))}
+          <div className="space-y-6 bg-green-600">
+           <Image src={saftey_luxry} alt="User Type" className="w-full h-auto rounded-lg" />
           </div>
         </div>
 
@@ -166,10 +123,12 @@ const WhyOkDriver = () => {
         }`} style={{ transitionDelay: '1000ms' }}>
           <div className="inline-block relative group cursor-pointer">
             <div className="absolute inset-0 bg-black rounded-full blur opacity-25 group-hover:opacity-75 transition-all duration-500 transform group-hover:scale-110"></div>
-            <button className="relative bg-black text-white px-12 py-4 rounded-full text-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-              Experience okDriver Safety
+           <Link href="/services">
+        <button className="relative cursor-pointer bg-black text-white px-12 py-4 rounded-full text-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+              Explore okDriver Services
               <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-10 transition-all duration-300"></div>
             </button>
+           </Link>
           </div>
           
           <p className="mt-6 text-gray-500 text-lg">

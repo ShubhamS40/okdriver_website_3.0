@@ -112,7 +112,7 @@ const CTOProfile = () => {
               variants={staggerContainer}
             >
               <motion.div className="mb-6" variants={fadeIn}>
-                <p className="text-black font-semibold text-lg mb-2 opacity-80">CTO, OKDriver Technologies</p>
+                <p className="text-black font-semibold text-lg mb-2 opacity-80">CTO, okDriver Smart Dashcams Private Limited</p>
                 <h2 className="text-3xl lg:text-5xl font-bold text-black mb-4">
                   SHUBHAM SINGH
                 </h2>
@@ -121,7 +121,7 @@ const CTOProfile = () => {
               {/* Bio Content */}
               <motion.div className="space-y-6 text-gray-700 leading-relaxed" variants={fadeIn}>
                 <p className="text-lg">
-                  Shubham Singh is the Chief Technology Officer at OKDriver Technologies. With his expertise in 
+                  Shubham Singh is the Chief Technology Officer at okDriver Smart Dashcams Private Limited. With his expertise in 
                   <span className="font-semibold text-black"> mobile development</span> and 
                   <span className="font-semibold text-black"> AI integration</span>, he leads the technical vision 
                   and development of our innovative driver management platform.

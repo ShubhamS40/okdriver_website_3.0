@@ -74,9 +74,9 @@ const termsData = [
 ];
 
 const quickInfo = [
-  { icon: Clock, text: '14-day money-back guarantee' },
+  // { icon: Clock, text: '' },
   { icon: Shield, text: 'Secure and protected platform' },
-  { icon: Users, text: 'Trusted by 10K+ users' },
+  { icon: Users, text: 'Trusted by 100+ users' },
   { icon: CheckCircle, text: 'Transparent policies' }
 ];
 
@@ -270,8 +270,8 @@ export default function TermsAndConditions() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Email Support</h3>
               <p className="text-gray-600 mb-4">Get detailed answers to your legal questions</p>
-              <a href="mailto:legal@okdriver.com" className="text-blue-600 font-semibold hover:underline">
-                legal@okdriver.com
+              <a href="mailto:support@okdriver.in" className="text-blue-600 font-semibold hover:underline">
+                support@okdriver.in
               </a>
             </div>
             
@@ -281,8 +281,8 @@ export default function TermsAndConditions() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Phone Support</h3>
               <p className="text-gray-600 mb-4">Speak directly with our legal team</p>
-              <a href="tel:+11234567890" className="text-green-600 font-semibold hover:underline">
-                +1 (123) 456-7890
+              <a href="tel:+919319500121" className="text-green-600 font-semibold hover:underline">
+                +91-9319500121
               </a>
             </div>
             
@@ -293,7 +293,7 @@ export default function TermsAndConditions() {
               <h3 className="text-xl font-bold text-gray-900 mb-2">Office Address</h3>
               <p className="text-gray-600 mb-4">Visit us for in-person consultation</p>
               <p className="text-purple-600 font-semibold">
-                123 Driver Street<br />City, Country
+                L16-A, Dilshad Garden<br />New Delhi - 110095, India
               </p>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function TermsAndConditions() {
           <div className="text-center mb-8">
             <div className="inline-flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-md">
               <Clock className="w-5 h-5 text-gray-600" />
-              <span className="text-gray-700 font-medium">Last Updated: May 1, 2023</span>
+              <span className="text-gray-700 font-medium">Last Updated: August 10, 2025</span>
             </div>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function TermsAndConditions() {
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
             <button className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors">
-              Accept & Start Free Trial
+              <a href="https://play.google.com/store/apps/details?id=app.dash.okDriver&pli=1">Download Now</a>
             </button>
             <Link href="/privacy" className="border-2 border-white text-white px-10 py-5 rounded-lg text-lg font-semibold hover:bg-white hover:text-black transition-colors">
               View Privacy Policy
