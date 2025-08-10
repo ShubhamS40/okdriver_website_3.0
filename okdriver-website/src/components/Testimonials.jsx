@@ -161,8 +161,7 @@ export default function Testimonials() {
           ))}
         </div>
 
-
-            </div>
+              </div>
 
       {/* Animated Background Elements */}
       <div className="absolute top-1/4 left-10 w-2 h-2 bg-white rounded-full opacity-30 animate-pulse" />

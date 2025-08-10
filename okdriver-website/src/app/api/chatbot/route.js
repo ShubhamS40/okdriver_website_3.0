@@ -53,10 +53,10 @@ By default, no. You can enable audio recording in the settings if needed.
 
 ### 5. Contact & Support
 **How do I contact okDriver?**
-📧 Email: hello@okdriver.in or team@okdriver.in
+📧 Email: support@okdriver.in
 📞 Phone/WhatsApp: +91-9319500121
-📍 Location: New Delhi
-📲 Social: LinkedIn, Instagram (@okdriver.in)
+📍 Location: L-16A Dilshad Garden, Delhi
+📲 Social: LinkedIn: https://www.linkedin.com/company/okdriver-in, Instagram: https://www.instagram.com/okdriver.in
 
 **I have an idea or feedback. How can I share it?**
 We love feedback! Drop us a message through our contact form or email us directly.

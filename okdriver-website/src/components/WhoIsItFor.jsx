@@ -57,7 +57,7 @@ const WhoIsItFor = () => {
   ];
 
   return (
-    <div className="bg-black text-white py-20 px-6 min-h-screen">
+    <div className="bg-black text-white py-5 px-6 ">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
@@ -68,7 +68,7 @@ const WhoIsItFor = () => {
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
           {categories.map((category, index) => {
             const IconComponent = category.icon;
             const isActive = activeCategory === category.id;
@@ -96,7 +96,7 @@ const WhoIsItFor = () => {
                   }`}></div>
                   
                   {/* Icon Container */}
-                  <div className={`relative mb-4 transition-all duration-500 ${
+                  <div className={`relative transition-all duration-500 ${
                     isActive ? 'transform -translate-y-1' : ''
                   }`}>
                     <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${category.color} p-3 transition-all duration-500 ${
@@ -136,20 +136,7 @@ const WhoIsItFor = () => {
           })}
         </div>
 
-        {/* CTA Section */}
-        <div className="text-center mb-12">
-          <div className="relative inline-block">
-            <div className=" p-8 rounded-3xl shadow-2xl shadow-blue-500/20 border border-blue-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-500 to-black  rounded-3xl blur-xl opacity-20 animate-pulse"></div>
-              <div className="relative">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                  If you're on Indian roads — okDriver is for you.
-                </h2>
-                <div className="w-20 h-1 bg-white/40 mx-auto rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      
 
      
       </div>
