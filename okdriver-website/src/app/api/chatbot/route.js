@@ -1,4 +1,4 @@
-// pages/api/chatbot.js or app/api/chatbot/route.js (for App Router)
+// app/api/chatbot/route.js - Next.js App Router API Route
 
 import { NextResponse } from 'next/server';
 
@@ -136,61 +136,4 @@ export async function POST(request) {
   }
 }
 
-// For Pages Router (pages/api/chatbot.js)
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { message } = req.body;
-
-    if (!message || message.trim() === '') {
-      return res.status(400).json({ error: 'Message is required' });
-    }
-
-    const response = await fetch('https://api.together.xyz/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer dbd65ef3ea28743eb9f6ed0df90a98971c5a014ec4ddbd3fca2bf087de1a73e0',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
-        messages: [
-          {
-            role: 'system',
-            content: SYSTEM_PROMPT
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        max_tokens: 50,
-        temperature: 0.7,
-        stream: false
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('API Error:', errorData);
-      return res.status(500).json({ error: 'Failed to get response from AI' });
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content || 
-      "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details.";
-
-    return res.status(200).json({
-      response: aiResponse
-    });
-
-  } catch (error) {
-    console.error('Chatbot API Error:', error);
-    return res.status(500).json({
-      response: "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details."
-    });
-  }
-}
+// Note: Pages Router implementation removed as this is an App Router file
