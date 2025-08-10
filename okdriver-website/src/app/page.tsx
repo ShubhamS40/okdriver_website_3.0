@@ -11,7 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import TailoredSolution from '@/components/TailoredSolution';
 import Product from '@/components/Product';
-
+import Testimonials from "@/components/Testimonials";
 
 export default function Home() {
   return (
@@ -20,11 +20,13 @@ export default function Home() {
       <OkDriverHero/>
       
       {/* Main Content Sections with proper spacing */}
-      <div className="space-y-16 md:space-y-24 lg:space-y-0">
+      <div className=" md:space-y-24 lg:space-y-0">
         <FeaturesComponent/>
         <WhyOkDriver/>
         <Stats/>
+        <Product/>
         <TailoredSolution/>
+        <Testimonials/>
         {/* <Product></Product> */}
         {/* <OurVision/> */}
         {/* <HowItWorks/> */}

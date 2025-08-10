@@ -4,7 +4,7 @@ import {
   Truck, Building2, User, MapPin, AlertTriangle, Eye, Camera, 
   Headphones, Phone, Cloud, BarChart3, Shield, CheckCircle, 
   ArrowRight, Play, Star, Users, Award, Smartphone, HardDrive,
-  Navigation, Mic, Battery, Monitor, Wifi, Zap, X
+  Navigation, Mic, Battery, Monitor, Wifi, Zap
 } from 'lucide-react';
 
 const services = [
@@ -104,35 +104,6 @@ const mobileFeatures = [
     description: "Secure cloud backup of recordings and driving data across devices",
     color: "from-cyan-500 to-cyan-600",
     available: true
-  },
-  // Features not available in mobile app
-  {
-    icon: <HardDrive className="w-8 h-8" />,
-    title: "Dual Dashcam System",
-    description: "Front and rear camera setup with 4K recording capability",
-    color: "from-gray-400 to-gray-500",
-    available: false
-  },
-  {
-    icon: <Monitor className="w-8 h-8" />,
-    title: "Camera-based Distraction Monitoring",
-    description: "Real-time detection of phone usage, smoking, and other distractions",
-    color: "from-gray-400 to-gray-500",
-    available: false
-  },
-  {
-    icon: <Navigation className="w-8 h-8" />,
-    title: "Real-Time GPS Tracking",
-    description: "Precise vehicle location monitoring with geofencing capabilities",
-    color: "from-gray-400 to-gray-500",
-    available: false
-  },
-  {
-    icon: <BarChart3 className="w-8 h-8" />,
-    title: "Fleet Dashboard & Analytics",
-    description: "Centralized management system for fleet operators with detailed insights",
-    color: "from-gray-400 to-gray-500",
-    available: false
   }
 ];
 
@@ -371,16 +342,16 @@ export default function Services() {
           <div id="voice-assistant" className="grid md:grid-cols-2 gap-16 items-center mb-24">
             <div className="relative">
               <div className="relative h-96 w-full rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center shadow-2xl">
-                <div className="text-center">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                    <Headphones className="w-16 h-16 text-white" />
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                    <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-                  </div>
-                </div>
+                  <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover rounded-2xl"
+                >
+                  <source src="/assets/service_image/voice-clip.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
             </div>
             <div>
@@ -425,197 +396,7 @@ export default function Services() {
       
 
       {/* Product Showcase Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Product Header */}
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Products</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Comprehensive road safety solutions designed for individual drivers and fleet operators, 
-              powered by advanced AI technology to reduce accidents and enhance driving experience.
-            </p>
-            
-            <div className="inline-block bg-gray-100 text-gray-800 px-6 py-3 rounded-full text-lg font-bold">
-              OKDriver's Product has Two Components
-            </div>
-          </div>
-
-          {/* Product Tab Navigation */}
-          <div className="flex justify-center mb-12">
-            <div className="bg-gray-100 p-2 rounded-2xl flex space-x-2">
-              <button
-                onClick={() => setActiveProductTab('mobile')}
-                className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center space-x-3 ${
-                  activeProductTab === 'mobile'
-                    ? 'bg-white text-black shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-black'
-                }`}
-              >
-                <Smartphone className="w-5 h-5" />
-                <span>Mobile App Solution</span>
-              </button>
-              <button
-                onClick={() => setActiveProductTab('hardware')}
-                className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center space-x-3 ${
-                  activeProductTab === 'hardware'
-                    ? 'bg-white text-black shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-black'
-                }`}
-              >
-                <HardDrive className="w-5 h-5" />
-                <span>Hardware + Cloud DMS</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Product Comparison Table */}
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden mb-16">
-            <div className="grid lg:grid-cols-2">
-              {/* Mobile App Side */}
-              <div className={`p-8 transition-all duration-500 ${
-                activeProductTab === 'mobile' ? 'bg-gradient-to-br from-blue-50 to-white' : 'bg-gray-50'
-              }`}>
-                <div className="text-center mb-8">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                    <Smartphone className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-3xl font-black text-gray-900 mb-3">
-                    OKDriver Mobile App
-                  </h3>
-                  <p className="text-lg text-gray-600 font-medium">
-                    Individual Driver Solution
-                  </p>
-                  <div className="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold mt-4">
-                    Mobile-Only Version
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {mobileFeatures.map((feature, index) => (
-                    <div key={index} className={`flex items-start space-x-4 p-4 rounded-xl transition-all duration-300 ${
-                      feature.available 
-                        ? 'hover:bg-white hover:shadow-lg' 
-                        : 'opacity-60 hover:bg-red-50'
-                    }`}>
-                      <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg relative`}>
-                        <div className="text-white">{feature.icon}</div>
-                        {!feature.available && (
-                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                            <X className="w-4 h-4 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className={`font-bold mb-2 ${feature.available ? 'text-gray-900' : 'text-gray-500'}`}>
-                          {feature.title}
-                        </h4>
-                        <p className={`text-sm ${feature.available ? 'text-gray-600' : 'text-gray-400'}`}>
-                          {feature.available ? feature.description : 'Not available in mobile app - Hardware device provides this benefit'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-blue-100">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                    <Star className="w-5 h-5 text-yellow-500 mr-2" />
-                    Perfect For:
-                  </h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Individual drivers</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Personal vehicle safety</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Cost-effective solution</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Easy smartphone integration</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Hardware Side */}
-              <div className={`p-8 transition-all duration-500 border-l border-gray-200 ${
-                activeProductTab === 'hardware' ? 'bg-gradient-to-br from-purple-50 to-white' : 'bg-gray-50'
-              }`}>
-                <div className="text-center mb-8">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                    <HardDrive className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-3xl font-black text-gray-900 mb-3">
-                    OKDriver Hardware + Cloud DMS
-                  </h3>
-                  <p className="text-lg text-gray-600 font-medium">
-                    Professional Fleet Solution
-                  </p>
-                  <div className="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-bold mt-4">
-                    For B2B Fleets
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {hardwareFeatures.map((feature, index) => (
-                    <div key={index} className="flex items-start space-x-4 p-3 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300">
-                      <div className={`w-10 h-10 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                        <div className="text-white text-sm">{feature.icon}</div>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-1 text-sm">{feature.title}</h4>
-                        <p className="text-gray-600 text-xs">{feature.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-purple-100">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                    <Users className="w-5 h-5 text-purple-500 mr-2" />
-                    Ideal For:
-                  </h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Fleet operators</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Commercial vehicles</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Enterprise-grade monitoring</li>
-                    <li className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Advanced analytics</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Key Product Benefits */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <div className="text-center p-8 bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl shadow-xl border border-red-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
-              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Accident Prevention</h3>
-              <p className="text-gray-600">
-                Advanced AI algorithms designed specifically to reduce road accidents in India through real-time monitoring and alerts.
-              </p>
-            </div>
-
-            <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl shadow-xl border border-blue-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Zap className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Real-Time Monitoring</h3>
-              <p className="text-gray-600">
-                Continuous surveillance of driver behavior, vehicle performance, and road conditions for maximum safety.
-              </p>
-            </div>
-
-            <div className="text-center p-8 bg-gradient-to-br from-green-50 to-teal-50 rounded-3xl shadow-xl border border-green-100 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <BarChart3 className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Data-Driven Insights</h3>
-              <p className="text-gray-600">
-                Comprehensive analytics and reporting to improve driving habits and optimize fleet operations.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+    
 
       {/* Final CTA Section */}
       <section className="py-20 bg-black text-white">

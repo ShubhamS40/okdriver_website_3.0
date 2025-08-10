@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { 
   FileText, Shield, CreditCard, RotateCcw, User, 
   Copyright, AlertTriangle, Scale, Phone, Mail, 
-  MapPin, CheckCircle, ArrowRight, Clock, Users
+  MapPin, CheckCircle, ArrowRight, Clock, Users,
+  XCircle
 } from 'lucide-react';
 
 const termsData = [
@@ -24,17 +25,17 @@ const termsData = [
   },
   {
     id: 'refund',
-    title: 'Refund Policy',
-    icon: RotateCcw,
-    content: `We offer a 14-day money-back guarantee for all new subscriptions. If you are not satisfied with our Services within the first 14 days of your subscription, you may request a full refund. After the 14-day period, refunds are provided at our discretion and may be prorated based on the unused portion of your subscription. To request a refund, please contact our support team at support@okdriver.com with your account information and reason for the refund request.`,
-    highlights: ['14-day money-back guarantee', 'Full refund within trial period', 'Contact support for refund requests']
+    title: 'No Refund Policy',
+    icon: XCircle,
+    content: `OKDriver operates under a strict no refund policy. All payments made for our services, including subscription fees, premium features, and any additional services, are final and non-refundable. This policy applies to all transactions regardless of the reason for cancellation or dissatisfaction with our services. We encourage all users to carefully review our service features, terms, and conditions before making any payment. By completing any purchase, you acknowledge and agree that you will not be entitled to any refund under any circumstances. This policy is in place to maintain our service quality and operational efficiency.`,
+    highlights: ['All payments are final and non-refundable', 'No exceptions for any circumstances', 'Review services carefully before purchase']
   },
   {
     id: 'cancellation',
     title: 'Cancellation Policy',
     icon: RotateCcw,
-    content: `You may cancel your subscription at any time through your account settings or by contacting our support team. If you cancel your subscription, you will continue to have access to the Services until the end of your current billing cycle. We do not provide refunds for the remaining unused portion of your subscription term after cancellation, except as described in our Refund Policy.`,
-    highlights: ['Cancel anytime', 'Access until billing cycle ends', 'No refunds unless within guarantee period']
+    content: `You may cancel your subscription at any time through your account settings or by contacting our support team. If you cancel your subscription, you will continue to have access to the Services until the end of your current billing cycle. However, please note that no refunds will be provided for the remaining unused portion of your subscription term after cancellation, as per our No Refund Policy. Cancellation only prevents future billing cycles.`,
+    highlights: ['Cancel anytime through account settings', 'Access until current billing cycle ends', 'No refunds for unused portions']
   },
   {
     id: 'accounts',
@@ -74,10 +75,10 @@ const termsData = [
 ];
 
 const quickInfo = [
-  // { icon: Clock, text: '' },
   { icon: Shield, text: 'Secure and protected platform' },
   { icon: Users, text: 'Trusted by 100+ users' },
-  { icon: CheckCircle, text: 'Transparent policies' }
+  { icon: CheckCircle, text: 'Transparent policies' },
+
 ];
 
 export default function TermsAndConditions() {
@@ -98,14 +99,22 @@ export default function TermsAndConditions() {
             We've made them clear and straightforward for your understanding.
           </p>
           
+          
+         
+          
           {/* Quick Info Pills */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {quickInfo.map((info, index) => {
               const Icon = info.icon;
+              const isRefundPolicy = info.text.includes('No refund');
               return (
-                <div key={index} className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-full">
-                  <Icon className="w-4 h-4 text-green-400" />
-                  <span className="text-sm text-gray-300">{info.text}</span>
+                <div key={index} className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
+                  isRefundPolicy ? 'bg-red-900/30 border border-red-700' : 'bg-gray-800'
+                }`}>
+                  <Icon className={`w-4 h-4 ${isRefundPolicy ? 'text-red-400' : 'text-green-400'}`} />
+                  <span className={`text-sm ${isRefundPolicy ? 'text-red-300' : 'text-gray-300'}`}>
+                    {info.text}
+                  </span>
                 </div>
               );
             })}
@@ -129,29 +138,47 @@ export default function TermsAndConditions() {
             {termsData.map((term, index) => {
               const Icon = term.icon;
               const isHovered = hoveredCard === term.id;
+              const isRefundPolicy = term.id === 'refund';
               
               return (
                 <div
                   key={term.id}
                   className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-2 ${
                     isHovered ? 'ring-4 ring-black/10' : ''
-                  }`}
+                  } ${isRefundPolicy ? 'border-2 border-red-200' : ''}`}
                   onMouseEnter={() => setHoveredCard(term.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                   onClick={() => setSelectedTerm(selectedTerm === term.id ? null : term.id)}
                 >
+                  {/* Special highlight for refund policy */}
+                  {isRefundPolicy && (
+                    <div className="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+                      IMPORTANT
+                    </div>
+                  )}
+
                   {/* Gradient Background Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-gray-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className={`absolute inset-0 transition-opacity duration-500 ${
+                    isRefundPolicy 
+                      ? 'bg-gradient-to-br from-red-50/50 to-red-100/50 opacity-100' 
+                      : 'bg-gradient-to-br from-black/5 to-gray-600/5 opacity-0 group-hover:opacity-100'
+                  }`} />
                   
                   {/* Main Content */}
                   <div className="relative p-6">
                     {/* Icon */}
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r from-black to-gray-800 mb-4 transform transition-transform duration-300 group-hover:scale-110">
+                    <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 transform transition-transform duration-300 group-hover:scale-110 ${
+                      isRefundPolicy 
+                        ? 'bg-gradient-to-r from-red-600 to-red-800' 
+                        : 'bg-gradient-to-r from-black to-gray-800'
+                    }`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-gray-800 transition-colors">
+                    <h3 className={`text-xl font-bold mb-3 group-hover:text-gray-800 transition-colors ${
+                      isRefundPolicy ? 'text-red-800' : 'text-gray-900'
+                    }`}>
                       {term.title}
                     </h3>
 
@@ -164,14 +191,18 @@ export default function TermsAndConditions() {
                     <div className="space-y-2 mb-4">
                       {term.highlights.slice(0, 2).map((highlight, idx) => (
                         <div key={idx} className="flex items-center space-x-2">
-                          <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          <CheckCircle className={`w-3 h-3 flex-shrink-0 ${
+                            isRefundPolicy ? 'text-red-500' : 'text-green-500'
+                          }`} />
                           <span className="text-xs text-gray-700 font-medium">{highlight}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Read More Button */}
-                    <button className="inline-flex items-center space-x-2 text-black font-semibold hover:text-gray-700 transition-colors text-sm">
+                    <button className={`inline-flex items-center space-x-2 font-semibold hover:opacity-70 transition-colors text-sm ${
+                      isRefundPolicy ? 'text-red-600' : 'text-black'
+                    }`}>
                       <span>Read More</span>
                       <ArrowRight className={`w-3 h-3 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
                     </button>
@@ -179,7 +210,7 @@ export default function TermsAndConditions() {
 
                   {/* Hover Effect Border */}
                   <div className={`absolute inset-0 border-2 border-transparent rounded-2xl transition-all duration-300 ${
-                    isHovered ? 'border-black/20' : ''
+                    isHovered ? (isRefundPolicy ? 'border-red-300' : 'border-black/20') : ''
                   }`} />
                 </div>
               );
@@ -193,16 +224,30 @@ export default function TermsAndConditions() {
                 {(() => {
                   const term = termsData.find(t => t.id === selectedTerm);
                   const Icon = term.icon;
+                  const isRefundPolicy = term.id === 'refund';
                   
                   return (
                     <div className="p-8">
                       {/* Header */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-4">
-                          <div className="p-3 rounded-xl bg-gradient-to-r from-black to-gray-800">
+                          <div className={`p-3 rounded-xl ${
+                            isRefundPolicy 
+                              ? 'bg-gradient-to-r from-red-600 to-red-800' 
+                              : 'bg-gradient-to-r from-black to-gray-800'
+                          }`}>
                             <Icon className="w-8 h-8 text-white" />
                           </div>
-                          <h3 className="text-3xl font-bold text-gray-900">{term.title}</h3>
+                          <h3 className={`text-3xl font-bold ${
+                            isRefundPolicy ? 'text-red-800' : 'text-gray-900'
+                          }`}>
+                            {term.title}
+                          </h3>
+                          {isRefundPolicy && (
+                            <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              IMPORTANT
+                            </span>
+                          )}
                         </div>
                         <button
                           onClick={() => setSelectedTerm(null)}
@@ -214,6 +259,19 @@ export default function TermsAndConditions() {
                         </button>
                       </div>
 
+                      {/* Special Notice for Refund Policy */}
+                      {isRefundPolicy && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <XCircle className="w-5 h-5 text-red-600" />
+                            <span className="font-bold text-red-800">Strict No Refund Policy</span>
+                          </div>
+                          <p className="text-red-700 text-sm">
+                            Please read this section carefully. All payments are final and non-refundable under any circumstances.
+                          </p>
+                        </div>
+                      )}
+
                       {/* Full Content */}
                       <div className="prose max-w-none mb-8">
                         <p className="text-lg text-gray-700 leading-relaxed">{term.content}</p>
@@ -224,8 +282,12 @@ export default function TermsAndConditions() {
                         <h4 className="text-xl font-semibold mb-4">Key Points</h4>
                         <div className="grid md:grid-cols-2 gap-3">
                           {term.highlights.map((highlight, idx) => (
-                            <div key={idx} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <div key={idx} className={`flex items-center space-x-3 p-3 rounded-lg ${
+                              isRefundPolicy ? 'bg-red-50 border border-red-200' : 'bg-green-50'
+                            }`}>
+                              <CheckCircle className={`w-5 h-5 flex-shrink-0 ${
+                                isRefundPolicy ? 'text-red-600' : 'text-green-600'
+                              }`} />
                               <span className="text-gray-800">{highlight}</span>
                             </div>
                           ))}
@@ -236,9 +298,13 @@ export default function TermsAndConditions() {
                       <div className="flex flex-col sm:flex-row gap-4">
                         <button 
                           onClick={() => setSelectedTerm(null)}
-                          className="px-6 py-3 rounded-lg bg-gradient-to-r from-black to-gray-800 text-white font-semibold hover:opacity-90 transition-opacity"
+                          className={`px-6 py-3 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity ${
+                            isRefundPolicy 
+                              ? 'bg-gradient-to-r from-red-600 to-red-800' 
+                              : 'bg-gradient-to-r from-black to-gray-800'
+                          }`}
                         >
-                          Got it
+                          {isRefundPolicy ? 'I Understand' : 'Got it'}
                         </button>
                         <Link href="/contact" className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-center">
                           Have Questions?
@@ -314,9 +380,11 @@ export default function TermsAndConditions() {
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Ready to Experience Safe Driving?
           </h2>
-          <p className="text-xl mb-12 max-w-3xl mx-auto text-gray-300">
+          <p className="text-xl mb-8 max-w-3xl mx-auto text-gray-300">
             Now that you understand our terms, join thousands of drivers who trust OKDriver for their safety needs.
           </p>
+          
+        
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
             <button className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors">

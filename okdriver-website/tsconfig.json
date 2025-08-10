@@ -23,6 +23,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "tailwind.config.js", "src/components/Whyokdriver.jsx", "src/components/Header.jsx", "src/components/Header.jsx", "src/components/Header.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "tailwind.config.js", "src/components/Whyokdriver.jsx", "src/components/Header.jsx", "src/components/Header.jsx", "src/components/Header.jsx", "src/components/Hero.jsx", "src/components/Hero.jsx", "src/app/admin/dashboard/page.jsx", "src/app/admin/fleet/[id]/page.jsx", "src/app/admin/drivers/[id]/page.jsx", "src/app/about/ceo/page.jsx", "src/app/about/page.jsx"],
   "exclude": ["node_modules"]
 }
