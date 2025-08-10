@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { Home, Search, ArrowLeft, Car, MapPin, Phone, Mail } from 'lucide-react';
+import { Home, ArrowLeft, Car, MapPin, Phone, Mail } from 'lucide-react';
+import Image from 'next/image';
 
 // Note: In a real Next.js project, you would import images like this:
 import logo_white from '../../public/assets/OKDriverWhite_logo.png'; 
@@ -30,12 +31,13 @@ export default function NotFound() {
     window.history.back();
   };
 
-  const quickLinks = [
-    { name: 'Book a Ride', path: '/book', icon: Car },
-    { name: 'Track Location', path: '/track', icon: MapPin },
-    { name: 'Contact Us', path: '/contact', icon: Phone },
-    { name: 'Support', path: '/support', icon: Mail }
-  ];
+  // Commented out as it's not being used
+  // const quickLinks = [
+  //   { name: 'Book a Ride', path: '/book', icon: Car },
+  //   { name: 'Track Location', path: '/track', icon: MapPin },
+  //   { name: 'Contact Us', path: '/contact', icon: Phone },
+  //   { name: 'Support', path: '/support', icon: Mail }
+  // ];
 
   return (
     <div className="min-h-screen pt-25 bg-black text-white relative overflow-hidden">
@@ -65,14 +67,18 @@ export default function NotFound() {
         {/* Logo/Brand Area */}
         <div className="mb-8 text-center">
           <div className="flex flex-col items-center justify-center space-y-4 mb-4">
-            <img 
+            <Image 
               src="/assets/OKDriverWhite_logo.png" 
               alt="OKDriver Logo"
+              width={64}
+              height={64}
               className="h-16 w-16 object-contain"
             />
-            <img 
+            <Image 
               src="/assets/OkD- white_text.png" 
               alt="OKDriver Text"
+              width={144}
+              height={48}
               className="h-12 object-contain"
             />
           </div>
@@ -98,7 +104,7 @@ export default function NotFound() {
           </h3>
           
           <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
-            Looks like you've taken a wrong turn. Don't worry, even the best drivers need directions sometimes!
+            Looks like you&apos;ve taken a wrong turn. Don&apos;t worry, even the best drivers need directions sometimes!
           </p>
         </div>
 
