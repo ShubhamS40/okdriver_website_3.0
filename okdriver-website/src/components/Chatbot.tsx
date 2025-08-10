@@ -70,7 +70,7 @@ export default function ChatBot() {
         ...prev,
         { 
           role: 'assistant', 
-          content: "I'm having trouble connecting right now. Please try again later or contact us at +91 93195 00121."
+          content: "I&apos;m having trouble connecting right now. Please try again later or contact us at +91 93195 00121."
         },
       ]);
     } finally {

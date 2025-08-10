@@ -119,7 +119,7 @@ export async function POST(request) {
 
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content || 
-      "I don't have that specific information. Please contact us at +91 93195 00121 for more details.";
+      "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details.";
 
     return NextResponse.json({
       response: aiResponse
@@ -129,7 +129,7 @@ export async function POST(request) {
     console.error('Chatbot API Error:', error);
     return NextResponse.json(
       { 
-        response: "I don't have that specific information. Please contact us at +91 93195 00121 for more details."
+        response: "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details."
       },
       { status: 500 }
     );
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content || 
-      "I don't have that specific information. Please contact us at +91 93195 00121 for more details.";
+      "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details.";
 
     return res.status(200).json({
       response: aiResponse
@@ -190,7 +190,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Chatbot API Error:', error);
     return res.status(500).json({
-      response: "I don't have that specific information. Please contact us at +91 93195 00121 for more details."
+      response: "I don&apos;t have that specific information. Please contact us at +91 93195 00121 for more details."
     });
   }
 }

@@ -22,7 +22,7 @@ const OkDriverHero = () => {
       setCurrentFeature((prev) => (prev + 1) % features.length);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [features.length]);
 
   const handlePartnerClick = () => {
     window.location.href = '/contact';

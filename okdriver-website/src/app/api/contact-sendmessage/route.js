@@ -41,7 +41,7 @@ export async function POST(req) {
 
     // Email Content
     const mailOptions = {
-      from: `"${name}" <${email}>`,
+      from: `&quot;${name}&quot; <${email}>`,
       to: RECIPIENT_EMAIL,
       subject: subject,
       text: `

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shield, Eye, Lock, Users, FileText, Mail, Phone, MapPin, CheckCircle, Star, Award } from 'lucide-react';
+import { Shield, Eye, Lock, Users, FileText, Mail, Phone, MapPin, CheckCircle, Star } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const privacySections = [
