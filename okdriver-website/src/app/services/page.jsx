@@ -425,10 +425,10 @@ export default function Services() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <button className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center">
+            <a href="https://play.google.com/store/apps/details?id=app.dash.okDriver&pli=1" target="_blank" rel="noopener noreferrer" className="bg-white text-black px-10 py-5 rounded-lg text-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center">
               <Smartphone className="w-5 h-5 mr-2" />
               Download Mobile App
-            </button>
+            </a>
             <button className="border-2 border-white text-white px-10 py-5 rounded-lg text-lg font-semibold hover:bg-white hover:text-black transition-colors flex items-center justify-center">
               <HardDrive className="w-5 h-5 mr-2" />
               Get Hardware Solution

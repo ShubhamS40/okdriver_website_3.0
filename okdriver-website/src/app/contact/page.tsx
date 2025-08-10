@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   MapPin, Mail, Phone, Clock, MessageCircle, Send, 
-  CheckCircle, Facebook, Twitter, Instagram, Github,
+  CheckCircle, Instagram, Linkedin,
   Headphones, Users, Award, Star
 } from 'lucide-react';
 
@@ -27,23 +27,42 @@ export default function Contact() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage('');
     setSubmitError(false);
 
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitMessage('Thank you for your message. We will get back to you soon!');
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
+    try {
+      const response = await fetch('/api/contact-sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-    }, 1500);
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitMessage('Thank you for your message. We will get back to you soon!');
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        setSubmitError(true);
+        setSubmitMessage(data.error || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      setSubmitError(true);
+      setSubmitMessage('An error occurred. Please try again later.');
+      console.error('Contact form error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -56,7 +75,7 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email Us',
-      details: 'hello@okdriver.com',
+      details: 'hello@okdriver.in',
       color: 'from-green-600 to-green-800'
     },
     {
@@ -80,10 +99,18 @@ export default function Contact() {
   ];
 
   const socialLinks = [
-    { icon: Facebook, href: '#', color: 'hover:text-blue-500' },
-    { icon: Twitter, href: '#', color: 'hover:text-sky-500' },
-    { icon: Instagram, href: '#', color: 'hover:text-pink-500' },
-    { icon: Github, href: '#', color: 'hover:text-gray-400' }
+    { 
+      icon: Linkedin, 
+      href: 'https://www.linkedin.com/company/okdriver/posts/?feedView=all', 
+      color: 'hover:text-blue-600',
+      label: 'LinkedIn'
+    },
+    { 
+      icon: Instagram, 
+      href: 'https://www.instagram.com/okdriver.in?igsh=ZTZjeHVmZmcyMmY1', 
+      color: 'hover:text-pink-500',
+      label: 'Instagram'
+    }
   ];
 
   return (
@@ -163,7 +190,7 @@ export default function Contact() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
                     placeholder="Enter your name"
                     required
                   />
@@ -179,7 +206,7 @@ export default function Contact() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
                     placeholder="Enter your email"
                     required
                   />
@@ -194,16 +221,16 @@ export default function Contact() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-gray-900 bg-white"
                     required
                   >
-                    <option value="">Select a subject</option>
-                    <option value="General Inquiry">General Inquiry</option>
-                    <option value="Subscription Plans">Subscription Plans</option>
-                    <option value="Technical Support">Technical Support</option>
-                    <option value="Billing Issue">Billing Issue</option>
-                    <option value="Partnership">Partnership</option>
-                    <option value="Other">Other</option>
+                    <option value="" className="text-gray-500">Select a subject</option>
+                    <option value="General Inquiry" className="text-gray-900">General Inquiry</option>
+                    <option value="Subscription Plans" className="text-gray-900">Subscription Plans</option>
+                    <option value="Technical Support" className="text-gray-900">Technical Support</option>
+                    <option value="Billing Issue" className="text-gray-900">Billing Issue</option>
+                    <option value="Partnership" className="text-gray-900">Partnership</option>
+                    <option value="Other" className="text-gray-900">Other</option>
                   </select>
                 </div>
                 
@@ -217,7 +244,7 @@ export default function Contact() {
                     value={formData.message}
                     onChange={handleChange}
                     rows={5}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 resize-none"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 resize-none text-gray-900 bg-white placeholder-gray-500"
                     placeholder="Enter your message"
                     required
                   ></textarea>
@@ -276,10 +303,16 @@ export default function Contact() {
                     return (
                       <a 
                         key={index}
-                        href={social.href} 
-                        className={`bg-gray-100 hover:bg-gray-200 p-4 rounded-xl transition-all duration-300 transform hover:scale-110 text-gray-600 ${social.color}`}
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`bg-gray-100 hover:bg-gray-200 p-4 rounded-xl transition-all duration-300 transform hover:scale-110 text-gray-600 ${social.color} group relative`}
+                        title={social.label}
                       >
                         <Icon className="w-6 h-6" />
+                        <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {social.label}
+                        </span>
                       </a>
                     );
                   })}
