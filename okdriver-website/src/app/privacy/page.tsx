@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shield, Eye, Lock, Users, FileText, Mail, Phone, MapPin, CheckCircle, Star } from 'lucide-react';
+import { Shield, Eye, Lock, Users, FileText, Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const privacySections = [
@@ -11,9 +11,9 @@ export default function PrivacyPolicy() {
       content: (
         <>
           <p className="mb-4">
-            At OKDriver ("we," "our," or "us"), we respect your privacy and are committed to protecting your 
+            At OKDriver (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), we respect your privacy and are committed to protecting your 
             personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your 
-            information when you use our website, mobile applications, and services (collectively, the "Services").
+            information when you use our website, mobile applications, and services (collectively, the &quot;Services&quot;).
           </p>
           <p>
             Please read this Privacy Policy carefully. By accessing or using our Services, you acknowledge that 
@@ -149,7 +149,7 @@ export default function PrivacyPolicy() {
       content: 'Depending on your location, you may have certain rights regarding your personal information, including the right to access, rectify, delete, restrict processing, data portability, and withdraw consent.'
     },
     {
-      title: 'Children\'s Privacy',
+      title: 'Children&apos;s Privacy',
       content: 'Our Services are not intended for children under the age of 16. We do not knowingly collect personal information from children under 16. If you are a parent or guardian and you believe your child has provided us with personal information, please contact us.'
     },
     {
