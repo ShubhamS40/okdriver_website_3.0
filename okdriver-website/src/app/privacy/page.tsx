@@ -63,7 +63,7 @@ export default function PrivacyPolicy() {
               <div>
                 <strong className="text-gray-900">Driver Information:</strong>
                 <span className="text-gray-700 ml-1">For users who register as drivers, we may collect additional 
-                information such as driver's license details, vehicle information, and driving history.</span>
+                information such as driver&apos;s license details, vehicle information, and driving history.</span>
               </div>
             </div>
           </div>
