@@ -29,7 +29,7 @@ const OkDriverHero = () => {
   };
 
   return (
-    <div className="relative min-h-screen md:py-5 bg-gradient-to-br from-black via-gray-500 to-black overflow-hidden">
+    <div className="relative min-h-screen pt-7 md:py-5 bg-gradient-to-br from-black via-gray-500 to-black overflow-hidden">
       {/* Enhanced Grid Background */}
       <div className="absolute inset-0 opacity-20">
         <div 
@@ -72,8 +72,8 @@ const OkDriverHero = () => {
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-12 min-h-screen flex items-center py-12 lg:py-0">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           
-          {/* Left Content */}
-          <div className={`space-y-4 lg:space-y-6 order-2 lg:order-1 lg:mt-[15%] transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}>
+          {/* Left Content - Mobile: order-1 (top), Desktop: order-1 (left) */}
+          <div className={`space-y-4 lg:space-y-6 order-1 lg:mt-[15%] transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}>
             
             {/* Brand Badge */}
             <div className="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur-sm px-3 py-2 lg:px-4 lg:py-2 rounded-full border border-gray-600/50">
@@ -102,23 +102,22 @@ const OkDriverHero = () => {
               </p>
             </div>
 
-        {/* Animated Features */}
-<div className="grid grid-cols-2 grid-rows-2 gap-3  p-3">
-  {features.map((Feature, index) => (
-    <div
-      key={index}
-      className={`flex items-center space-x-2 lg:space-x-3 transition-all duration-500 ${
-        currentFeature === index ? 'scale-105 text-white' : 'text-gray-700'
-      }`}
-    >
-      <Feature.icon className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
-      <span className="text-xs lg:text-sm font-medium whitespace-nowrap">
-        {Feature.text}
-      </span>
-    </div>
-  ))}
-</div>
-
+            {/* Animated Features */}
+            <div className="grid grid-cols-2 grid-rows-2 gap-3 p-3">
+              {features.map((Feature, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center space-x-2 lg:space-x-3 transition-all duration-500 ${
+                    currentFeature === index ? 'scale-105 text-white' : 'text-gray-700'
+                  }`}
+                >
+                  <Feature.icon className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
+                  <span className="text-xs lg:text-sm font-medium whitespace-nowrap">
+                    {Feature.text}
+                  </span>
+                </div>
+              ))}
+            </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 pt-4">
@@ -141,11 +140,11 @@ const OkDriverHero = () => {
             </div>
           </div>
 
-          {/* Right Side - Enhanced Visual */}
-          <div className={`relative order-1 mt-[10%] lg:order-2 flex justify-center lg:justify-end transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+          {/* Right Side - Mobile: order-2 (bottom), Desktop: order-2 (right) */}
+          <div className={`relative order-2 mt-[10%] lg:mt-[10%] flex justify-center lg:justify-end transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
             
             {/* Phone Mockup with Dashboard */}
-            <div className="relative  md:p-8 max-w-xs sm:max-w-sm lg:max-w-md">
+            <div className="relative md:p-8 max-w-xs sm:max-w-sm lg:max-w-md">
               
               {/* Floating Cards - Hidden on mobile for better layout */}
               <div className="hidden sm:block absolute -top-4 -left-4 lg:-left-8 bg-gradient-to-r from-gray-800/70 to-gray-700/70 backdrop-blur-md border border-gray-500/50 rounded-xl p-3 lg:p-4 transform rotate-3 hover:rotate-6 transition-transform duration-300">
@@ -163,21 +162,18 @@ const OkDriverHero = () => {
               </div>
 
               {/* Main Phone Container */}
-           <div className="relative rounded-3xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] bg-black">
-  
-    <div className="relative w-64 h-96 sm:w-72 sm:h-[28rem] lg:w-80 lg:h-[32rem] flex items-center justify-center">
-      <Image
-        src={HomeScreen}
-        alt="OkDriver App"
-        fill
-        style={{ objectFit: "contain" }}
-        className="rounded-xl shadow-lg"
-      />
-    
-  </div>
-  <div className="absolute -z-10 inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl rounded-3xl"></div>
-</div>
-
+              <div className="relative rounded-3xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] bg-black">
+                <div className="relative w-64 h-96 sm:w-72 sm:h-[28rem] lg:w-80 lg:h-[32rem] flex items-center justify-center">
+                  <Image
+                    src={HomeScreen}
+                    alt="OkDriver App"
+                    fill
+                    style={{ objectFit: "contain" }}
+                    className="rounded-xl shadow-lg"
+                  />
+                </div>
+                <div className="absolute -z-10 inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl rounded-3xl"></div>
+              </div>
 
               {/* Floating Bottom Card */}
               <div className="absolute -bottom-4 lg:-bottom-6 left-2 right-2 lg:left-4 lg:right-4 bg-gradient-to-r from-gray-800/70 to-gray-700/70 backdrop-blur-md border border-gray-500/50 rounded-xl p-3 lg:p-4">

@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Camera, Mic, Eye, AlertTriangle, Wifi, WifiOff, RotateCcw, Cloud, Zap, Shield, Phone, MapPin } from 'lucide-react';
+import Link from 'next/link';
 
 const FeaturesComponent = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -62,7 +63,7 @@ const FeaturesComponent = () => {
       ),
       features: [
         { text: "Voice-activated AI co-pilot that speaks like a buddy", icon: <Mic className="w-4 h-4" /> },
-        { text: "Wake word: &quot;OkDriver&quot; (call to action by voice)", icon: <Zap className="w-4 h-4" /> },
+        { text: `Wake word: "OkDriver" call to action by voice`, icon: <Zap className="w-4 h-4" /> },
         { text: "Provides traffic updates, nearby fuel stations, jokes, life advice", icon: <MapPin className="w-4 h-4" /> },
         { text: "Keeps drivers alert, engaged, and supported", icon: <Shield className="w-4 h-4" /> }
       ]
@@ -231,7 +232,7 @@ const FeaturesComponent = () => {
                 Join thousands of drivers who trust okDriver to keep them safe on Indian roads
               </p>
               <button className="bg-white text-black px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-                Get Started Now
+               <Link href="/contact"> Get Started Now</Link>
               </button>
             </div>
           </div>

@@ -254,7 +254,7 @@ export default function Header() {
                       whileTap={{ scale: 0.97 }}
                     >
                       <Link 
-                        href="/admin/login" 
+                        href="/contact" 
                         className="block w-full px-4 py-3 bg-black text-white font-medium text-center rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg"
                         onClick={closeMenu}
                       >

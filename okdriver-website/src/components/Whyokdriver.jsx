@@ -15,27 +15,27 @@ const WhyOkDriver = () => {
 
   const features = [
     {
-      icon: <Smartphone className="w-6 h-6" />,
+     
       text: "No expensive setup — just your phone",
       delay: "0ms"
     },
     {
-      icon: <Car className="w-6 h-6" />,
+ 
       text: "Made for Indian roads and local driving behavior",
       delay: "100ms"
     },
     {
-      icon: <Mic className="w-6 h-6" />,
+  
       text: "Human-like co-pilot with voice support",
       delay: "200ms"
     },
     {
-      icon: <Users className="w-6 h-6" />,
+ 
       text: "Built for both B2B fleets and B2C users",
       delay: "300ms"
     },
     {
-      icon: <Settings className="w-6 h-6" />,
+      
       text: "OEM and logistics pilot ready",
       delay: "400ms"
     }

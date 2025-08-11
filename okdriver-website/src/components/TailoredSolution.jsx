@@ -62,10 +62,25 @@ function TailoredSolution() {
       features: [
         { icon: Cloud, text: 'Cloud integration' },
         { icon: Users, text: 'Team management' },
-        { icon: Award, text: 'ISO-certified systems' }
+        { icon: Award, text: 'Trusted systems' }
       ]
     }
   ];
+
+  // Function to handle email redirect for demo scheduling
+  const handleScheduleDemo = (serviceName) => {
+    const subject = encodeURIComponent(`Schedule Demo Request - ${serviceName}`);
+    const body = encodeURIComponent(`Hi OKDriver Team,
+
+I'm interested in scheduling a demo for your ${serviceName} solution.
+
+Please let me know your available time slots.
+
+Best regards`);
+    
+    const mailtoUrl = `mailto:hello@okdriver.in?subject=${subject}&body=${body}`;
+    window.open(mailtoUrl, '_blank');
+  };
 
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -198,10 +213,16 @@ function TailoredSolution() {
 
                     {/* Modal CTA */}
                     <div className="flex flex-col sm:flex-row gap-4">
-                      <button className={`px-6 py-3 rounded-lg text-white font-semibold bg-gradient-to-r ${service.color} hover:opacity-90 transition-opacity`}>
+                      <Link 
+                        href="/contact"
+                        className={`px-6 py-3 rounded-lg text-white font-semibold bg-gradient-to-r ${service.color} hover:opacity-90 transition-opacity text-center`}
+                      >
                         Get Started
-                      </button>
-                      <button className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
+                      </Link>
+                      <button 
+                        onClick={() => handleScheduleDemo(service.title)}
+                        className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                      >
                         Schedule Demo
                       </button>
                     </div>

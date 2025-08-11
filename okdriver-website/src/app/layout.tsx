@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'OKDriver - Driver Management Platform',
   description: 'OKDriver is a platform for managing drivers, subscriptions, and support tickets.',
    icons: {
-    icon: "/favicon.ico",
+    icon: "favicon.ico",
   },
 };
 
