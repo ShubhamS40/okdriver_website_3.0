@@ -8,18 +8,41 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real application, you would handle authentication here
-    // For demo purposes, just show a message
+    setError('');
+    
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
     }
     
-    // Mock login - in a real app, this would be an API call
-    console.log('Login attempt with:', { email });
-    setError('This is a demo. Authentication is not implemented.');
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        setError(data.message || 'Login failed');
+        return;
+      }
+      
+      // Store token and set authentication state
+      localStorage.setItem('adminToken', data.token);
+      localStorage.setItem('adminLoggedIn', 'true');
+      
+      // Redirect to admin dashboard
+      window.location.href = '/admin';
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('An error occurred during login. Please try again.');
+    }
   };
 
   return (
@@ -69,6 +92,15 @@ export default function AdminLogin() {
             Login
           </button>
         </form>
+        
+        <div className="mt-4 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <Link href="/admin/register" className="text-black hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
         
         <div className="mt-4 text-center">
           <Link href="/" className="text-black hover:underline">

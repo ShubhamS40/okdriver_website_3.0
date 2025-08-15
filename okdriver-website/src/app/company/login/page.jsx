@@ -76,7 +76,10 @@ const CompanyLogin = () => {
         
         if (data.hasActivePlan) {
           // Redirect to dashboard
-          window.location.href = '/dashboard';
+          window.location.href = '/company/dashboard';
+        } else {
+          // If no active plan, show plan selection
+          // Component will render plan selection UI
         }
         // If no active plan, component will show plan selection
       } else {
@@ -98,7 +101,7 @@ const CompanyLogin = () => {
 
   const handlePlanSelection = (planId) => {
     // Redirect to subscription page with selected plan
-    window.location.href = `/subscription?planId=${planId}`;
+    window.location.href = `/company/subscription?planId=${planId}`;
   };
 
   const handleKeyPress = (e) => {
@@ -294,7 +297,7 @@ const CompanyLogin = () => {
           <div className="text-center">
             <p className="text-gray-600 text-sm">
               Don't have an account?{' '}
-              <a href="/register" className="text-black hover:text-gray-700 transition-colors font-medium">
+              <a href="/company/signup" className="text-black hover:text-gray-700 transition-colors font-medium">
                 Register your company
               </a>
             </p>

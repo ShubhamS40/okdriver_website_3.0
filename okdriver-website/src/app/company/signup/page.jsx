@@ -93,8 +93,10 @@ const CompanyRegistration = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Success - you can redirect or show success message
-        alert('Company registered successfully!');
+        // Success - show success message and redirect to login
+        alert('Company registered successfully! Please login to continue.');
+        // Redirect to login page
+        window.location.href = '/company/login';
         // Reset form
         setFormData({
           name: '',
@@ -297,7 +299,7 @@ const CompanyRegistration = () => {
           <div className="text-center">
             <p className="text-gray-600 text-sm">
               Already have an account?{' '}
-              <a href="/login" className="text-black hover:text-gray-700 transition-colors font-medium">
+              <a href="/company/login" className="text-black hover:text-gray-700 transition-colors font-medium">
                 Sign in here
               </a>
             </p>
