@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const bcrypt = require('bcrypt');
 
 // Add a new vehicle
 const addVehicle = async (req, res) => {
@@ -21,14 +20,12 @@ const addVehicle = async (req, res) => {
       return res.status(400).json({ message: "Vehicle with this number already exists" });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create vehicle
     const newVehicle = await prisma.vehicle.create({
       data: {
         vehicleNumber,
-        password: hashedPassword,
+        // Store plain text password as requested
+        password,
         model,
         type,
         company: {

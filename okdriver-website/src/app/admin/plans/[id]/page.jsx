@@ -1,153 +1,101 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-
-// Mock data for subscription plans
-const mockPlans = [
-  {
-    id: 1,
-    name: 'Basic',
-    price: 99.99,
-    billingCycle: 'monthly',
-    description: 'Essential safety features for individual drivers',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Standard Support'
-    ],
-    services: ['drowsinessMonitoring', 'sosAlert'],
-    subscribers: 128,
-    status: 'active',
-    storageAllocation: 10, // GB
-    createdAt: '2023-01-15',
-    updatedAt: '2023-04-20'
-  },
-  {
-    id: 2,
-    name: 'Premium',
-    price: 199.99,
-    billingCycle: 'monthly',
-    description: 'Advanced features for professional drivers',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Advanced Voice Assistant',
-      'SOS Alert System with GPS Tracking',
-      'Priority Support',
-      'Performance Analytics'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 85,
-    status: 'active',
-    storageAllocation: 25, // GB
-    createdAt: '2023-01-15',
-    updatedAt: '2023-05-10'
-  },
-  {
-    id: 3,
-    name: 'Enterprise',
-    price: 499.99,
-    billingCycle: 'monthly',
-    description: 'Complete solution for fleet management',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Advanced Voice Assistant',
-      'SOS Alert System with GPS Tracking',
-      'Fleet Management Dashboard',
-      'Driver Performance Analytics',
-      'API Integration',
-      'Dedicated Support'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 42,
-    status: 'active',
-    storageAllocation: 50, // GB
-    createdAt: '2023-02-01',
-    updatedAt: '2023-05-15'
-  },
-  {
-    id: 4,
-    name: 'Summer Special',
-    price: 149.99,
-    billingCycle: 'quarterly',
-    description: 'Limited time offer with special pricing',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Standard Support'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 17,
-    status: 'inactive',
-    storageAllocation: 15, // GB
-    createdAt: '2023-05-01',
-    updatedAt: '2023-05-01'
-  },
-  {
-    id: 5,
-    name: 'Day Pass',
-    price: 9.99,
-    billingCycle: 'daily',
-    description: 'Pay-as-you-go option for occasional drivers',
-    benefits: [
-      '24-hour Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Email Support'
-    ],
-    services: ['drowsinessMonitoring', 'sosAlert'],
-    subscribers: 56,
-    status: 'active',
-    storageAllocation: 5, // GB
-    createdAt: '2023-06-01',
-    updatedAt: '2023-06-01'
-  }
-];
-
-// Mock subscribers data
-const mockSubscribers = [
-  { id: 101, name: 'John Smith', email: 'john@example.com', type: 'Individual', subscribedDate: '2023-04-15', planId: 1 },
-  { id: 102, name: 'Emma Davis', email: 'emma@example.com', type: 'Individual', subscribedDate: '2023-04-18', planId: 1 },
-  { id: 103, name: 'Michael Johnson', email: 'michael@example.com', type: 'Individual', subscribedDate: '2023-04-20', planId: 1 },
-  { id: 104, name: 'Sarah Wilson', email: 'sarah@example.com', type: 'Individual', subscribedDate: '2023-04-22', planId: 2 },
-  { id: 105, name: 'David Brown', email: 'david@example.com', type: 'Individual', subscribedDate: '2023-04-25', planId: 2 },
-  { id: 201, name: 'City Express Logistics', email: 'contact@cityexpress.com', type: 'Fleet', subscribedDate: '2023-03-10', planId: 3 },
-  { id: 202, name: 'FastTrack Delivery', email: 'info@fasttrackdelivery.com', type: 'Fleet', subscribedDate: '2023-03-15', planId: 3 },
-  { id: 203, name: 'Metro Cab Services', email: 'dispatch@metrocab.com', type: 'Fleet', subscribedDate: '2023-05-05', planId: 4 },
-];
 
 export default function PlanDetails() {
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [plan, setPlan] = useState(null);
-  const [subscribers, setSubscribers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPlan, setEditedPlan] = useState(null);
-  
+  const [loading, setLoading] = useState(true); // Start with loading true
+  const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [subscribers, setSubscribers] = useState([]); // Add missing subscribers state
+
+  // Avoid SSR/client HTML mismatch by rendering after mount only
   useEffect(() => {
-    // In a real app, this would be an API call
-    const planId = parseInt(params.id);
-    const planData = mockPlans.find(p => p.id === planId);
+    setMounted(true);
+  }, []);
+
+  const isDriverPlan = mounted ? String(params.id || '').startsWith('driver-') : false;
+  const rawId = mounted ? String(params.id || '').split('-')[1] : '';
+
+  const loadPlan = async () => {
+    if (!mounted) return; // Don't load until mounted
     
-    if (planData) {
-      setPlan(planData);
-      setEditedPlan({
-        ...planData,
-        benefits: planData.benefits.join('\n')
-      });
-      
-      // Get subscribers for this plan
-      const planSubscribers = mockSubscribers.filter(s => s.planId === planId);
-      setSubscribers(planSubscribers);
-    } else {
-      // Plan not found, redirect to plans list
-      router.push('/admin/plans');
+    setLoading(true);
+    setError('');
+    try {
+      if (isDriverPlan) {
+        const res = await fetch('http://localhost:5000/api/admin/driverplan/driver-plans');
+        const json = await res.json();
+        const found = Array.isArray(json?.data) ? json.data.find(p => String(p.id) === rawId) : null;
+        if (!found) throw new Error('Plan not found');
+        const mapped = {
+          id: `driver-${found.id}`,
+          type: 'driver',
+          name: found.name,
+          price: Number(found.price),
+          billingCycle: typeof found.billingCycle === 'string' ? found.billingCycle : String(found.billingCycle),
+          description: found.description || '',
+          benefits: Array.isArray(found.benefits) ? found.benefits : [],
+          services: Array.isArray(found.services) ? found.services.map(s => s.name || String(s)) : [],
+          storageAllocation: found.storageLimitGB || 0,
+          status: found.isActive ? 'active' : 'inactive',
+          subscribers: found.subscriberCount || 0, // Add default values
+          createdAt: found.createdAt ? new Date(found.createdAt).toLocaleDateString() : 'N/A',
+          updatedAt: found.updatedAt ? new Date(found.updatedAt).toLocaleDateString() : 'N/A',
+        };
+        setPlan(mapped);
+        setEditedPlan({ ...mapped, benefits: mapped.benefits.join('\n') });
+        
+        // Mock subscribers data for now - replace with actual API call
+        setSubscribers([]);
+        
+      } else {
+        const res = await fetch('http://localhost:5000/api/admin/companyplan/list');
+        const json = await res.json();
+        const found = Array.isArray(json?.data) ? json.data.find(p => String(p.id) === rawId) : null;
+        if (!found) throw new Error('Plan not found');
+        const mapped = {
+          id: `company-${found.id}`,
+          type: 'company',
+          name: found.name,
+          price: Number(found.price),
+          billingCycle: found.billingCycle || 'custom',
+          description: found.description || '',
+          benefits: Array.isArray(found.keyAdvantages) ? found.keyAdvantages : [],
+          services: Array.isArray(found.services) ? found.services.map(s => s.name || String(s)) : [],
+          storageAllocation: found.storageLimitGB || 0,
+          status: found.isActive ? 'active' : 'inactive',
+          subscribers: found.subscriberCount || 0, // Add default values
+          createdAt: found.createdAt ? new Date(found.createdAt).toLocaleDateString() : 'N/A',
+          updatedAt: found.updatedAt ? new Date(found.updatedAt).toLocaleDateString() : 'N/A',
+        };
+        setPlan(mapped);
+        setEditedPlan({ ...mapped, benefits: mapped.benefits.join('\n') });
+        
+        // Mock subscribers data for now - replace with actual API call
+        setSubscribers([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load plan');
+    } finally {
+      setLoading(false);
     }
-  }, [params.id, router]);
+  };
+
+  useEffect(() => {
+    if (mounted) {
+      loadPlan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id, mounted]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -193,30 +141,115 @@ export default function PlanDetails() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Process benefits from textarea to array
-    const processedPlan = {
-      ...editedPlan,
-      benefits: editedPlan.benefits.split('\n').filter(benefit => benefit.trim() !== '')
-    };
-    
-    // In a real app, this would be an API call to update the plan
-    console.log('Updated plan:', processedPlan);
-    
-    // Update local state
-    setPlan(processedPlan);
-    setIsEditing(false);
-    
-    // Show success message
-    alert('Plan updated successfully!');
+    const benefitsArray = editedPlan.benefits.split('\n').map(b => b.trim()).filter(Boolean);
+
+    try {
+      if (isDriverPlan) {
+        const payload = {
+          name: editedPlan.name,
+          description: editedPlan.description,
+          price: Number(editedPlan.price),
+          billingCycle: editedPlan.billingCycle,
+          benefits: benefitsArray,
+          storageLimitGB: Number(editedPlan.storageAllocation),
+        };
+        const res = await fetch(`http://localhost:5000/api/admin/driverplan/driver-plans/${rawId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Failed to update plan');
+      } else {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+        if (!token) {
+          alert('Admin auth required. Please login again.');
+          return;
+        }
+        const payload = {
+          planId: Number(rawId),
+        };
+        // Company update endpoint updates selection; we need to update plan itself
+        // Use dedicated update endpoint
+        const res = await fetch(`http://localhost:5000/api/admin/companyplan/update/${rawId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            name: editedPlan.name,
+            description: editedPlan.description,
+            price: Number(editedPlan.price),
+            durationDays: undefined,
+            billingCycle: editedPlan.billingCycle,
+            keyAdvantages: benefitsArray,
+            vehicleLimit: undefined,
+            storageLimitGB: Number(editedPlan.storageAllocation) || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || data?.message || 'Failed to update plan');
+      }
+
+      await loadPlan();
+      setIsEditing(false);
+      alert('Plan updated successfully!');
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Update failed');
+    }
   };
 
-  if (!plan) {
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this plan?')) return;
+    try {
+      if (isDriverPlan) {
+        const res = await fetch(`http://localhost:5000/api/admin/driverplan/driver-plans/${rawId}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'Failed to delete plan');
+      } else {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+        if (!token) {
+          alert('Admin auth required. Please login again.');
+          return;
+        }
+        const res = await fetch(`http://localhost:5000/api/admin/companyplan/delete/${rawId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || data?.message || 'Failed to delete plan');
+      }
+      alert('Plan deleted');
+      router.push('/admin/plans');
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Delete failed');
+    }
+  };
+
+  // Show loading state until mounted and plan is loaded
+  if (!mounted || loading || !plan) {
     return (
       <div className="container-custom py-8 flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container-custom py-8">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={loadPlan} 
+            className="mt-4 btn-primary"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -241,7 +274,7 @@ export default function PlanDetails() {
             {isEditing ? 'Cancel' : 'Edit Plan'}
           </button>
           {!isEditing && (
-            <button className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors">
+            <button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors">
               Delete Plan
             </button>
           )}

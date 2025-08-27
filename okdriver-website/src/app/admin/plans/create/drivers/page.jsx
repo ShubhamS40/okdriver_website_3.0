@@ -54,45 +54,59 @@ export default function CreatePlan() {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Create plan object
-    const plan = {
+
+    const benefitsArray = benefits.split('\n').map(b => b.trim()).filter(Boolean);
+    const storageLimitGB = Number(storageAllocation);
+    const durationMap = { daily: 1, monthly: 30, quarterly: 90, yearly: 365 };
+    const durationDays = durationMap[billingCycle] || 30;
+
+    const payload = {
       name: planName,
-      billingCycle,
-      price: parseFloat(price),
-      priceDisplay: `₹${price}${billingCycle === 'daily' ? '/day' : 
-                      billingCycle === 'monthly' ? '/month' : 
-                      billingCycle === 'quarterly' ? '/quarter' : 
-                      '/year'}`,
       description,
-      benefits: benefits.split('\n').filter(benefit => benefit.trim() !== ''),
-      includedServices: Object.keys(services).filter(key => services[key]),
-      storageAllocation,
-      dmsConditions: services.drowsinessMonitoring ? dmsConditions : [],
-      status: 'Active', // Default status for new plans
-      subscribers: 0 // New plans start with 0 subscribers
+      price: Number(price),
+      billingCycle,
+      durationDays,
+      benefits: benefitsArray,
+      // Keeping features empty for now; can be expanded separately
+      features: [],
+      storageLimitGB,
+      // Backend expects array of service IDs; omit to avoid invalid IDs
     };
-    
-    console.log('Plan created:', plan);
-    // Here you would typically send this data to your backend
-    
-    // Show success message or redirect
-    alert('Plan created successfully!');
-    // Reset form
-    setPlanName('');
-    setBillingCycle('monthly');
-    setPrice('');
-    setDescription('');
-    setBenefits('');
-    setStorageAllocation(50);
-    setDmsConditions([]);
-    setServices({
-      drowsinessMonitoring: false,
-      voiceAssistant: false,
-      sosAlert: false
-    });
+
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/driverplan/driver-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Driver plan creation failed:', data);
+        alert(data?.error || 'Failed to create driver plan');
+        return;
+      }
+
+      alert('Plan created successfully!');
+      // Reset form
+      setPlanName('');
+      setBillingCycle('monthly');
+      setPrice('');
+      setDescription('');
+      setBenefits('');
+      setStorageAllocation(50);
+      setDmsConditions([]);
+      setServices({
+        drowsinessMonitoring: false,
+        voiceAssistant: false,
+        sosAlert: false
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Network error while creating plan');
+    }
   };
 
   return (

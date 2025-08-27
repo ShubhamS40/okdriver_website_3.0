@@ -1,109 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-
-// Mock data for subscription plans
-const mockPlans = [
-  {
-    id: 1,
-    name: 'Basic',
-    price: 99.99,
-    billingCycle: 'monthly',
-    description: 'Essential safety features for individual drivers',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Standard Support'
-    ],
-    services: ['drowsinessMonitoring', 'sosAlert'],
-    subscribers: 128,
-    status: 'active'
-  },
-  {
-    id: 2,
-    name: 'Premium',
-    price: 199.99,
-    billingCycle: 'monthly',
-    description: 'Advanced features for professional drivers',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Advanced Voice Assistant',
-      'SOS Alert System with GPS Tracking',
-      'Priority Support',
-      'Performance Analytics'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 85,
-    status: 'active'
-  },
-  {
-    id: 3,
-    name: 'Enterprise',
-    price: 499.99,
-    billingCycle: 'monthly',
-    description: 'Complete solution for fleet management',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Advanced Voice Assistant',
-      'SOS Alert System with GPS Tracking',
-      'Fleet Management Dashboard',
-      'Driver Performance Analytics',
-      'API Integration',
-      'Dedicated Support'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 42,
-    status: 'active'
-  },
-  {
-    id: 4,
-    name: 'Summer Special',
-    price: 149.99,
-    billingCycle: 'quarterly',
-    description: 'Limited time offer with special pricing',
-    benefits: [
-      '24/7 Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Standard Support'
-    ],
-    services: ['drowsinessMonitoring', 'voiceAssistant', 'sosAlert'],
-    subscribers: 17,
-    status: 'inactive'
-  },
-  {
-    id: 5,
-    name: 'Day Pass',
-    price: 9.99,
-    billingCycle: 'daily',
-    description: 'Pay-as-you-go option for occasional drivers',
-    benefits: [
-      '24-hour Drowsiness Monitoring',
-      'Basic Voice Assistant',
-      'SOS Alert System',
-      'Email Support'
-    ],
-    services: ['drowsinessMonitoring', 'sosAlert'],
-    subscribers: 56,
-    status: 'active'
-  }
-];
 
 export default function SubscriptionPlans() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('active');
-  
-  // Filter plans based on search term and active tab
-  const filteredPlans = mockPlans.filter(plan => {
-    const matchesSearch = plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         plan.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'all' || 
-                      (activeTab === 'active' && plan.status === 'active') ||
-                      (activeTab === 'inactive' && plan.status === 'inactive');
-    return matchesSearch && matchesTab;
-  });
+  const [activeTab, setActiveTab] = useState('all');
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [driverRes, companyRes] = await Promise.all([
+          fetch('http://localhost:5000/api/admin/driverplan/driver-plans'),
+          fetch('http://localhost:5000/api/admin/companyplan/list'),
+        ]);
+
+        const [driverJson, companyJson] = await Promise.all([
+          driverRes.json().catch(() => ({ data: [] })),
+          companyRes.json().catch(() => ({ data: [] })),
+        ]);
+
+        const driverPlans = Array.isArray(driverJson?.data)
+          ? driverJson.data.map((p) => ({
+              id: `driver-${p.id}`,
+              name: p.name,
+              price: Number(p.price),
+              billingCycle: typeof p.billingCycle === 'string' ? p.billingCycle : String(p.billingCycle),
+              description: p.description || '',
+              benefits: Array.isArray(p.benefits) ? p.benefits : [],
+              services: Array.isArray(p.services) ? p.services.map((s) => s.name || String(s)) : [],
+              status: p.isActive ? 'active' : 'inactive',
+              planType: 'Individual',
+              subscribers: 0,
+            }))
+          : [];
+
+        const companyPlans = Array.isArray(companyJson?.data)
+          ? companyJson.data.map((p) => ({
+              id: `company-${p.id}`,
+              name: p.name,
+              price: Number(p.price),
+              billingCycle: p.billingCycle || 'custom',
+              description: p.description || '',
+              benefits: Array.isArray(p.keyAdvantages) ? p.keyAdvantages : [],
+              services: Array.isArray(p.services) ? p.services.map((s) => s.name || String(s)) : [],
+              status: p.isActive ? 'active' : 'inactive',
+              planType: 'Fleet Company',
+              subscribers: 0,
+            }))
+          : [];
+
+        setPlans([...driverPlans, ...companyPlans]);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load plans');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+  const filteredPlans = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return plans.filter((plan) => {
+      const matchesSearch =
+        plan.name.toLowerCase().includes(term) ||
+        plan.description.toLowerCase().includes(term);
+      const matchesTab =
+        activeTab === 'all' ||
+        (activeTab === 'active' && plan.status === 'active') ||
+        (activeTab === 'inactive' && plan.status === 'inactive');
+      return matchesSearch && matchesTab;
+    });
+  }, [plans, searchTerm, activeTab]);
 
   return (
     <div className="container-custom py-8">
@@ -165,6 +141,14 @@ export default function SubscriptionPlans() {
       </div>
 
       {/* Plans Grid */}
+      {loading && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">Loading plans...</div>
+      )}
+
+      {error && !loading && (
+        <div className="bg-red-100 text-red-800 rounded-lg shadow-md p-4 mb-6">{error}</div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPlans.map((plan) => (
           <div key={plan.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
@@ -200,20 +184,14 @@ export default function SubscriptionPlans() {
               <div className="mb-4">
                 <h3 className="font-semibold mb-2">Included Services:</h3>
                 <div className="flex flex-wrap gap-2">
-                  {plan.services.includes('drowsinessMonitoring') && (
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Drowsiness Monitoring</span>
-                  )}
-                  {plan.services.includes('voiceAssistant') && (
-                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">Voice Assistant</span>
-                  )}
-                  {plan.services.includes('sosAlert') && (
-                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">SOS Alert</span>
-                  )}
+                  {plan.services.map((srv, idx) => (
+                    <span key={idx} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">{srv}</span>
+                  ))}
                 </div>
               </div>
               
               <div className="text-sm text-gray-500 mb-4">
-                <span>{plan.subscribers} active subscribers</span>
+                <span>{plan.planType ? `${plan.planType} · ` : ''}{plan.subscribers} active subscribers</span>
               </div>
               
               <div className="flex space-x-2">

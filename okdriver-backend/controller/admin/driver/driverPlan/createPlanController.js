@@ -23,13 +23,32 @@ const createDriverPlan = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Normalize billingCycle from UI to Prisma enum
+    const billingCycleMap = {
+      daily: 'DAILY',
+      DAY: 'DAILY',
+      DAILY: 'DAILY',
+      monthly: 'MONTHLY',
+      MONTH: 'MONTHLY',
+      MONTHLY: 'MONTHLY',
+      quarterly: 'THREE_MONTHS',
+      QUARTERLY: 'THREE_MONTHS',
+      three_months: 'THREE_MONTHS',
+      THREE_MONTHS: 'THREE_MONTHS',
+      yearly: 'YEARLY',
+      YEARLY: 'YEARLY',
+      custom: 'CUSTOM',
+      CUSTOM: 'CUSTOM',
+    };
+    const normalizedBillingCycle = billingCycleMap[String(billingCycle).trim()] || billingCycleMap[String(billingCycle).trim().toLowerCase()] || 'MONTHLY';
+
     // Create DriverPlan
     const driverPlan = await prisma.driverPlan.create({
       data: {
         name,
         description,
         price,
-        billingCycle,
+        billingCycle: normalizedBillingCycle,
         durationDays,
         benefits: benefits || [],
         features: features || [],

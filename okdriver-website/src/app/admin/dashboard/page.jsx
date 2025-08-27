@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 // Mock data for drivers
@@ -21,74 +21,7 @@ const mockTickets = [
   { id: 'T-1005', subject: 'Subscription question', status: 'Open', priority: 'Medium', date: '2023-05-06' },
 ];
 
-// Enhanced subscription plans with plan types
-const mockPlans = [
-  { 
-    id: 1, 
-    name: 'Basic Individual', 
-    price: 499, 
-    features: '24/7 Support, Basic Monitoring', 
-    subscribers: 25, 
-    status: 'Active', 
-    billingCycle: 'Monthly', 
-    description: 'Perfect for individual drivers', 
-    benefits: ['24/7 Customer Support', 'Basic Monitoring Features', 'Monthly Reports'], 
-    includedServices: ['Drowsiness Monitoring'],
-    planType: 'individual'
-  },
-  { 
-    id: 2, 
-    name: 'Premium Individual', 
-    price: 999, 
-    features: '24/7 Support, Advanced Monitoring, Voice Assistant', 
-    subscribers: 42, 
-    status: 'Active', 
-    billingCycle: 'Monthly', 
-    description: 'Ideal for professional drivers', 
-    benefits: ['24/7 Priority Support', 'Advanced Monitoring Features', 'Weekly Reports', 'Performance Analytics'], 
-    includedServices: ['Drowsiness Monitoring', 'Voice Assistant'],
-    planType: 'individual'
-  },
-  { 
-    id: 3, 
-    name: 'Enterprise Fleet', 
-    price: 1999, 
-    features: 'All Features, Priority Support, Custom Integration', 
-    subscribers: 18, 
-    status: 'Active', 
-    billingCycle: 'Monthly', 
-    description: 'Best for fleet companies', 
-    benefits: ['24/7 Dedicated Support', 'All Monitoring Features', 'Daily Reports', 'Advanced Analytics', 'Custom Integration'], 
-    includedServices: ['Drowsiness Monitoring', 'Voice Assistant', 'SOS Alert'],
-    planType: 'company'
-  },
-  { 
-    id: 4, 
-    name: 'Corporate Fleet Plus', 
-    price: 2999, 
-    features: '24/7 Support, Fleet Management, Driver Analytics', 
-    subscribers: 12, 
-    status: 'Active', 
-    billingCycle: 'Monthly', 
-    description: 'Advanced fleet management solution', 
-    benefits: ['24/7 Dedicated Support', 'Fleet Dashboard', 'Driver Performance Analytics', 'Real-time Tracking'], 
-    includedServices: ['Drowsiness Monitoring', 'Voice Assistant', 'SOS Alert', 'Fleet Management'],
-    planType: 'company'
-  },
-  { 
-    id: 5, 
-    name: 'Day Pass', 
-    price: 9.99, 
-    features: '24-hour Access, Basic Monitoring, SOS Alert', 
-    subscribers: 56, 
-    status: 'Active', 
-    billingCycle: 'Daily', 
-    description: 'Pay-as-you-go option for occasional drivers', 
-    benefits: ['24-hour Drowsiness Monitoring', 'Basic Voice Assistant', 'SOS Alert System', 'Email Support'], 
-    includedServices: ['Drowsiness Monitoring', 'SOS Alert'],
-    planType: 'individual'
-  },
-];
+// Plans will be fetched from backend
 
 // Mock data for fleet companies
 const mockFleetCompanies = [
@@ -102,9 +35,67 @@ const mockFleetCompanies = [
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('drivers');
   const [planFilter, setPlanFilter] = useState('all');
+  const [plans, setPlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [plansError, setPlansError] = useState('');
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      setLoadingPlans(true);
+      setPlansError('');
+      try {
+        const [driverRes, companyRes] = await Promise.all([
+          fetch('http://localhost:5000/api/admin/driverplan/driver-plans'),
+          fetch('http://localhost:5000/api/admin/companyplan/list'),
+        ]);
+        const [driverJson, companyJson] = await Promise.all([
+          driverRes.json().catch(() => ({ data: [] })),
+          companyRes.json().catch(() => ({ data: [] })),
+        ]);
+        const driverPlans = Array.isArray(driverJson?.data)
+          ? driverJson.data.map(p => ({
+              id: `driver-${p.id}`,
+              name: p.name,
+              price: Number(p.price),
+              description: p.description || '',
+              billingCycle: typeof p.billingCycle === 'string' ? p.billingCycle : String(p.billingCycle),
+              benefits: Array.isArray(p.benefits) ? p.benefits : [],
+              includedServices: Array.isArray(p.services) ? p.services.map(s => s.name || String(s)) : [],
+              subscribers: 0,
+              status: p.isActive ? 'Active' : 'Inactive',
+              planType: 'individual',
+            }))
+          : [];
+        const companyPlans = Array.isArray(companyJson?.data)
+          ? companyJson.data.map(p => ({
+              id: `company-${p.id}`,
+              name: p.name,
+              price: Number(p.price),
+              description: p.description || '',
+              billingCycle: p.billingCycle || 'custom',
+              benefits: Array.isArray(p.keyAdvantages) ? p.keyAdvantages : [],
+              includedServices: Array.isArray(p.services) ? p.services.map(s => s.name || String(s)) : [],
+              subscribers: 0,
+              status: p.isActive ? 'Active' : 'Inactive',
+              planType: 'company',
+            }))
+          : [];
+        setPlans([...driverPlans, ...companyPlans]);
+      } catch (err) {
+        console.error(err);
+        setPlansError('Failed to load plans');
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+    loadPlans();
+  }, []);
 
   // Filter plans based on selected filter
-  const filteredPlans = planFilter === 'all' ? mockPlans : mockPlans.filter(plan => plan.planType === planFilter);
+  const filteredPlans = useMemo(() => {
+    const base = planFilter === 'all' ? plans : plans.filter(p => p.planType === planFilter);
+    return base;
+  }, [planFilter, plans]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -321,6 +312,12 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {plansError && (
+                <div className="mb-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">{plansError}</div>
+              )}
+              {loadingPlans && (
+                <div className="mb-4 text-gray-600">Loading plans...</div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPlans.map((plan) => (
                   <div key={plan.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
@@ -343,11 +340,13 @@ export default function AdminDashboard() {
                     <div className="mb-3">
                       <p className="text-2xl font-bold text-gray-900">
                         ₹{plan.price}
-                        <span className="text-sm font-normal text-gray-500">
-                          {plan.billingCycle === 'Daily' ? '/day' : plan.billingCycle === 'Monthly' ? '/month' : plan.billingCycle === 'Quarterly' ? '/quarter' : '/year'}
+                        <span className="text-sm font-normal text-gray-500 ml-1">/
+                          {String(plan.billingCycle).toLowerCase() === 'daily' ? 'day' :
+                           String(plan.billingCycle).toLowerCase() === 'monthly' ? 'month' :
+                           String(plan.billingCycle).toLowerCase() === 'quarterly' || String(plan.billingCycle).toLowerCase() === 'three_months' ? 'quarter' : 'year'}
                         </span>
                       </p>
-                      <p className="text-sm text-gray-500">{plan.billingCycle} billing</p>
+                      <p className="text-sm text-gray-500 capitalize">{String(plan.billingCycle).toLowerCase()} billing</p>
                     </div>
                     
                     <p className="text-sm text-gray-600 mb-4">{plan.description}</p>

@@ -18,5 +18,8 @@ router.delete('/vehicles/:id', deleteVehicle);
 // @route   GET /api/vehicles
 // @desc    Get all vehicles
 router.get('/vehicles', getAllVehicles);
+router.get('/shubham', (req, res) => {
+  res.send('Hello Shubham');
+});
 
 module.exports = router;

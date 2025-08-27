@@ -64,4 +64,7 @@ const getVehicleChats = async (req, res) => {
   }
 };
 
-
+module.exports = {
+  sendMessageToVehicle,
+  getVehicleChats,
+};

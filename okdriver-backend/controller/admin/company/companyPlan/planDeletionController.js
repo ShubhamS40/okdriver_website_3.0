@@ -25,16 +25,22 @@ const deleteCompanyPlan = async (req, res) => {
       return res.status(404).json({ error: "Company Plan not found" });
     }
 
-    // Optionally: Check if this plan is assigned to any company
+    // Check if this plan is assigned as current plan to any company
     const activeCompanies = await prisma.company.findMany({
-      where: { planId: parseInt(id) },
+      where: { currentPlanId: parseInt(id) },
       select: { id: true, name: true }
     });
 
-    if (activeCompanies.length > 0) {
+    // Also check if there are subscriptions referencing this plan
+    const subscriptionCount = await prisma.companySubscription.count({
+      where: { planId: parseInt(id) }
+    });
+
+    if (activeCompanies.length > 0 || subscriptionCount > 0) {
       return res.status(400).json({
-        error: "Cannot delete this plan because it is currently assigned to companies",
-        companies: activeCompanies
+        error: "Cannot delete this plan because it is in use by companies or subscriptions",
+        companies: activeCompanies,
+        subscriptions: subscriptionCount
       });
     }
 

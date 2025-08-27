@@ -122,53 +122,60 @@ export default function CreatePlan() {
     return "Multi-year";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    
-    // Validation
+
     if (!form.name || !form.price || !form.durationDays || !form.vehicleLimit) {
       alert("❌ Please fill in all required fields (Name, Price, Duration, Vehicle Limit)");
       return;
     }
-
     if (form.features.length === 0) {
       alert("❌ Please select at least one feature");
       return;
     }
+    // Services are optional per requirement
 
-    if (form.services.length === 0) {
-      alert("❌ Please select at least one service");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    if (!token) {
+      alert('Admin auth required. Please login again.');
       return;
     }
 
-    try {
-      const planData = {
-        name: form.name,
-        description: form.description,
-        price: parseFloat(form.price),
-        durationDays: parseInt(form.durationDays),
-        vehicleLimit: parseInt(form.vehicleLimit),
-        storageLimit: form.storageLimit ? parseInt(form.storageLimit) : 10,
-        features: form.features,
-        services: form.services,
-        advantages: form.advantages,
-        billingCycle: getDurationLabel(),
-        createdAt: new Date().toISOString().split('T')[0]
-      };
+    const payload = {
+      name: form.name,
+      description: form.description,
+      price: Number(form.price),
+      durationDays: Number(form.durationDays),
+      billingCycle: getDurationLabel(),
+      keyAdvantages: form.advantages
+        ? form.advantages.split('\n').map(s => s.trim()).filter(Boolean)
+        : [],
+      vehicleLimit: Number(form.vehicleLimit),
+      storageLimitGB: form.storageLimit ? Number(form.storageLimit) : 10,
+      // NOTE: Backend expects numeric IDs for features/services.
+      // For now, send empty arrays unless you map them to IDs.
+      features: [],
+      services: []
+    };
 
-      // Simulate API call
-      console.log("Creating plan:", planData);
-      
-      // Here you would make the actual API call
-      // const res = await fetch("/api/plans", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(planData),
-      // });
-      
-      alert("✅ Plan created successfully!");
-      
-      // Reset form
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/companyplan/creation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Company plan creation failed:', data);
+        alert(data?.error || data?.message || 'Failed to create plan');
+        return;
+      }
+
+      alert('✅ Plan created successfully!');
       setForm({
         name: "",
         description: "",
@@ -184,7 +191,7 @@ export default function CreatePlan() {
       });
     } catch (error) {
       console.error(error);
-      alert("❌ Server error");
+      alert('❌ Network error');
     }
   };
 
