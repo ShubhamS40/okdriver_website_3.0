@@ -1,5 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import VehicleDetail from '../../../components/VechileDetail.jsx';
+import ClientManager from '@/components/ClientManager';
 import { 
   MessageCircle, 
   Car, 
@@ -170,6 +172,24 @@ export default function ChatSupportDashboard() {
     }
   };
 
+  const [assignments, setAssignments] = useState([]);
+  const [detailVehicleId, setDetailVehicleId] = useState(null);
+
+  const loadAssignments = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : '';
+      const res = await fetch('http://localhost:5000/api/company/clients/vehicles-list-assignments', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setAssignments(data);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  useEffect(() => { loadAssignments(); }, []);
+
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -240,10 +260,10 @@ export default function ChatSupportDashboard() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Driver</th>
+                
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client Lists</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -253,7 +273,7 @@ export default function ChatSupportDashboard() {
               {vehicles.length > 0 ? vehicles.map((vehicle) => (
                 <tr key={vehicle.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-black">{vehicle.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{vehicle.driver}</td>
+                  
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       vehicle.status === 'Active' 
@@ -264,11 +284,11 @@ export default function ChatSupportDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.location}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{vehicle.client}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{(assignments.find(a => a.vehicleId === vehicle.id)?.listNames || []).join(', ') || '—'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.model}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.type}</td>
                   <td className="px-6 py-4">
-                    <button className="text-black hover:text-gray-600">
+                    <button onClick={() => setDetailVehicleId(vehicle.id)} className="text-black hover:text-gray-600">
                       <Eye className="w-4 h-4" />
                     </button>
                   </td>
@@ -285,6 +305,9 @@ export default function ChatSupportDashboard() {
         </div>
         )}
       </div>
+      {detailVehicleId && (
+        <VehicleDetail vehicleId={detailVehicleId} companyToken={typeof window !== 'undefined' ? localStorage.getItem('companyToken') : ''} onClose={() => setDetailVehicleId(null)} />
+      )}
     </div>
   );
 
@@ -386,20 +409,7 @@ export default function ChatSupportDashboard() {
         return renderAddVehicle();
       case 'clients':
         return (
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Add New Client</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Company Name" className="border border-gray-300 rounded-lg px-3 py-2" />
-              <input type="email" placeholder="Email" className="border border-gray-300 rounded-lg px-3 py-2" />
-              <input type="tel" placeholder="Phone" className="border border-gray-300 rounded-lg px-3 py-2" />
-              <input type="text" placeholder="Location" className="border border-gray-300 rounded-lg px-3 py-2" />
-              <div className="md:col-span-2">
-                <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                  Add Client
-                </button>
-              </div>
-            </div>
-          </div>
+          <ClientManager companyToken={typeof window !== 'undefined' ? localStorage.getItem('companyToken') : ''} />
         );
       case 'locations':
         return (

@@ -2,23 +2,27 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Forward the request to the backend API
-    const response = await fetch('http://localhost:5000/api/admin/plan/list', {
+    const response = await fetch('http://localhost:5000/api/admin/companyplan/list', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    const data = await response.json();
-    
-    // Return the response from the backend
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Error in plans list API route:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    let data;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error('Non-JSON response from backend (plans list):', text);
+      return NextResponse.json({ message: 'Failed to fetch plans' }, { status: 502 });
+    }
+
+    // Normalize shape: backend returns { message, data: [...] }
+    const normalized = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+
+    return NextResponse.json(normalized, { status: response.status });
+  } catch (err) {
+    console.error('Error in /api/plans/list:', err);
+    return NextResponse.json({ message: 'Failed to fetch plans' }, { status: 500 });
   }
 }

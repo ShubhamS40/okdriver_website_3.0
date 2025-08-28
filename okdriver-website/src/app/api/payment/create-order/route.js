@@ -16,7 +16,7 @@ export async function POST(request) {
     console.log('Creating payment order with data:', body);
     console.log('Using token:', token.substring(0, 10) + '...');
     
-    const response = await fetch('http://localhost:5000/api/admin/plan/payment/order', {
+    const response = await fetch('http://localhost:5000/api/admin/companyplan/payment/order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,10 +25,20 @@ export async function POST(request) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    let data;
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error('Non-JSON response from backend (create-order):', text);
+      return NextResponse.json(
+        { success: false, message: 'Failed to create payment order: ' + response.statusText },
+        { status: response.status || 502 }
+      );
+    }
+
     console.log('Backend response:', data);
-    
-    // Return the response from the backend
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error in payment create-order API route:', error);

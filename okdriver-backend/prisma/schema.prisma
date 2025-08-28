@@ -235,6 +235,7 @@ model Company {
   sentMessages          ChatMessage[] @relation("CompanySender")
 
   @@index([currentPlanId])
+  ClientList ClientList[]
 }
 
 // ---------- VEHICLES (credentials live here) ----------
@@ -284,6 +285,8 @@ model Client {
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   accesses   ClientVehicleAccess[]
   sentMessages ChatMessage[] @relation("ClientSender")
+
+  ClientListMember ClientListMember[]
 }
 
 model ClientVehicleAccess {
@@ -299,6 +302,33 @@ model ClientVehicleAccess {
 
   @@unique([clientId, vehicleId])      // same client -> same vehicle only once
   @@index([companyId])
+}
+
+// ---------- CLIENT LISTS (like Play Store tester lists) ----------
+model ClientList {
+  id         Int       @id @default(autoincrement())
+  companyId  Int
+  name       String
+  createdAt  DateTime  @default(now())
+
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  members    ClientListMember[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model ClientListMember {
+  id           Int       @id @default(autoincrement())
+  clientListId Int
+  clientId     Int
+  createdAt    DateTime  @default(now())
+
+  list         ClientList @relation(fields: [clientListId], references: [id], onDelete: Cascade)
+  client       Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientListId, clientId])
+  @@index([clientId])
 }
 
 // ---------- CHAT (per-vehicle room) ----------

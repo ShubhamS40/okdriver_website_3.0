@@ -21,6 +21,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Request logger to debug routing issues
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Static audio serving and directory setup (for Voice Assistant)
 const audioDir = path.join(__dirname, 'audio');
 if (!fs.existsSync(audioDir)) {
@@ -51,7 +57,10 @@ app.use('/api/assistant', require('./routes/driver/DriverVoiceAssistant/driverVo
 // WEBSITE ALL ROUTE 
 
 // company routes
-// app.use('/api/company/clients', require('./routes/company/client/clientRoute'));
+console.log('🔄 Loading company client routes...');
+app.use('/api/company/clients', require('./routes/company/client/clientRoute'));
+console.log('✅ Company client routes mounted at /api/company/clients');
+
 app.use('/api/company/vehicles', require('./routes/company/vechile/companyVehicleRoute'));
 
 
