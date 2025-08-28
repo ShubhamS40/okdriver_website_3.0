@@ -12,10 +12,14 @@ export default function ClientManager({ companyToken }) {
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
 
-  const authHeaders = useMemo(() => ({
-    "Content-Type": "application/json",
-    ...(companyToken ? { Authorization: `Bearer ${companyToken}` } : {}),
-  }), [companyToken]);
+  const authHeaders = useMemo(() => {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(companyToken ? { Authorization: `Bearer ${companyToken}` } : {}),
+    };
+    console.log('🔑 Auth headers:', headers);
+    return headers;
+  }, [companyToken]);
 
   const loadLists = async () => {
     setLoading(true);
@@ -38,20 +42,36 @@ export default function ClientManager({ companyToken }) {
   const loadVehicles = async () => {
     try {
       setVehiclesLoading(true);
-      const res = await fetch('http://localhost:5000/api/company/vehicles/vehicles');
+      console.log('🚗 Loading vehicles...');
+      
+      const res = await fetch('http://localhost:5000/api/company/vehicles', {
+        headers: authHeaders
+      });
+      
+      console.log('📡 Vehicle response status:', res.status);
       const data = await res.json();
+      console.log('📡 Vehicle response data:', data);
+      
       // Support both {data:[...]} and [...] shapes
       const arr = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-      const mapped = arr.map(v => ({ id: v.id, label: v.vehicleNumber || `#${v.id}` }));
+      console.log('📋 Processed vehicle array:', arr);
+      
+      const mapped = arr.map(v => ({ 
+        id: v.id, 
+        label: v.vehicleNumber || v.name || `Vehicle #${v.id}` 
+      }));
+      
+      console.log('🗺️ Mapped vehicles:', mapped);
       setVehicles(mapped);
     } catch (e) {
-      console.error('Failed to load vehicles', e);
+      console.error('❌ Failed to load vehicles', e);
+      setError(`Failed to load vehicles: ${e.message}`);
     } finally {
       setVehiclesLoading(false);
     }
   };
 
-  useEffect(() => { loadVehicles(); }, []);
+  useEffect(() => { loadVehicles(); }, [authHeaders]);
 
   const createList = async () => {
     if (!newListName.trim()) return;
@@ -102,17 +122,32 @@ export default function ClientManager({ companyToken }) {
   };
 
   const assignListToVehicle = async () => {
-    if (!selectedListId || !vehicleIdForAssign) return;
+    if (!selectedListId || !vehicleIdForAssign) {
+      setError("Please select both a list and a vehicle");
+      return;
+    }
+    
+    console.log('🔗 Attempting to assign list', selectedListId, 'to vehicle', vehicleIdForAssign);
+    
     try {
+      setError("");
       const res = await fetch(`http://localhost:5000/api/company/clients/lists/${selectedListId}/assign/${Number(vehicleIdForAssign)}`, {
         method: "POST",
         headers: authHeaders
       });
+      
+      console.log('📡 Response status:', res.status);
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Failed to assign");
+      console.log('📡 Response data:', data);
+      
+      if (!res.ok) {
+        throw new Error(data?.message || `Failed to assign (${res.status})`);
+      }
+      
       setVehicleIdForAssign("");
-      alert("Assigned successfully");
+      alert(`Successfully assigned list to vehicle! ${data.assignedCount || 0} clients now have access.`);
     } catch (e) {
+      console.error('❌ Assignment error:', e);
       setError(e.message);
     }
   };
@@ -176,8 +211,76 @@ export default function ClientManager({ companyToken }) {
           </select>
           <button onClick={assignListToVehicle} className="bg-black text-white px-4 py-2 rounded">Assign</button>
         </div>
-        <div className="mt-2">
+        <div className="mt-2 flex gap-2">
           <button onClick={loadVehicles} className="text-sm underline">Refresh vehicles</button>
+          <button 
+            onClick={() => {
+              console.log('🔍 Current vehicles state:', vehicles);
+              console.log('🔍 Current vehicles loading state:', vehiclesLoading);
+              alert(`Current vehicles: ${vehicles.length}\nLoading: ${vehiclesLoading}\nVehicles: ${JSON.stringify(vehicles, null, 2)}`);
+            }} 
+            className="text-sm underline text-purple-600"
+          >
+            Check State
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                const res = await fetch('http://localhost:5000/api/company/vehicles/debug', {
+                  headers: authHeaders
+                });
+                const data = await res.json();
+                console.log('Auth debug response:', data);
+                alert(`Auth test: ${JSON.stringify(data, null, 2)}`);
+              } catch (e) {
+                console.error('Auth test failed:', e);
+                alert(`Auth test failed: ${e.message}`);
+              }
+            }} 
+            className="text-sm underline text-green-600"
+          >
+            Test Auth
+          </button>
+          <button 
+            onClick={async () => {
+              if (!selectedListId || !vehicleIdForAssign) {
+                alert('Please select both list and vehicle first');
+                return;
+              }
+              try {
+                const res = await fetch(`http://localhost:5000/api/company/clients/test-assignment/${selectedListId}/${vehicleIdForAssign}`, {
+                  headers: authHeaders
+                });
+                const data = await res.json();
+                console.log('Test assignment response:', data);
+                alert(`Test successful: ${JSON.stringify(data, null, 2)}`);
+              } catch (e) {
+                console.error('Test failed:', e);
+                alert(`Test failed: ${e.message}`);
+              }
+            }} 
+            className="text-sm underline text-blue-600"
+          >
+            Test Assignment
+          </button>
+        </div>
+        
+        {/* Debug section */}
+        <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>Vehicles loaded: {vehicles.length}</p>
+          <p>Selected vehicle: {vehicleIdForAssign || 'None'}</p>
+          <p>Loading: {vehiclesLoading ? 'Yes' : 'No'}</p>
+          {vehicles.length > 0 && (
+            <div>
+              <p><strong>Available vehicles:</strong></p>
+              <ul className="list-disc list-inside">
+                {vehicles.map(v => (
+                  <li key={v.id}>{v.label} (ID: {v.id})</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

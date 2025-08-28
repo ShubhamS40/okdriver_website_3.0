@@ -5,14 +5,17 @@ const prisma = new PrismaClient();
 const getVehicleListAssignments = async (req, res) => {
   try {
     const companyId = req.company.id;
+    console.log('🔍 Getting vehicle list assignments for company:', companyId);
 
     const vehicles = await prisma.vehicle.findMany({ where: { companyId } });
     const vehicleIds = vehicles.map(v => v.id);
+    console.log('🚗 Found vehicles:', vehicles.length, 'Vehicle IDs:', vehicleIds);
 
     const accesses = await prisma.clientVehicleAccess.findMany({
       where: { companyId, vehicleId: { in: vehicleIds } },
       include: { client: { include: { accesses: false } } }
     });
+    console.log('🔗 Found accesses:', accesses.length);
 
     // Build map vehicleId -> set of clientIds
     const mapVehicleToClientIds = new Map();
@@ -47,6 +50,7 @@ const getVehicleListAssignments = async (req, res) => {
       return { vehicleId: v.id, vehicleNumber: v.vehicleNumber, listNames: Array.from(listNames) };
     });
 
+    console.log('📋 Final result:', result);
     res.json(result);
   } catch (err) {
     console.error('getVehicleListAssignments error', err);
@@ -92,5 +96,6 @@ const getVehicleDetails = async (req, res) => {
 };
 
 module.exports = { getVehicleListAssignments, getVehicleDetails };
+
 
 

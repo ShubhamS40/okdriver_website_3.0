@@ -33,6 +33,16 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Client route is working' });
 });
 
+// Debug route to test assignment endpoint
+router.get('/test-assignment/:listId/:vehicleId', verifyCompanyAuth, (req, res) => {
+  console.log('🔍 Testing assignment endpoint with:', req.params);
+  res.json({ 
+    message: 'Assignment test endpoint hit',
+    params: req.params,
+    companyId: req.company.id
+  });
+});
+
 // Login/Register Client
 router.post('/login', clientLogin);
 

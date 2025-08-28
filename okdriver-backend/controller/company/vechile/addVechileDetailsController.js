@@ -1,14 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const bcrypt = require('bcrypt');
 
 // Add a new vehicle
 const addVehicle = async (req, res) => {
   try {
-    const { vehicleNumber, password, model, type, companyId } = req.body;
+    const { vehicleNumber, password, model, type } = req.body;
+    const companyId = req.company.id;
 
     // Validate required fields
-    if (!vehicleNumber || !password || !companyId) {
-      return res.status(400).json({ message: "vehicleNumber, password, and companyId are required" });
+    if (!vehicleNumber || !password) {
+      return res.status(400).json({ message: "vehicleNumber and password are required" });
     }
 
     // Check if vehicle number already exists
@@ -20,12 +22,14 @@ const addVehicle = async (req, res) => {
       return res.status(400).json({ message: "Vehicle with this number already exists" });
     }
 
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     // Create vehicle
     const newVehicle = await prisma.vehicle.create({
       data: {
         vehicleNumber,
-        // Store plain text password as requested
-        password,
+        password: hashedPassword,
         model,
         type,
         company: {

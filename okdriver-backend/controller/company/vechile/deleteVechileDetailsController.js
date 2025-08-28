@@ -5,14 +5,18 @@ const prisma = new PrismaClient();
 const deleteVehicle = async (req, res) => {
   try {
     const { id } = req.params;
+    const companyId = req.company.id;
 
-    // Check if vehicle exists
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: parseInt(id) },
+    // Check if vehicle exists and belongs to the company
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { 
+        id: parseInt(id),
+        companyId: companyId
+      },
     });
 
     if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
+      return res.status(404).json({ message: "Vehicle not found or access denied" });
     }
 
     // Delete vehicle

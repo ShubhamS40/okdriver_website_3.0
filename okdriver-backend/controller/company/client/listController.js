@@ -117,7 +117,25 @@ const assignListToVehicle = async (req, res) => {
 
     console.log('🔍 Looking for list:', listId, 'and vehicle:', vehicleId, 'for company:', companyId);
 
-    const list = await prisma.clientList.findFirst({ where: { id: listId, companyId }, include: { members: true } });
+    // Validate parameters
+    if (!listId || isNaN(listId)) {
+      return res.status(400).json({ message: 'Invalid list ID' });
+    }
+    if (!vehicleId || isNaN(vehicleId)) {
+      return res.status(400).json({ message: 'Invalid vehicle ID' });
+    }
+
+    const list = await prisma.clientList.findFirst({ 
+      where: { id: listId, companyId }, 
+      include: { 
+        members: {
+          include: {
+            client: true
+          }
+        } 
+      } 
+    });
+    
     if (!list) {
       console.log('❌ List not found');
       return res.status(404).json({ message: 'List not found' });
@@ -131,19 +149,47 @@ const assignListToVehicle = async (req, res) => {
 
     console.log('✅ Found list and vehicle, members count:', list.members.length);
 
-    // Upsert accesses
-    const operations = list.members.map(m => prisma.clientVehicleAccess.upsert({
-      where: { clientId_vehicleId: { clientId: m.clientId, vehicleId } },
-      update: {},
-      create: { companyId, clientId: m.clientId, vehicleId }
-    }));
+    if (list.members.length === 0) {
+      return res.status(400).json({ message: 'List has no members to assign' });
+    }
+
+    // Upsert accesses for each member
+    const operations = list.members.map(member => {
+      console.log(`🔗 Creating access for client ${member.clientId} to vehicle ${vehicleId}`);
+      return prisma.clientVehicleAccess.upsert({
+        where: { 
+          clientId_vehicleId: { 
+            clientId: member.clientId, 
+            vehicleId: vehicleId 
+          } 
+        },
+        update: {}, // No update needed if exists
+        create: { 
+          companyId, 
+          clientId: member.clientId, 
+          vehicleId: vehicleId 
+        }
+      });
+    });
+
     await prisma.$transaction(operations);
     
     console.log('✅ Successfully assigned list to vehicle');
-    res.json({ message: 'Assigned list to vehicle' });
+    res.json({ 
+      message: 'Assigned list to vehicle',
+      assignedCount: list.members.length,
+      listName: list.name,
+      vehicleNumber: vehicle.vehicleNumber
+    });
   } catch (err) {
     console.error('❌ assignListToVehicle error', err);
-    res.status(500).json({ message: 'Internal Server Error' });
+    
+    // Handle specific Prisma errors
+    if (err.code === 'P2002') {
+      return res.status(409).json({ message: 'Some clients already have access to this vehicle' });
+    }
+    
+    res.status(500).json({ message: 'Internal Server Error', error: err.message });
   }
 };
 

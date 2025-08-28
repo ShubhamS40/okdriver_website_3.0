@@ -57,10 +57,28 @@ export default function ChatSupportDashboard() {
   const loadVehicles = async () => {
     setVehiclesLoading(true);
     setVehiclesError('');
+    
+    // Check if we have authentication token
+    const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : null;
+    if (!token) {
+      setVehiclesError('No authentication token found. Please log in again.');
+      setVehiclesLoading(false);
+      return;
+    }
+    
     try {
-      const res = await fetch('http://localhost:5000/api/company/vehicles/vehicles');
+      const res = await fetch('http://localhost:5000/api/company/vehicles', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(typeof window !== 'undefined' && localStorage.getItem('companyToken') ? 
+            { Authorization: `Bearer ${localStorage.getItem('companyToken')}` } : {})
+        }
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to load vehicles');
+      if (!res.ok) {
+        console.error('Vehicle API error:', res.status, data);
+        throw new Error(data?.message || `Failed to load vehicles (${res.status})`);
+      }
       
       console.log('API Response:', data); // Debug log
       
@@ -83,11 +101,20 @@ export default function ChatSupportDashboard() {
         createdAt: v.createdAt ? new Date(v.createdAt).toLocaleDateString() : 'N/A'
       })) : [];
       
-      console.log('Mapped Vehicles:', mappedVehicles); // Debug log
-      setVehicles(mappedVehicles);
-    } catch (err) {
+             console.log('Mapped Vehicles:', mappedVehicles); // Debug log
+       setVehicles(mappedVehicles);
+       
+       // Also reload assignments to get updated client list data
+       await loadAssignments();
+     } catch (err) {
       console.error('Load vehicles error:', err);
-      setVehiclesError('Failed to load vehicles: ' + err.message);
+      
+      // Check if it's a JSON parsing error (HTML response)
+      if (err.message.includes('Unexpected token') && err.message.includes('<!DOCTYPE')) {
+        setVehiclesError('Server returned HTML instead of JSON. Please check authentication or server status.');
+      } else {
+        setVehiclesError('Failed to load vehicles: ' + err.message);
+      }
     } finally {
       setVehiclesLoading(false);
     }
@@ -130,17 +157,16 @@ export default function ChatSupportDashboard() {
 
   const submitVehicle = async () => {
     setVehicleMsg('');
-    const { vehicleNumber, password, companyId } = vehicleForm;
-    if (!vehicleNumber || !password || !companyId) {
-      setVehicleMsg('vehicleNumber, password and companyId are required');
+    const { vehicleNumber, password } = vehicleForm;
+    if (!vehicleNumber || !password) {
+      setVehicleMsg('vehicleNumber and password are required');
       return;
     }
     setVehicleSubmitting(true);
     try {
       const payload = {
         vehicleNumber: vehicleForm.vehicleNumber,
-        password: vehicleForm.password,
-        companyId: Number(vehicleForm.companyId)
+        password: vehicleForm.password
       };
       
       // Only add model and type if they have values
@@ -153,13 +179,20 @@ export default function ChatSupportDashboard() {
       
       console.log('Submitting vehicle:', payload); // Debug log
       
-      const res = await fetch('http://localhost:5000/api/company/vehicles/vehicles', {
+      const res = await fetch('http://localhost:5000/api/company/vehicles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(typeof window !== 'undefined' && localStorage.getItem('companyToken') ? 
+            { Authorization: `Bearer ${localStorage.getItem('companyToken')}` } : {})
+        },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to add vehicle');
+      if (!res.ok) {
+        console.error('Add vehicle API error:', res.status, data);
+        throw new Error(data?.message || `Failed to add vehicle (${res.status})`);
+      }
       setVehicleMsg('Vehicle added successfully');
       setVehicleForm(prev => ({ ...prev, vehicleNumber: '', password: '', model: '', type: '' }));
       // Reload vehicles list after adding
@@ -178,13 +211,23 @@ export default function ChatSupportDashboard() {
   const loadAssignments = async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : '';
+      if (!token) return;
+      
+      console.log('🔗 Loading vehicle assignments...');
       const res = await fetch('http://localhost:5000/api/company/clients/vehicles-list-assignments', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (Array.isArray(data)) setAssignments(data);
+      console.log('📋 Assignments data:', data);
+      
+      if (Array.isArray(data)) {
+        setAssignments(data);
+        console.log('✅ Assignments loaded:', data.length, 'assignments');
+      } else {
+        console.log('❌ Assignments data is not an array:', data);
+      }
     } catch (e) {
-      // ignore
+      console.error('❌ Failed to load assignments:', e);
     }
   };
 
@@ -234,12 +277,38 @@ export default function ChatSupportDashboard() {
       <div className="bg-white border border-gray-200 rounded-lg">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-black">Vehicle List</h3>
-          <button 
-            onClick={loadVehicles}
-            className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={loadVehicles}
+              className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors"
+            >
+              Refresh
+            </button>
+                         <button 
+               onClick={async () => {
+                 try {
+                   const res = await fetch('http://localhost:5000/');
+                   const text = await res.text();
+                   alert(`Backend is running: ${text}`);
+                 } catch (e) {
+                   alert(`Backend error: ${e.message}`);
+                 }
+               }}
+               className="text-sm bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded transition-colors"
+             >
+               Test Backend
+             </button>
+             <button 
+               onClick={() => {
+                 console.log('🔍 Current assignments:', assignments);
+                 console.log('🔍 Current vehicles:', vehicles);
+                 alert(`Assignments: ${assignments.length}\nVehicles: ${vehicles.length}\nCheck console for details`);
+               }}
+               className="text-sm bg-green-100 hover:bg-green-200 px-3 py-1 rounded transition-colors"
+             >
+               Debug Data
+             </button>
+          </div>
         </div>
         {vehiclesError && (
           <div className="p-4 text-red-600 bg-red-50 border-b border-red-200">
@@ -284,7 +353,15 @@ export default function ChatSupportDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.location}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{(assignments.find(a => a.vehicleId === vehicle.id)?.listNames || []).join(', ') || '—'}</td>
+                                     <td className="px-6 py-4 text-sm text-gray-600">
+                     {(() => {
+                       const assignment = assignments.find(a => a.vehicleId === vehicle.id);
+                       if (assignment && assignment.listNames && assignment.listNames.length > 0) {
+                         return assignment.listNames.join(', ');
+                       }
+                       return '—';
+                     })()}
+                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.model}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{vehicle.type}</td>
                   <td className="px-6 py-4">
@@ -448,29 +525,42 @@ export default function ChatSupportDashboard() {
             </div>
           </div>
         );
-      case 'profile':
-        return (
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Company Profile</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                <input type="text" defaultValue="Chat Support Company" className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input type="email" defaultValue="admin@company.com" className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Details</label>
-                <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 h-24" defaultValue="Vehicle management and chat support system"></textarea>
-              </div>
-              <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                Save Changes
-              </button>
-            </div>
-          </div>
-        );
+             case 'profile':
+         return (
+           <div className="bg-white border border-gray-200 rounded-lg p-6">
+             <h3 className="text-lg font-semibold text-black mb-4">Company Profile</h3>
+             <div className="space-y-4">
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                 <input type="text" defaultValue="Chat Support Company" className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                 <input type="email" defaultValue="admin@company.com" className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Details</label>
+                 <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 h-24" defaultValue="Vehicle management and chat support system"></textarea>
+               </div>
+               <div className="flex gap-3">
+                 <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                   Save Changes
+                 </button>
+                 <button 
+                   onClick={() => {
+                     if (typeof window !== 'undefined') {
+                       localStorage.removeItem('companyToken');
+                       window.location.href = '/company/login';
+                     }
+                   }}
+                   className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                 >
+                   Logout
+                 </button>
+               </div>
+             </div>
+           </div>
+         );
       default:
         return renderDashboard();
     }
@@ -488,7 +578,7 @@ export default function ChatSupportDashboard() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-xl font-bold text-black">Chat Support System</h1>
+                         <h1 className="text-xl font-bold text-black">Company Dashboard</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Bell className="w-6 h-6 text-gray-400" />
