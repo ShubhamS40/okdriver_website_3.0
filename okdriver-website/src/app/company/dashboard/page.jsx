@@ -79,18 +79,35 @@ export default function ChatSupportDashboard() {
         vehicleData = data.data;
       }
       
-      // Map API response to UI format
-      const mappedVehicles = Array.isArray(vehicleData) ? vehicleData.map(v => ({
-        id: v.id,
-        name: v.vehicleNumber,
-        driver: 'N/A',
-        status: v.status === 'ACTIVE' ? 'Active' : 'Inactive',
-        location: 'N/A',
-        client: 'N/A',
-        model: v.model || 'N/A',
-        type: v.type || 'N/A',
-        createdAt: v.createdAt ? new Date(v.createdAt).toLocaleDateString() : 'N/A'
-      })) : [];
+      // Map API response to UI format and fetch locations
+      const mappedVehicles = await Promise.all(
+        Array.isArray(vehicleData) ? vehicleData.map(async (v) => {
+          let location = 'N/A';
+          try {
+            const locationRes = await fetch(`http://localhost:5000/api/company/vehicles/location/${encodeURIComponent(v.vehicleNumber)}`);
+            if (locationRes.ok) {
+              const locationData = await locationRes.json();
+              if (locationData.location) {
+                location = `${locationData.location.lat.toFixed(4)}, ${locationData.location.lng.toFixed(4)}`;
+              }
+            }
+          } catch (_) {
+            // Keep N/A if location fetch fails
+          }
+          
+          return {
+            id: v.id,
+            name: v.vehicleNumber,
+            driver: 'N/A',
+            status: v.status === 'ACTIVE' ? 'Active' : 'Inactive',
+            location,
+            client: 'N/A',
+            model: v.model || 'N/A',
+            type: v.type || 'N/A',
+            createdAt: v.createdAt ? new Date(v.createdAt).toLocaleDateString() : 'N/A'
+          };
+        }) : []
+      );
       
       console.log('Mapped Vehicles:', mappedVehicles);
       setVehicles(mappedVehicles);
@@ -150,8 +167,8 @@ export default function ChatSupportDashboard() {
   const dashboardStats = {
     totalVehicles: vehiclesLoading ? '...' : vehicles.length,
     activeChats: chatRooms.filter(c => c.status === 'active').length,
-    totalClients: 25, // Static value
-    locations: 12 // Static value
+    totalClients: assignments.reduce((sum, assignment) => sum + (assignment.listNames?.length || 0), 0),
+    locations: vehicles.filter(v => v.location && v.location !== 'N/A').length
   };
 
   // Try to prefill companyId from JWT (if payload has id)

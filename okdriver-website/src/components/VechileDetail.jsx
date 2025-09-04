@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MapPin, MessageCircle, Users, Eye, EyeOff, X, Car, Calendar, Clock } from 'lucide-react';
 
 export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
@@ -9,71 +9,139 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [showChat, setShowChat] = useState(false);
   const [selectedList, setSelectedList] = useState(null);
   const [showPassword, setShowPassword] = useState({});
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
 
   const headers = useMemo(() => ({
     'Content-Type': 'application/json',
     ...(companyToken ? { Authorization: `Bearer ${companyToken}` } : {})
   }), [companyToken]);
 
-  // Mock data - replace with actual API calls
-  const mockData = {
-    vehicle: {
-      id: vehicleId,
-      vehicleNumber: "DL6SAX6208",
-      model: "DZIRE",
-      status: "ACTIVE",
-      password: "$2b$10$UR:gcdMzEsHGmPGHTEAtW09",
-      createdAt: "2025-08-26 17:12:56.277",
-      updatedAt: "2025-08-26 17:12:56.277",
-      type: "Car"
-    },
-    latestLocation: {
-      lat: 28.6139,
-      lng: 77.2090,
-      address: "New Delhi, India"
-    },
-    clientLists: [
-      {
-        id: 1,
-        name: "bonnet(Stock1/Total1)",
-        emailCount: 3,
-        emails: [
-          { id: 1, email: "admin@company.com", status: "active" },
-          { id: 2, email: "manager@company.com", status: "active" },
-          { id: 3, email: "support@company.com", status: "inactive" }
-        ]
-      },
-      {
-        id: 2,
-        name: "Test Can-Am(0/0)",
-        emailCount: 2,
-        emails: [
-          { id: 4, email: "test@canam.com", status: "active" },
-          { id: 5, email: "demo@canam.com", status: "active" }
-        ]
-      }
-    ],
-    chats: [
-      { id: 1, senderType: "Admin", message: "Vehicle location updated", timestamp: "2025-08-26 10:30" },
-      { id: 2, senderType: "Driver", message: "Trip completed successfully", timestamp: "2025-08-26 11:45" },
-      { id: 3, senderType: "System", message: "Maintenance reminder", timestamp: "2025-08-26 14:20" }
-    ]
-  };
-
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setData(mockData);
-        setLoading(false);
-      }, 1000);
+      const res = await fetch(`http://localhost:5000/api/company/clients/vehicle/${vehicleId}/details`, { headers });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.message || 'Failed to load vehicle details');
+      }
+
+      // Fetch company lists with members to populate emails for assigned lists
+      let listsWithMembers = [];
+      try {
+        const listsRes = await fetch('http://localhost:5000/api/company/clients/lists', { headers });
+        if (listsRes.ok) {
+          const listsJson = await listsRes.json();
+          listsWithMembers = Array.isArray(listsJson) ? listsJson : [];
+        }
+      } catch (_) {}
+
+      // Normalize to the UI structure previously used
+      const normalized = {
+        vehicle: {
+          id: json.vehicle?.id,
+          vehicleNumber: json.vehicle?.vehicleNumber,
+          model: json.vehicle?.model || 'N/A',
+          status: 'ACTIVE',
+          password: json.vehicle?.password || 'Not available',
+          createdAt: json.latestLocation?.recordedAt ? new Date(json.latestLocation.recordedAt).toLocaleString() : 'N/A',
+          updatedAt: json.latestLocation?.recordedAt ? new Date(json.latestLocation.recordedAt).toLocaleString() : 'N/A',
+          type: json.vehicle?.type || 'N/A'
+        },
+        latestLocation: json.latestLocation ? {
+          lat: json.latestLocation.lat,
+          lng: json.latestLocation.lng,
+          address: `${json.latestLocation.lat}, ${json.latestLocation.lng}`
+        } : { lat: 0, lng: 0, address: 'No location yet' },
+        clientLists: Array.isArray(json.listNames) ? json.listNames.map((name, idx) => {
+          const matched = listsWithMembers.find(l => l.name === name);
+          const emails = matched && Array.isArray(matched.members) ? matched.members.map(m => ({
+            id: m.client?.id || `${idx}-${m.id}`,
+            email: m.client?.email || '' ,
+            status: 'active'
+          })) : [];
+          return {
+            id: matched?.id || idx + 1,
+            name,
+            emailCount: emails.length,
+            emails
+          };
+        }) : [],
+        chats: Array.isArray(json.chats) ? json.chats.map((c, idx) => ({
+          id: c.id || idx + 1,
+          senderType: c.senderType || 'System',
+          message: c.message || '',
+          timestamp: c.createdAt ? new Date(c.createdAt).toLocaleString() : ''
+        })) : []
+      };
+
+      setData(normalized);
     } catch (e) {
       setError(e.message);
+    } finally {
       setLoading(false);
     }
   };
+
+  // Initialize Leaflet map once data is loaded
+  useEffect(() => {
+    if (!data?.latestLocation) return;
+
+    const ensureLeaflet = () => new Promise((resolve) => {
+      if (window.L) return resolve();
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
+      document.head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
+      js.onload = () => resolve();
+      document.head.appendChild(js);
+    });
+
+    const initMap = async () => {
+      await ensureLeaflet();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      const lat = Number(data.latestLocation.lat) || 0;
+      const lng = Number(data.latestLocation.lng) || 0;
+      const map = window.L.map(mapRef.current, { center: [lat, lng], zoom: 14 });
+      mapInstanceRef.current = map;
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      // Build a type-specific icon and show vehicle number in popup
+      const t = String(data.vehicle?.type || '').toLowerCase();
+      let svg = '';
+      if (t.includes('bus')) {
+        svg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10z"/></svg>`;
+      } else if (t.includes('truck')) {
+        svg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/></svg>`;
+      } else {
+        svg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11C5.84 5 5.28 5.42 5.08 6.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-1.92-5.99z"/></svg>`;
+      }
+      const icon = window.L.divIcon({
+        html: `<div style="background:#2563eb;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 4px 8px rgba(0,0,0,.25);position:relative;">${svg}<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #2563eb;"></div></div>`,
+        iconSize: [38, 46],
+        iconAnchor: [19, 46],
+        className: 'vehicle-marker'
+      });
+      const marker = window.L.marker([lat, lng], { icon }).addTo(map);
+      marker.bindPopup(`<strong>${data.vehicle?.vehicleNumber || ''}</strong><br/>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`).openPopup();
+    };
+
+    initMap();
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [data]);
 
   const togglePasswordVisibility = (field) => {
     setShowPassword(prev => ({
@@ -313,21 +381,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                   </h4>
                 </div>
                 <div className="flex-1 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <MapPin className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">Map Integration</h3>
-                      <p className="text-gray-600 mb-4">Integrate with Google Maps, OpenStreetMap, or Leaflet</p>
-                      <div className="bg-white rounded-lg p-4 border">
-                        <p className="text-sm text-gray-700">
-                          <strong>Current Position:</strong><br />
-                          Latitude: {data.latestLocation.lat}<br />
-                          Longitude: {data.latestLocation.lng}<br />
-                          Address: {data.latestLocation.address}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
                 </div>
               </div>
             )}

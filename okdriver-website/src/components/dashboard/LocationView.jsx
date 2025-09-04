@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
-function LocationView() {
+function LocationView({ vehicles = [] }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const token = useMemo(() => (typeof window !== 'undefined' ? localStorage.getItem('companyToken') : ''), []);
 
   useEffect(() => {
     // Load Leaflet CSS and JS
@@ -109,121 +110,137 @@ function LocationView() {
       const busIcon = createVehicleIcon('#1976D2', 'bus', 32); // Blue
       const truckIcon = createVehicleIcon('#FF6B35', 'truck', 30); // Orange
 
-      // Vehicle data with different locations around Delhi
-      const vehicles = [
-        { id: 1, type: 'car', name: 'Car A1-2345', lat: 28.6139, lng: 77.2090, icon: carIcon, driver: 'Rahul Kumar', status: 'Available' },
-        { id: 2, type: 'car', name: 'Car B2-3456', lat: 28.6304, lng: 77.2177, icon: carIcon, driver: 'Amit Singh', status: 'On Trip' },
-        { id: 3, type: 'car', name: 'Car C3-4567', lat: 28.5921, lng: 77.2507, icon: carIcon, driver: 'Priya Sharma', status: 'Available' },
-        { id: 4, type: 'car', name: 'Car D4-5678', lat: 28.6469, lng: 77.2167, icon: carIcon, driver: 'Vikash Gupta', status: 'Available' },
-        
-        { id: 5, type: 'bus', name: 'Bus DL-1C-5789', lat: 28.5706, lng: 77.1956, icon: busIcon, driver: 'Suresh Yadav', status: 'On Route' },
-        { id: 6, type: 'bus', name: 'Bus DL-1D-6890', lat: 28.6562, lng: 77.2410, icon: busIcon, driver: 'Rajesh Kumar', status: 'Available' },
-        { id: 7, type: 'bus', name: 'Bus DL-1E-7901', lat: 28.6234, lng: 77.2855, icon: busIcon, driver: 'Manoj Tiwari', status: 'On Route' },
-        
-        { id: 8, type: 'truck', name: 'Truck HR-26-8012', lat: 28.6040, lng: 77.2664, icon: truckIcon, driver: 'Deepak Rana', status: 'Loading' },
-        { id: 9, type: 'truck', name: 'Truck UP-80-9123', lat: 28.5355, lng: 77.3910, icon: truckIcon, driver: 'Santosh Kumar', status: 'Available' },
-        { id: 10, type: 'truck', name: 'Truck RJ-14-0234', lat: 28.6692, lng: 77.4538, icon: truckIcon, driver: 'Ravi Sharma', status: 'In Transit' }
-      ];
-
-      // Add markers for each vehicle
-      vehicles.forEach(vehicle => {
-        const marker = window.L.marker([vehicle.lat, vehicle.lng], {
-          icon: vehicle.icon
-        }).addTo(map);
-
-        const statusColor = vehicle.status === 'Available' ? '#00D084' : 
-                           vehicle.status === 'On Trip' || vehicle.status === 'On Route' || vehicle.status === 'In Transit' ? '#FF9500' : 
-                           '#DC2626';
-
-        // Add popup with vehicle information
-        marker.bindPopup(`
-          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-width: 200px;">
-            <div style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
-              <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">${vehicle.name}</h3>
-              <div style="display: inline-block; background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; margin-top: 4px;">
-                ${vehicle.status}
-              </div>
-            </div>
-            <div style="font-size: 14px; line-height: 1.4;">
-              <div style="margin-bottom: 4px;">
-                <strong style="color: #333;">Driver:</strong> <span style="color: #666;">${vehicle.driver}</span>
-              </div>
-              <div style="margin-bottom: 4px;">
-                <strong style="color: #333;">Type:</strong> <span style="color: #666; text-transform: capitalize;">${vehicle.type}</span>
-              </div>
-              <div style="font-size: 12px; color: #888; margin-top: 8px;">
-                📍 ${vehicle.lat.toFixed(4)}, ${vehicle.lng.toFixed(4)}
-              </div>
-            </div>
-          </div>
-        `, {
-          maxWidth: 250,
-          className: 'custom-popup'
-        });
-
-        // Add click event
-        marker.on('click', function() {
-          this.openPopup();
-        });
-      });
-
-      // Vehicle count by type
-      const carCount = vehicles.filter(v => v.type === 'car').length;
-      const busCount = vehicles.filter(v => v.type === 'bus').length;
-      const truckCount = vehicles.filter(v => v.type === 'truck').length;
-
-      // Add a custom control for vehicle stats
-      const statsControl = window.L.control({ position: 'topright' });
-      statsControl.onAdd = function() {
-        const div = window.L.DomUtil.create('div', 'vehicle-stats');
-        div.innerHTML = `
-          <div style="background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-width: 200px;">
-            <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #1a1a1a; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 8px;">Vehicle Summary</h4>
-            
-            <div style="display: flex; align-items: center; margin: 8px 0; padding: 6px 0;">
-              <div style="background: #00D084; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11C5.84 5 5.28 5.42 5.08 6.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-1.92-5.99z"/>
-                </svg>
-              </div>
-              <div style="flex: 1;">
-                <span style="font-size: 13px; color: #333; font-weight: 500;">Cars</span>
-                <div style="font-size: 16px; font-weight: 600; color: #00D084;">${carCount}</div>
-              </div>
-            </div>
-            
-            <div style="display: flex; align-items: center; margin: 8px 0; padding: 6px 0;">
-              <div style="background: #1976D2; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10z"/>
-                </svg>
-              </div>
-              <div style="flex: 1;">
-                <span style="font-size: 13px; color: #333; font-weight: 500;">Buses</span>
-                <div style="font-size: 16px; font-weight: 600; color: #1976D2;">${busCount}</div>
-              </div>
-            </div>
-            
-            <div style="display: flex; align-items: center; margin: 8px 0; padding: 6px 0;">
-              <div style="background: #FF6B35; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
-                </svg>
-              </div>
-              <div style="flex: 1;">
-                <span style="font-size: 13px; color: #333; font-weight: 500;">Trucks</span>
-                <div style="font-size: 16px; font-weight: 600; color: #FF6B35;">${truckCount}</div>
-              </div>
-            </div>
-            
-            <div style="border-top: 1px solid #eee; margin-top: 12px; padding-top: 8px; font-size: 12px; color: #888; text-align: center;">
-              Total: ${vehicles.length} vehicles
-            </div>
-          </div>
-        `;
-        return div;
+      // Helper to pick icon by type
+      const getIconFor = (type) => {
+        const t = String(type || '').toLowerCase();
+        if (t.includes('bus')) return busIcon;
+        if (t.includes('truck')) return truckIcon;
+        return carIcon;
       };
-      statsControl.addTo(map);
+
+      // Fetch live locations for provided vehicles and render markers
+      const renderMarkers = async () => {
+        const markers = [];
+        const actualVehiclesOnMap = []; // Track vehicles that actually have locations
+        
+        for (const v of vehicles) {
+          try {
+            const res = await fetch(`http://localhost:5000/api/company/vehicles/location/${encodeURIComponent(v.name)}`);
+            if (!res.ok) continue;
+            const { location } = await res.json();
+            if (!location) continue;
+            const lat = Number(location.lat);
+            const lng = Number(location.lng);
+            if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+            
+            // Only add to actualVehiclesOnMap if we successfully have location data
+            actualVehiclesOnMap.push(v);
+            
+            const marker = window.L.marker([lat, lng], { icon: getIconFor(v.type) }).addTo(map);
+            marker.bindPopup(`
+              <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-width: 200px;">
+                <div style="border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
+                  <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">${v.name}</h3>
+                </div>
+                <div style="font-size: 14px; line-height: 1.4;">
+                  <div style="font-size: 12px; color: #888; margin-top: 8px;">
+                    📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                  </div>
+                </div>
+              </div>
+            `, { maxWidth: 250, className: 'custom-popup' });
+            markers.push(marker);
+          } catch (error) {
+            console.log(`Failed to get location for vehicle ${v.name}:`, error);
+            // ignore per-vehicle failures
+          }
+        }
+
+        // Fit bounds if we have markers
+        if (markers.length) {
+          const group = new window.L.featureGroup(markers);
+          map.fitBounds(group.getBounds().pad(0.2));
+        }
+
+        // Count vehicles by type - ONLY from vehicles that actually have location data
+        const carCount = actualVehiclesOnMap.filter(v => 
+          String(v.type || '').toLowerCase().includes('car')
+        ).length;
+        
+        const busCount = actualVehiclesOnMap.filter(v => 
+          String(v.type || '').toLowerCase().includes('bus')
+        ).length;
+        
+        const truckCount = actualVehiclesOnMap.filter(v => 
+          String(v.type || '').toLowerCase().includes('truck')
+        ).length;
+
+        // Add a custom control for vehicle stats - using actual counts
+        const statsControl = window.L.control({ position: 'topright' });
+        statsControl.onAdd = function() {
+          const div = window.L.DomUtil.create('div', 'vehicle-stats');
+          div.style.margin = '10px';
+          div.innerHTML = `
+            <div style="
+              background: white; 
+              padding: 12px; 
+              border-radius: 8px; 
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              width: 200px;
+              max-height: 280px;
+              overflow: hidden;
+            ">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 6px;">Vehicle Summary</h4>
+              
+              <div style="display: flex; align-items: center; margin: 6px 0; padding: 4px 0;">
+                <div style="background: #00D084; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11C5.84 5 5.28 5.42 5.08 6.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-1.92-5.99z"/>
+                  </svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <span style="font-size: 12px; color: #333; font-weight: 500; display: block;">Cars</span>
+                  <div style="font-size: 18px; font-weight: 600; color: #00D084; line-height: 1;">${carCount}</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; margin: 6px 0; padding: 4px 0;">
+                <div style="background: #1976D2; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                    <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10z"/>
+                  </svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <span style="font-size: 12px; color: #333; font-weight: 500; display: block;">Buses</span>
+                  <div style="font-size: 18px; font-weight: 600; color: #1976D2; line-height: 1;">${busCount}</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; margin: 6px 0; padding: 4px 0;">
+                <div style="background: #FF6B35; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                    <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+                  </svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <span style="font-size: 12px; color: #333; font-weight: 500; display: block;">Trucks</span>
+                  <div style="font-size: 18px; font-weight: 600; color: #FF6B35; line-height: 1;">${truckCount}</div>
+                </div>
+              </div>
+              
+              <div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 6px; font-size: 11px; color: #888; text-align: center; line-height: 1.3;">
+                Total: ${actualVehiclesOnMap.length} vehicles with location data
+                ${vehicles.length > actualVehiclesOnMap.length ? `<br/><span style="color: #f59e0b;">(${vehicles.length - actualVehiclesOnMap.length} vehicles location)</span>` : ''}
+              </div>
+            </div>
+          `;
+          return div;
+        };
+        statsControl.addTo(map);
+      };
+
+      renderMarkers();
 
       // Add custom styles
       const style = document.createElement('style');
@@ -254,7 +271,7 @@ function LocationView() {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [vehicles]); // Added vehicles as dependency
 
   return (
     <div style={{ 
