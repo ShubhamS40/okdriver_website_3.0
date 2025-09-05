@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin, MessageCircle, Users, Eye, EyeOff, X, Car, Calendar, Clock } from 'lucide-react';
+import { MapPin, MessageCircle, Users, Eye, EyeOff, X, Car, Calendar, Clock, ChevronDown } from 'lucide-react';
 
 export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [data, setData] = useState(null);
@@ -9,6 +9,9 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [showChat, setShowChat] = useState(false);
   const [selectedList, setSelectedList] = useState(null);
   const [showPassword, setShowPassword] = useState({});
+  const [chatMode, setChatMode] = useState(''); // 'vehicle', 'client-list', or ''
+  const [selectedChatOption, setSelectedChatOption] = useState(null);
+  const [showChatOptions, setShowChatOptions] = useState(false);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
@@ -143,6 +146,15 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     };
   }, [data]);
 
+  // Add the missing function to get selected list emails
+  const getSelectedListEmails = () => {
+    if (chatMode === 'client-list' && selectedChatOption && data?.clientLists) {
+      const selectedList = data.clientLists.find(list => list.id === selectedChatOption.id);
+      return selectedList ? selectedList.emails : [];
+    }
+    return [];
+  };
+
   const togglePasswordVisibility = (field) => {
     setShowPassword(prev => ({
       ...prev,
@@ -154,10 +166,51 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     setSelectedList(selectedList?.id === list.id ? null : list);
   };
 
+  const handleChatClick = () => {
+    if (!showChat) {
+      setShowChatOptions(true);
+    } else {
+      setShowChat(false);
+      setChatMode('');
+      setSelectedChatOption(null);
+      setShowChatOptions(false);
+    }
+  };
+
+  const handleChatOptionSelect = (option) => {
+    setSelectedChatOption(option);
+    setShowChatOptions(false);
+    setShowChat(true);
+    
+    if (option.type === 'vehicle') {
+      setChatMode('vehicle');
+    } else if (option.type === 'client-list') {
+      setChatMode('client-list');
+    }
+  };
+
   const sendMessage = () => {
     if (!chatInput.trim()) return;
     // Add message logic here
     setChatInput('');
+  };
+
+  const getChatTitle = () => {
+    if (chatMode === 'vehicle') {
+      return `Chat with Vehicle: ${data?.vehicle?.vehicleNumber}`;
+    } else if (chatMode === 'client-list' && selectedChatOption) {
+      return `Chat with List: ${selectedChatOption.name}`;
+    }
+    return 'Chat Messages';
+  };
+
+  // Generate chat placeholder text
+  const getChatPlaceholder = () => {
+    if (chatMode === 'client-list' && selectedChatOption) {
+      const emails = getSelectedListEmails();
+      return `Type message to ${selectedChatOption.name} list (${emails.length} emails)...`;
+    }
+    return `Type your message to ${selectedChatOption?.name || 'chat'}...`;
   };
 
   useEffect(() => { 
@@ -185,25 +238,83 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     );
   }
 
+  // Chat options data
+  const chatOptions = [
+    {
+      type: 'vehicle',
+      name: `Vehicle: ${data?.vehicle?.vehicleNumber}`,
+      icon: Car,
+      description: 'Chat with vehicle driver'
+    },
+    ...data?.clientLists?.map(list => ({
+      type: 'client-list',
+      id: list.id,
+      name: list.name,
+      icon: Users,
+      description: `${list.emailCount} emails`
+    })) || []
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white w-full max-w-7xl h-full max-h-[90vh] rounded-lg overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+      <div className="bg-white w-full max-w-7xl h-full max-h-[90vh] rounded-lg overflow-hidden flex flex-col relative">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 relative">
           <div className="flex items-center gap-3">
             <Car className="w-6 h-6 text-blue-600" />
             <h3 className="font-semibold text-xl text-gray-800">Vehicle Details - {data?.vehicle?.vehicleNumber}</h3>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setShowChat(!showChat)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                showChat ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <MessageCircle className="w-4 h-4" />
-              Chat
-            </button>
+            <div className="relative">
+              <button 
+                onClick={handleChatClick}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  showChat ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                <MessageCircle className="w-4 h-4" />
+                Chat
+                {!showChat && <ChevronDown className="w-4 h-4" />}
+              </button>
+              
+              {/* Chat Options Dropdown - Fixed z-index issue */}
+              {showChatOptions && (
+                <>
+                  {/* Backdrop to close dropdown when clicked outside */}
+                  <div 
+                    className="fixed inset-0 z-[9998]" 
+                    onClick={() => setShowChatOptions(false)}
+                  />
+                  {/* Dropdown with higher z-index */}
+                  <div 
+                    className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-96 overflow-y-auto"
+                    style={{ zIndex: 9999 }}
+                  >
+                    <div className="p-4">
+                      <h4 className="font-semibold text-gray-800 mb-3">Select Chat Option</h4>
+                      <div className="space-y-2">
+                        {chatOptions.map((option, index) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <button
+                              key={`${option.type}-${option.id || index}`}
+                              onClick={() => handleChatOptionSelect(option)}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors text-left"
+                            >
+                              <IconComponent className="w-5 h-5 text-blue-600" />
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-800">{option.name}</div>
+                                <div className="text-sm text-gray-600">{option.description}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700 p-2">
               <X className="w-5 h-5" />
             </button>
@@ -334,10 +445,22 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
               /* Chat UI */
               <div className="flex-1 flex flex-col">
                 <div className="px-6 py-4 border-b bg-gray-50">
-                  <h4 className="font-semibold text-lg flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-blue-600" />
-                    Chat Messages
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-lg flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5 text-blue-600" />
+                      {getChatTitle()}
+                    </h4>
+                    {selectedChatOption && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        {chatMode === 'vehicle' ? (
+                          <Car className="w-4 h-4" />
+                        ) : (
+                          <Users className="w-4 h-4" />
+                        )}
+                        <span>{selectedChatOption.name}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex-1 overflow-auto p-4 space-y-4">
                   {data.chats.map((chat) => (
@@ -352,6 +475,13 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                       <p className="text-gray-700">{chat.message}</p>
                     </div>
                   ))}
+                  {data.chats.length === 0 && (
+                    <div className="text-center text-gray-500 mt-8">
+                      <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No messages yet</p>
+                      <p className="text-sm">Start a conversation!</p>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 border-t bg-white">
                   <div className="flex gap-2">
@@ -360,7 +490,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Type your message..."
+                      placeholder={getChatPlaceholder()}
                     />
                     <button
                       onClick={sendMessage}
