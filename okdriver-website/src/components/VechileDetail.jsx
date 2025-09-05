@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin, MessageCircle, Users, Eye, EyeOff, X, Car, Calendar, Clock, ChevronDown } from 'lucide-react';
+import { MapPin, MessageCircle, Users, Eye, EyeOff, X, Car, Calendar, Clock, ChevronDown, Send } from 'lucide-react';
+import io from 'socket.io-client';
 
 export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [data, setData] = useState(null);
@@ -12,8 +13,12 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [chatMode, setChatMode] = useState(''); // 'vehicle', 'client-list', or ''
   const [selectedChatOption, setSelectedChatOption] = useState(null);
   const [showChatOptions, setShowChatOptions] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const headers = useMemo(() => ({
     'Content-Type': 'application/json',
@@ -190,8 +195,19 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   };
 
   const sendMessage = () => {
-    if (!chatInput.trim()) return;
-    // Add message logic here
+    if (!chatInput.trim() || !socket || !isConnected) return;
+
+    if (chatMode === 'vehicle') {
+      // Send message to vehicle via socket
+      socket.emit('company:send_message_to_vehicle', {
+        vehicleId: parseInt(vehicleId),
+        message: chatInput.trim()
+      });
+    } else if (chatMode === 'client-list') {
+      // Handle client list messaging (email functionality)
+      console.log('Client list messaging not implemented yet');
+    }
+
     setChatInput('');
   };
 
@@ -211,6 +227,70 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       return `Type message to ${selectedChatOption.name} list (${emails.length} emails)...`;
     }
     return `Type your message to ${selectedChatOption?.name || 'chat'}...`;
+  };
+
+  // Initialize socket connection
+  useEffect(() => {
+    if (companyToken && vehicleId) {
+      const newSocket = io('http://localhost:5000', {
+        auth: {
+          token: companyToken
+        }
+      });
+
+      newSocket.on('connect', () => {
+        console.log('Connected to socket server');
+        setIsConnected(true);
+      });
+
+      newSocket.on('disconnect', () => {
+        console.log('Disconnected from socket server');
+        setIsConnected(false);
+      });
+
+      newSocket.on('new_message', (message) => {
+        setMessages(prev => [...prev, message]);
+        scrollToBottom();
+      });
+
+      newSocket.on('error', (error) => {
+        console.error('Socket error:', error);
+      });
+
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.close();
+      };
+    }
+  }, [companyToken, vehicleId]);
+
+  // Load chat history when chat mode changes to vehicle
+  useEffect(() => {
+    if (chatMode === 'vehicle' && vehicleId && socket) {
+      loadChatHistory();
+    }
+  }, [chatMode, vehicleId, socket]);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadChatHistory = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
+      const json = await res.json();
+      if (res.ok) {
+        setMessages(json.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
   };
 
   useEffect(() => { 
@@ -463,27 +543,67 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                   </div>
                 </div>
                 <div className="flex-1 overflow-auto p-4 space-y-4">
-                  {data.chats.map((chat) => (
-                    <div key={chat.id} className="bg-white rounded-lg p-4 border">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-800">{chat.senderType}</span>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {chat.timestamp}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{chat.message}</p>
-                    </div>
-                  ))}
-                  {data.chats.length === 0 && (
-                    <div className="text-center text-gray-500 mt-8">
-                      <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <p>No messages yet</p>
-                      <p className="text-sm">Start a conversation!</p>
-                    </div>
+                  {chatMode === 'vehicle' ? (
+                    <>
+                      {messages.map((message) => (
+                        <div key={message.id} className={`flex ${message.senderType === 'COMPANY' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            message.senderType === 'COMPANY' 
+                              ? 'bg-blue-500 text-white' 
+                              : 'bg-gray-200 text-gray-800'
+                          }`}>
+                            <div className="text-sm font-medium mb-1">
+                              {message.senderType === 'COMPANY' ? 'You' : 'Driver'}
+                            </div>
+                            <div className="text-sm">{message.message}</div>
+                            <div className="text-xs opacity-75 mt-1">
+                              {new Date(message.createdAt).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {messages.length === 0 && (
+                        <div className="text-center text-gray-500 mt-8">
+                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p>No messages yet</p>
+                          <p className="text-sm">Start a conversation with the driver!</p>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </>
+                  ) : (
+                    <>
+                      {data.chats.map((chat) => (
+                        <div key={chat.id} className="bg-white rounded-lg p-4 border">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-800">{chat.senderType}</span>
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {chat.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-gray-700">{chat.message}</p>
+                        </div>
+                      ))}
+                      {data.chats.length === 0 && (
+                        <div className="text-center text-gray-500 mt-8">
+                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p>No messages yet</p>
+                          <p className="text-sm">Start a conversation!</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="p-4 border-t bg-white">
+                  {chatMode === 'vehicle' && (
+                    <div className="flex items-center gap-2 mb-2 text-xs">
+                      <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
+                        {isConnected ? 'Connected' : 'Disconnected'}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <input
                       value={chatInput}
@@ -491,11 +611,14 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder={getChatPlaceholder()}
+                      disabled={chatMode === 'vehicle' && !isConnected}
                     />
                     <button
                       onClick={sendMessage}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      disabled={!chatInput.trim() || (chatMode === 'vehicle' && !isConnected)}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
+                      <Send className="w-4 h-4" />
                       Send
                     </button>
                   </div>
