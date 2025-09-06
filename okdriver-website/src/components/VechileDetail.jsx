@@ -24,7 +24,8 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     'Content-Type': 'application/json',
     ...(companyToken ? { Authorization: `Bearer ${companyToken}` } : {})
   }), [companyToken]);
-
+   console.log(companyToken);
+   
   const load = async () => {
     setLoading(true);
     setError('');
@@ -194,15 +195,39 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     }
   };
 
-  const sendMessage = () => {
-    if (!chatInput.trim() || !socket || !isConnected) return;
+  const sendMessage = async () => {
+    if (!chatInput.trim()) return;
 
     if (chatMode === 'vehicle') {
-      // Send message to vehicle via socket
-      socket.emit('company:send_message_to_vehicle', {
-        vehicleId: parseInt(vehicleId),
-        message: chatInput.trim()
-      });
+      if (socket && isConnected) {
+        // Send message via socket for real-time communication
+        console.log('📤 Sending message via socket:', chatInput.trim());
+        socket.emit('chat:send', {
+          vehicleId: parseInt(vehicleId),
+          message: chatInput.trim()
+        });
+        // Don't add message locally - let it come through socket to avoid echoing
+      } else {
+        // Fallback to HTTP API if socket is not connected
+        try {
+          const response = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/send-message`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              message: chatInput.trim()
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            // Add message to local state only for HTTP fallback
+            setMessages(prev => [...prev, result.data]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+        }
+      }
     } else if (chatMode === 'client-list') {
       // Handle client list messaging (email functionality)
       console.log('Client list messaging not implemented yet');
@@ -234,7 +259,9 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     if (companyToken && vehicleId) {
       const newSocket = io('http://localhost:5000', {
         auth: {
-          token: companyToken
+          token: companyToken,
+          role: 'COMPANY',
+          vehicleId: parseInt(vehicleId)
         }
       });
 
@@ -249,7 +276,14 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       });
 
       newSocket.on('new_message', (message) => {
-        setMessages(prev => [...prev, message]);
+        console.log('📨 Received message:', message);
+        setMessages(prev => {
+          // Check if message already exists to avoid duplicates
+          if (!prev.some(m => m.id === message.id)) {
+            return [...prev, message];
+          }
+          return prev;
+        });
         scrollToBottom();
       });
 
@@ -283,10 +317,20 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   const loadChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
-      const json = await res.json();
-      if (res.ok) {
-        setMessages(json.data || []);
+      if (socket && isConnected) {
+        // Use socket to get chat history
+        socket.emit('chat:history', parseInt(vehicleId), (response) => {
+          if (response.ok) {
+            setMessages(response.chats || []);
+          }
+        });
+      } else {
+        // Fallback to HTTP API
+        const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
+        const json = await res.json();
+        if (res.ok) {
+          setMessages(json.data || []);
+        }
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
