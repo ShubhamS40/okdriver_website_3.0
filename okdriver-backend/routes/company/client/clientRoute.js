@@ -104,6 +104,43 @@ router.get('/vehicles-list-assignments', verifyCompanyAuth, getVehicleListAssign
 // Vehicle details (location, lists, chats)
 router.get('/vehicle/:vehicleId/details', verifyCompanyAuth, getVehicleDetails);
 
+// Import chat controllers
+const {
+  getClientChatHistory,
+  sendCompanyMessageToClient,
+  sendClientMessage,
+  markClientMessagesAsRead,
+  getClientUnreadCount,
+} = require('../../../controller/company/client/clientChatController');
+
+// Import additional middleware
+const companyOrClientAuth = require('../../../middleware/companyOrClientAuth');
+
 console.log('✅ Client routes loaded with assignListToVehicle route');
+
+// @route   GET /api/company/clients/:clientId/chat-history
+// @desc    Get chat history for a specific client (company or client token)
+router.get('/:clientId/chat-history', companyOrClientAuth, getClientChatHistory);
+
+// @route   POST /api/company/clients/:clientId/send-message
+// @desc    Send message from company to client (company token) or client to company (client token)
+router.post('/:clientId/send-message', companyOrClientAuth, (req, res) => {
+  // Route to appropriate handler based on user type
+  if (req.userType === 'company') {
+    return sendCompanyMessageToClient(req, res);
+  } else if (req.userType === 'client') {
+    return sendClientMessage(req, res);
+  } else {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+});
+
+// @route   PUT /api/company/clients/:clientId/mark-read
+// @desc    Mark messages as read (client token)
+router.put('/:clientId/mark-read', companyOrClientAuth, markClientMessagesAsRead);
+
+// @route   GET /api/company/clients/:clientId/unread-count
+// @desc    Get unread message count for client (client token)
+router.get('/:clientId/unread-count', companyOrClientAuth, getClientUnreadCount);
 
 module.exports = router;

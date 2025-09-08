@@ -10,15 +10,19 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [showChat, setShowChat] = useState(false);
   const [selectedList, setSelectedList] = useState(null);
   const [showPassword, setShowPassword] = useState({});
-  const [chatMode, setChatMode] = useState(''); // 'vehicle', 'client-list', or ''
+  const [chatMode, setChatMode] = useState(''); // 'vehicle', 'client-list', 'individual-client', or ''
   const [selectedChatOption, setSelectedChatOption] = useState(null);
   const [showChatOptions, setShowChatOptions] = useState(false);
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientMessages, setClientMessages] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const socketRef = useRef(null); // Add ref to track socket instance
 
   const headers = useMemo(() => ({
     'Content-Type': 'application/json',
@@ -95,7 +99,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   // Initialize Leaflet map once data is loaded
   useEffect(() => {
-    if (!data?.latestLocation) return;
+    if (!data?.latestLocation || showChat) return;
 
     const ensureLeaflet = () => new Promise((resolve) => {
       if (window.L) return resolve();
@@ -150,7 +154,23 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
         mapInstanceRef.current = null;
       }
     };
-  }, [data]);
+  }, [data, showChat]);
+
+  // Cleanup socket connection properly
+  const cleanupSocket = () => {
+    if (socketRef.current) {
+      console.log('🧹 Cleaning up socket connection...');
+      try {
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+      } catch (error) {
+        console.error('Error during socket cleanup:', error);
+      }
+      socketRef.current = null;
+      setSocket(null);
+      setIsConnected(false);
+    }
+  };
 
   // Add the missing function to get selected list emails
   const getSelectedListEmails = () => {
@@ -192,7 +212,24 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       setChatMode('vehicle');
     } else if (option.type === 'client-list') {
       setChatMode('client-list');
+    } else if (option.type === 'individual-client') {
+      setChatMode('individual-client');
+      setSelectedClient(option.client);
+      // Load chat history for the selected client
+      loadClientChatHistory(option.client.id);
     }
+  };
+
+  const handleClientClick = (client) => {
+    setSelectedClient(client);
+    setChatMode('individual-client');
+    setShowChat(true);
+    setSelectedChatOption({
+      type: 'individual-client',
+      name: `Client: ${client.email}`,
+      client: client
+    });
+    loadClientChatHistory(client.id);
   };
 
   const sendMessage = async () => {
@@ -202,38 +239,68 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       if (socket && isConnected) {
         // Send message via socket for real-time communication
         console.log('📤 Sending message via socket:', chatInput.trim());
-        socket.emit('chat:send', {
-          vehicleId: parseInt(vehicleId),
-          message: chatInput.trim()
-        });
-        // Don't add message locally - let it come through socket to avoid echoing
+        try {
+          socket.emit('chat:send', {
+            vehicleId: parseInt(vehicleId),
+            message: chatInput.trim()
+          });
+          // Don't add message locally - let it come through socket to avoid echoing
+        } catch (error) {
+          console.error('Error sending socket message:', error);
+          // Fallback to HTTP if socket fails
+          await sendMessageHTTP();
+        }
       } else {
         // Fallback to HTTP API if socket is not connected
-        try {
-          const response = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/send-message`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              message: chatInput.trim()
-            })
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            // Add message to local state only for HTTP fallback
-            setMessages(prev => [...prev, result.data]);
-            scrollToBottom();
-          }
-        } catch (error) {
-          console.error('Error sending message:', error);
-        }
+        await sendMessageHTTP();
       }
     } else if (chatMode === 'client-list') {
       // Handle client list messaging (email functionality)
       console.log('Client list messaging not implemented yet');
+    } else if (chatMode === 'individual-client' && selectedClient) {
+      // Send message to individual client
+      try {
+        const response = await fetch(`http://localhost:5000/api/company/clients/${selectedClient.id}/send-message`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            message: chatInput.trim()
+          })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          // Add message to local state
+          setClientMessages(prev => [...prev, result.data]);
+          scrollToBottom();
+        }
+      } catch (error) {
+        console.error('Error sending message to client:', error);
+      }
     }
 
     setChatInput('');
+  };
+
+  const sendMessageHTTP = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/send-message`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          message: chatInput.trim()
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        // Add message to local state only for HTTP fallback
+        setMessages(prev => [...prev, result.data]);
+        scrollToBottom();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const getChatTitle = () => {
@@ -241,6 +308,8 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       return `Chat with Vehicle: ${data?.vehicle?.vehicleNumber}`;
     } else if (chatMode === 'client-list' && selectedChatOption) {
       return `Chat with List: ${selectedChatOption.name}`;
+    } else if (chatMode === 'individual-client' && selectedClient) {
+      return `Chat with Client: ${selectedClient.email}`;
     }
     return 'Chat Messages';
   };
@@ -250,90 +319,201 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     if (chatMode === 'client-list' && selectedChatOption) {
       const emails = getSelectedListEmails();
       return `Type message to ${selectedChatOption.name} list (${emails.length} emails)...`;
+    } else if (chatMode === 'individual-client' && selectedClient) {
+      return `Type your message to ${selectedClient.email}...`;
     }
     return `Type your message to ${selectedChatOption?.name || 'chat'}...`;
   };
 
-  // Initialize socket connection
+  // Initialize socket connection with proper error handling
   useEffect(() => {
-    if (companyToken && vehicleId) {
-      const newSocket = io('http://localhost:5000', {
-        auth: {
-          token: companyToken,
-          role: 'COMPANY',
-          vehicleId: parseInt(vehicleId)
+    if (companyToken && vehicleId && !socketRef.current) {
+      console.log('🔌 Initializing socket connection...');
+      
+      // Test server connectivity first
+      const testServerConnectivity = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/test-socketio');
+          const data = await response.json();
+          console.log('✅ Server connectivity test:', data);
+        } catch (error) {
+          console.error('❌ Server connectivity test failed:', error);
         }
-      });
-
-      newSocket.on('connect', () => {
-        console.log('Connected to socket server');
-        setIsConnected(true);
-      });
-
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from socket server');
-        setIsConnected(false);
-      });
-
-      newSocket.on('new_message', (message) => {
-        console.log('📨 Received message:', message);
-        setMessages(prev => {
-          // Check if message already exists to avoid duplicates
-          if (!prev.some(m => m.id === message.id)) {
-            return [...prev, message];
-          }
-          return prev;
-        });
-        scrollToBottom();
-      });
-
-      newSocket.on('error', (error) => {
-        console.error('Socket error:', error);
-      });
-
-      setSocket(newSocket);
-
-      return () => {
-        newSocket.close();
       };
+      
+      testServerConnectivity();
+      
+      try {
+        const newSocket = io('http://localhost:5000', {
+          auth: {
+            token: companyToken,
+            role: 'COMPANY',
+            vehicleId: parseInt(vehicleId)
+          },
+          forceNew: true,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 10000,
+          // Add these options to prevent WebSocket issues
+          transports: ['websocket', 'polling'],
+          upgrade: true,
+          rememberUpgrade: false
+        });
+
+        // Store reference
+        socketRef.current = newSocket;
+        setSocket(newSocket);
+
+        newSocket.on('connect', () => {
+          console.log('✅ Connected to socket server');
+          setIsConnected(true);
+        });
+
+        newSocket.on('disconnect', (reason) => {
+          console.log('❌ Disconnected from socket server:', reason);
+          setIsConnected(false);
+        });
+
+        newSocket.on('connect_error', (error) => {
+          console.error('🔴 Socket connection error:', error);
+          console.error('🔴 Error details:', {
+            message: error.message,
+            description: error.description,
+            type: error.type,
+            context: error.context
+          });
+          setIsConnected(false);
+        });
+
+        newSocket.on('new_message', (message) => {
+          console.log('📨 Received message:', message);
+          
+          // Handle vehicle messages
+          if (message.vehicleId) {
+            setMessages(prev => {
+              // Check if message already exists to avoid duplicates
+              if (!prev.some(m => m.id === message.id)) {
+                return [...prev, message];
+              }
+              return prev;
+            });
+          }
+          
+          // Handle client messages
+          if (message.clientId) {
+            setClientMessages(prev => {
+              // Check if message already exists to avoid duplicates
+              if (!prev.some(m => m.id === message.id)) {
+                return [...prev, message];
+              }
+              return prev;
+            });
+          }
+          
+          scrollToBottom();
+        });
+
+        newSocket.on('error', (error) => {
+          console.error('🔴 Socket error:', error);
+        });
+
+        // Handle WebSocket close events properly
+        newSocket.on('close', (code, reason) => {
+          console.log('🔒 Socket closed:', code, reason);
+          setIsConnected(false);
+        });
+
+      } catch (error) {
+        console.error('🔴 Error initializing socket:', error);
+      }
     }
+
+    // Cleanup function
+    return () => {
+      cleanupSocket();
+    };
   }, [companyToken, vehicleId]);
+
+  // Cleanup on unmount or when component closes
+  useEffect(() => {
+    return () => {
+      cleanupSocket();
+    };
+  }, []);
 
   // Load chat history when chat mode changes to vehicle
   useEffect(() => {
-    if (chatMode === 'vehicle' && vehicleId && socket) {
+    if (chatMode === 'vehicle' && vehicleId && socket && isConnected) {
       loadChatHistory();
     }
-  }, [chatMode, vehicleId, socket]);
+  }, [chatMode, vehicleId, socket, isConnected]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, clientMessages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const loadChatHistory = async () => {
     try {
       if (socket && isConnected) {
-        // Use socket to get chat history
+        // Use socket to get chat history with timeout
+        const timeoutId = setTimeout(() => {
+          console.warn('Socket chat history request timed out, falling back to HTTP');
+          loadChatHistoryHTTP();
+        }, 5000);
+
         socket.emit('chat:history', parseInt(vehicleId), (response) => {
-          if (response.ok) {
+          clearTimeout(timeoutId);
+          if (response && response.ok) {
             setMessages(response.chats || []);
+          } else {
+            console.warn('Socket chat history failed, falling back to HTTP');
+            loadChatHistoryHTTP();
           }
         });
       } else {
         // Fallback to HTTP API
-        const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
-        const json = await res.json();
-        if (res.ok) {
-          setMessages(json.data || []);
-        }
+        await loadChatHistoryHTTP();
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
+    }
+  };
+
+  const loadChatHistoryHTTP = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
+      const json = await res.json();
+      if (res.ok) {
+        setMessages(json.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading chat history via HTTP:', error);
+    }
+  };
+
+  const loadClientChatHistory = async (clientId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/company/clients/${clientId}/chat-history`, { headers });
+      const json = await res.json();
+      if (res.ok) {
+        setClientMessages(json.data || []);
+      } else {
+        console.error('Error loading client chat history:', json.message);
+        setClientMessages([]);
+      }
+    } catch (error) {
+      console.error('Error loading client chat history:', error);
+      setClientMessages([]);
     }
   };
 
@@ -370,20 +550,24 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       icon: Car,
       description: 'Chat with vehicle driver'
     },
-    ...data?.clientLists?.map(list => ({
-      type: 'client-list',
-      id: list.id,
-      name: list.name,
-      icon: Users,
-      description: `${list.emailCount} emails`
-    })) || []
+    // Show individual clients instead of client lists
+    ...data?.clientLists?.flatMap(list => 
+      list.emails?.map(email => ({
+        type: 'individual-client',
+        id: email.id,
+        name: email.email,
+        icon: Users,
+        description: `Client from ${list.name}`,
+        client: email
+      })) || []
+    ) || []
   ];
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
       <div className="bg-white w-full max-w-7xl h-full max-h-[90vh] rounded-lg overflow-hidden flex flex-col relative">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 relative">
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b bg-gray-50 relative">
           <div className="flex items-center gap-3">
             <Car className="w-6 h-6 text-blue-600" />
             <h3 className="font-semibold text-xl text-gray-800">Vehicle Details - {data?.vehicle?.vehicleNumber}</h3>
@@ -439,136 +623,148 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                 </>
               )}
             </div>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 p-2">
+            <button onClick={() => { cleanupSocket(); onClose(); }} className="text-gray-500 hover:text-gray-700 p-2">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Left Side - Vehicle Details & Client Lists */}
-          <div className="w-1/2 border-r overflow-auto">
-            <div className="p-6">
-              {/* Vehicle Information */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Car className="w-5 h-5" />
-                  Vehicle Information
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Vehicle Number</label>
-                    <p className="text-gray-800 font-medium">{data.vehicle.vehicleNumber}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Model</label>
-                    <p className="text-gray-800">{data.vehicle.model}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Status</label>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      data.vehicle.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {data.vehicle.status}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Type</label>
-                    <p className="text-gray-800">{data.vehicle.type}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium text-gray-600">Password</label>
-                    <div className="flex items-center gap-2">
-                      <p className="text-gray-800 font-mono text-sm">
-                        {showPassword.main ? data.vehicle.password : '••••••••••••••••'}
-                      </p>
-                      <button
-                        onClick={() => togglePasswordVisibility('main')}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        {showPassword.main ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+          <div className="w-1/2 border-r flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6">
+                {/* Vehicle Information */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Car className="w-5 h-5" />
+                    Vehicle Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Vehicle Number</label>
+                      <p className="text-gray-800 font-medium">{data.vehicle.vehicleNumber}</p>
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Created</label>
-                    <p className="text-gray-800 text-sm">{data.vehicle.createdAt}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Updated</label>
-                    <p className="text-gray-800 text-sm">{data.vehicle.updatedAt}</p>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Model</label>
+                      <p className="text-gray-800">{data.vehicle.model}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Status</label>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        data.vehicle.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {data.vehicle.status}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Type</label>
+                      <p className="text-gray-800">{data.vehicle.type}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-600">Password</label>
+                      <div className="flex items-center gap-2">
+                        <p className="text-gray-800 font-mono text-sm">
+                          {showPassword.main ? data.vehicle.password : '••••••••••••••••'}
+                        </p>
+                        <button
+                          onClick={() => togglePasswordVisibility('main')}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          {showPassword.main ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Created</label>
+                      <p className="text-gray-800 text-sm">{data.vehicle.createdAt}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Updated</label>
+                      <p className="text-gray-800 text-sm">{data.vehicle.updatedAt}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Location Information */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-blue-600" />
-                  Current Location
-                </h4>
-                <p className="text-gray-700">{data.latestLocation.address}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Coordinates: {data.latestLocation.lat}, {data.latestLocation.lng}
-                </p>
-              </div>
+                {/* Location Information */}
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                    Current Location
+                  </h4>
+                  <p className="text-gray-700">{data.latestLocation.address}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Coordinates: {data.latestLocation.lat}, {data.latestLocation.lng}
+                  </p>
+                </div>
 
-              {/* Client Lists */}
-              <div className="bg-green-50 rounded-lg p-4">
-                <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-green-600" />
-                  Client Lists ({data.clientLists.length})
-                </h4>
-                <div className="space-y-2">
-                  {data.clientLists.map((list) => (
-                    <div key={list.id} className="border rounded-lg bg-white">
-                      <button
-                        onClick={() => handleListClick(list)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Users className="w-4 h-4 text-gray-600" />
-                          <span className="font-medium text-gray-800">{list.name}</span>
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                            {list.emailCount} emails
-                          </span>
-                        </div>
-                        <div className="text-gray-400">
-                          {selectedList?.id === list.id ? '−' : '+'}
-                        </div>
-                      </button>
-                      
-                      {selectedList?.id === list.id && (
-                        <div className="px-4 pb-4 border-t bg-gray-50">
-                          <h5 className="font-medium text-gray-700 mb-2 mt-3">Email Addresses:</h5>
-                          <div className="space-y-2">
-                            {list.emails.map((email) => (
-                              <div key={email.id} className="flex items-center justify-between bg-white rounded p-2 border">
-                                <span className="text-sm text-gray-700">{email.email}</span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  email.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {email.status}
-                                </span>
-                              </div>
-                            ))}
+                {/* Client Lists */}
+                <div className="bg-green-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-green-600" />
+                    Client Lists ({data.clientLists.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {data.clientLists.map((list) => (
+                      <div key={list.id} className="border rounded-lg bg-white">
+                        <button
+                          onClick={() => handleListClick(list)}
+                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 rounded-lg transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Users className="w-4 h-4 text-gray-600" />
+                            <span className="font-medium text-gray-800">{list.name}</span>
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                              {list.emailCount} emails
+                            </span>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          <div className="text-gray-400">
+                            {selectedList?.id === list.id ? '−' : '+'}
+                          </div>
+                        </button>
+                        
+                        {selectedList?.id === list.id && (
+                          <div className="px-4 pb-4 border-t bg-gray-50">
+                            <h5 className="font-medium text-gray-700 mb-2 mt-3">Email Addresses:</h5>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {list.emails.map((email) => (
+                                <div key={email.id} className="flex items-center justify-between bg-white rounded p-2 border">
+                                  <span className="text-sm text-gray-700">{email.email}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      email.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {email.status}
+                                    </span>
+                                    <button
+                                      onClick={() => handleClientClick(email)}
+                                      className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors flex items-center gap-1"
+                                    >
+                                      <MessageCircle className="w-3 h-3" />
+                                      Chat
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Right Side - Map or Chat */}
-          <div className="w-1/2 flex flex-col">
+          <div className="w-1/2 flex flex-col min-h-0">
             {showChat ? (
-              /* Chat UI */
-              <div className="flex-1 flex flex-col">
-                <div className="px-6 py-4 border-b bg-gray-50">
+              /* Chat UI - Fixed scrolling structure */
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Chat Header - Fixed */}
+                <div className="flex-shrink-0 px-6 py-4 border-b bg-gray-50">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-lg flex items-center gap-2">
                       <MessageCircle className="w-5 h-5 text-blue-600" />
@@ -586,65 +782,116 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                     )}
                   </div>
                 </div>
-                <div className="flex-1 overflow-auto p-4 space-y-4">
-                  {chatMode === 'vehicle' ? (
-                    <>
-                      {messages.map((message) => (
-                        <div key={message.id} className={`flex ${message.senderType === 'COMPANY' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.senderType === 'COMPANY' 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-200 text-gray-800'
-                          }`}>
-                            <div className="text-sm font-medium mb-1">
-                              {message.senderType === 'COMPANY' ? 'You' : 'Driver'}
-                            </div>
-                            <div className="text-sm">{message.message}</div>
-                            <div className="text-xs opacity-75 mt-1">
-                              {new Date(message.createdAt).toLocaleTimeString()}
+
+                {/* Chat Messages - Scrollable */}
+                <div 
+                  ref={chatContainerRef}
+                  className="flex-1 overflow-y-auto min-h-0"
+                  style={{ 
+                    scrollBehavior: 'smooth',
+                    maxHeight: 'calc(100vh - 300px)' // Ensure proper height calculation
+                  }}
+                >
+                  <div className="p-4 space-y-4">
+                    {chatMode === 'vehicle' ? (
+                      <>
+                        {messages.map((message) => (
+                          <div key={message.id} className={`flex ${message.senderType === 'COMPANY' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.senderType === 'COMPANY' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-200 text-gray-800'
+                            }`}>
+                              <div className="text-sm font-medium mb-1">
+                                {message.senderType === 'COMPANY' ? 'You' : 'Driver'}
+                              </div>
+                              <div className="text-sm">{message.message}</div>
+                              <div className="text-xs opacity-75 mt-1">
+                                {new Date(message.createdAt).toLocaleTimeString()}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                      {messages.length === 0 && (
-                        <div className="text-center text-gray-500 mt-8">
-                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p>No messages yet</p>
-                          <p className="text-sm">Start a conversation with the driver!</p>
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </>
-                  ) : (
-                    <>
-                      {data.chats.map((chat) => (
-                        <div key={chat.id} className="bg-white rounded-lg p-4 border">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-gray-800">{chat.senderType}</span>
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {chat.timestamp}
-                            </span>
+                        ))}
+                        {messages.length === 0 && (
+                          <div className="text-center text-gray-500 mt-8">
+                            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                            <p>No messages yet</p>
+                            <p className="text-sm">Start a conversation with the driver!</p>
                           </div>
-                          <p className="text-gray-700">{chat.message}</p>
-                        </div>
-                      ))}
-                      {data.chats.length === 0 && (
-                        <div className="text-center text-gray-500 mt-8">
-                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p>No messages yet</p>
-                          <p className="text-sm">Start a conversation!</p>
-                        </div>
-                      )}
-                    </>
-                  )}
+                        )}
+                        {/* Scroll anchor */}
+                        <div ref={messagesEndRef} />
+                      </>
+                    ) : chatMode === 'individual-client' ? (
+                      <>
+                        {clientMessages.map((message) => (
+                          <div key={message.id} className={`flex ${message.senderType === 'COMPANY' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.senderType === 'COMPANY' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-gray-200 text-gray-800'
+                            }`}>
+                              <div className="text-sm font-medium mb-1">
+                                {message.senderType === 'COMPANY' ? 'You' : 'Client'}
+                              </div>
+                              <div className="text-sm">{message.message}</div>
+                              <div className="text-xs opacity-75 mt-1">
+                                {new Date(message.createdAt).toLocaleTimeString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {clientMessages.length === 0 && (
+                          <div className="text-center text-gray-500 mt-8">
+                            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                            <p>No messages yet</p>
+                            <p className="text-sm">Start a conversation with the client!</p>
+                          </div>
+                        )}
+                        {/* Scroll anchor */}
+                        <div ref={messagesEndRef} />
+                      </>
+                    ) : (
+                      <>
+                        {data.chats.map((chat) => (
+                          <div key={chat.id} className="bg-white rounded-lg p-4 border">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-gray-800">{chat.senderType}</span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {chat.timestamp}
+                              </span>
+                            </div>
+                            <p className="text-gray-700">{chat.message}</p>
+                          </div>
+                        ))}
+                        {data.chats.length === 0 && (
+                          <div className="text-center text-gray-500 mt-8">
+                            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                            <p>No messages yet</p>
+                            <p className="text-sm">Start a conversation!</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="p-4 border-t bg-white">
+
+                {/* Chat Input - Fixed */}
+                <div className="flex-shrink-0 p-4 border-t bg-white">
                   {chatMode === 'vehicle' && (
                     <div className="flex items-center gap-2 mb-2 text-xs">
                       <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                       <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
                         {isConnected ? 'Connected' : 'Disconnected'}
+                      </span>
+                    </div>
+                  )}
+                  {chatMode === 'individual-client' && (
+                    <div className="flex items-center gap-2 mb-2 text-xs">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-blue-600">
+                        Chat with {selectedClient?.email}
                       </span>
                     </div>
                   )}
@@ -669,15 +916,15 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
                 </div>
               </div>
             ) : (
-              /* Map UI */
-              <div className="flex-1 flex flex-col">
-                <div className="px-6 py-4 border-b bg-gray-50">
+              /* Map UI - Keeping original map functionality intact */
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-shrink-0 px-6 py-4 border-b bg-gray-50">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-red-600" />
                     Live Location
                   </h4>
                 </div>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-h-0">
                   <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
                 </div>
               </div>

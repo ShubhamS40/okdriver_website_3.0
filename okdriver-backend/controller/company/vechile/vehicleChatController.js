@@ -36,7 +36,7 @@ const getVehicleChatHistory = async (req, res) => {
           gte: oneDayAgo
         }
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: parseInt(limit),
       skip: parseInt(offset)
     });

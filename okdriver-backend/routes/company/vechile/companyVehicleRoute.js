@@ -1,6 +1,7 @@
 const express = require('express');
 const { addVehicle, updateVehicle, deleteVehicle, getAllVehicles, loginVehicle, updateLiveLocation, getLatestLocation, getLocationHistory, getVehicleChatHistory, sendMessageToVehicle, markMessagesAsRead, getUnreadCount, cleanupOldMessages } = require('../../../controller/company/vechile/route');
 const { verifyCompanyAuth } = require('../../../middleware/companyAuth');
+const companyOrVehicleAuth = require('../../../middleware/companyOrVehicleauth');
 
 const router = express.Router();
 
@@ -39,20 +40,20 @@ router.get('/', verifyCompanyAuth, getAllVehicles);
 
 // Chat routes
 // @route   GET /api/company/vehicles/:vehicleId/chat-history
-// @desc    Get chat history for a specific vehicle
-router.get('/:vehicleId/chat-history', verifyCompanyAuth, getVehicleChatHistory);
+// @desc    Get chat history for a specific vehicle (company or driver token)
+router.get('/:vehicleId/chat-history', companyOrVehicleAuth, getVehicleChatHistory);
 
 // @route   POST /api/company/vehicles/:vehicleId/send-message
 // @desc    Send message to vehicle driver
 router.post('/:vehicleId/send-message', verifyCompanyAuth, sendMessageToVehicle);
 
 // @route   PUT /api/company/vehicles/:vehicleId/mark-read
-// @desc    Mark messages as read
-router.put('/:vehicleId/mark-read', verifyCompanyAuth, markMessagesAsRead);
+// @desc    Mark messages as read (company or driver token)
+router.put('/:vehicleId/mark-read', companyOrVehicleAuth, markMessagesAsRead);
 
 // @route   GET /api/company/vehicles/:vehicleId/unread-count
-// @desc    Get unread message count for vehicle
-router.get('/:vehicleId/unread-count', verifyCompanyAuth, getUnreadCount);
+// @desc    Get unread message count for vehicle (company or driver token)
+router.get('/:vehicleId/unread-count', companyOrVehicleAuth, getUnreadCount);
 
 // @route   DELETE /api/company/vehicles/cleanup-messages
 // @desc    Clean up old messages (older than 24 hours)

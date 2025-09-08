@@ -234,6 +234,7 @@ model Company {
   grants                ClientVehicleAccess[]
   sentMessages          ChatMessage[] @relation("CompanySender")
   vehicleChats          VehicleChat[]
+  clientChats           ClientChat[]
 
   @@index([currentPlanId])
   ClientList ClientList[]
@@ -293,6 +294,7 @@ model Client {
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   accesses   ClientVehicleAccess[]
   sentMessages ChatMessage[] @relation("ClientSender")
+  clientChats ClientChat[]
 
   ClientListMember ClientListMember[]
 }
@@ -373,6 +375,25 @@ model VehicleChat {
   company         Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([isRead])
+}
+
+// ---------- CLIENT CHAT (real-time chat between company and client) ----------
+model ClientChat {
+  id              Int        @id @default(autoincrement())
+  clientId        Int
+  companyId       Int
+  senderType      SenderType
+  message         String
+  attachmentUrl   String?
+  isRead          Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+
+  client          Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  company         Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt])
   @@index([companyId, createdAt])
   @@index([isRead])
 }
