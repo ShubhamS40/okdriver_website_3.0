@@ -17,6 +17,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const selectedClientRef = useRef(null);
   const [clientMessages, setClientMessages] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -24,11 +25,22 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
   const chatContainerRef = useRef(null);
   const socketRef = useRef(null); // Add ref to track socket instance
 
+  // Resolve token: prefer prop, else fallback to localStorage
+  const resolvedCompanyToken = useMemo(() => {
+    if (companyToken && typeof companyToken === 'string') return companyToken;
+    try {
+      const stored = localStorage.getItem('company_token') || localStorage.getItem('companyToken');
+      return stored || '';
+    } catch (_) {
+      return '';
+    }
+  }, [companyToken]);
+
   const headers = useMemo(() => ({
     'Content-Type': 'application/json',
-    ...(companyToken ? { Authorization: `Bearer ${companyToken}` } : {})
-  }), [companyToken]);
-   console.log(companyToken);
+    ...(resolvedCompanyToken ? { Authorization: `Bearer ${resolvedCompanyToken}` } : {})
+  }), [resolvedCompanyToken]);
+   console.log(resolvedCompanyToken);
    
   const load = async () => {
     setLoading(true);
@@ -69,11 +81,15 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
         } : { lat: 0, lng: 0, address: 'No location yet' },
         clientLists: Array.isArray(json.listNames) ? json.listNames.map((name, idx) => {
           const matched = listsWithMembers.find(l => l.name === name);
-          const emails = matched && Array.isArray(matched.members) ? matched.members.map(m => ({
-            id: m.client?.id || `${idx}-${m.id}`,
-            email: m.client?.email || '' ,
-            status: 'active'
-          })) : [];
+          const emails = matched && Array.isArray(matched.members)
+            ? matched.members
+                .filter(m => typeof m.client?.id === 'number') // ensure numeric id for realtime matching
+                .map(m => ({
+                  id: m.client.id,
+                  email: m.client?.email || '',
+                  status: 'active'
+                }))
+            : [];
           return {
             id: matched?.id || idx + 1,
             name,
@@ -222,6 +238,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   const handleClientClick = (client) => {
     setSelectedClient(client);
+    selectedClientRef.current = client;
     setChatMode('individual-client');
     setShowChat(true);
     setSelectedChatOption({
@@ -229,7 +246,13 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       name: `Client: ${client.email}`,
       client: client
     });
-    loadClientChatHistory(client.id);
+    const cid = parseInt(client.id, 10);
+    if (!Number.isFinite(cid)) {
+      console.error('Invalid client id for chat history:', client.id);
+      setClientMessages([]);
+    } else {
+      loadClientChatHistory(cid);
+    }
   };
 
   const sendMessage = async () => {
@@ -260,7 +283,11 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     } else if (chatMode === 'individual-client' && selectedClient) {
       // Send message to individual client
       try {
-        const response = await fetch(`http://localhost:5000/api/company/clients/${selectedClient.id}/send-message`, {
+        const cid = parseInt(selectedClient.id, 10);
+        if (!Number.isFinite(cid)) {
+          throw new Error('Invalid client id');
+        }
+        const response = await fetch(`http://localhost:5000/api/company/clients/${cid}/send-message`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -273,6 +300,9 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
           // Add message to local state
           setClientMessages(prev => [...prev, result.data]);
           scrollToBottom();
+        } else {
+          const err = await response.json().catch(() => ({}));
+          console.error('Send to client failed:', err?.message || response.status);
         }
       } catch (error) {
         console.error('Error sending message to client:', error);
@@ -293,10 +323,8 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       });
       
       if (response.ok) {
-        const result = await response.json();
-        // Add message to local state only for HTTP fallback
-        setMessages(prev => [...prev, result.data]);
-        scrollToBottom();
+        // Do not append locally; server will broadcast via socket to avoid duplication
+        // const result = await response.json();
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -327,17 +355,20 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   // Initialize socket connection with proper error handling
   useEffect(() => {
-    if (companyToken && vehicleId && !socketRef.current) {
+    selectedClientRef.current = selectedClient;
+  }, [selectedClient]);
+
+  useEffect(() => {
+    if (resolvedCompanyToken && vehicleId && !socketRef.current) {
       console.log('🔌 Initializing socket connection...');
       
-      // Test server connectivity first
+      // Optional: lightweight ping without assuming JSON route exists
       const testServerConnectivity = async () => {
         try {
-          const response = await fetch('http://localhost:5000/test-socketio');
-          const data = await response.json();
-          console.log('✅ Server connectivity test:', data);
+          const response = await fetch('http://localhost:5000/', { method: 'GET' });
+          console.log('✅ Backend reachable:', response.ok, response.status);
         } catch (error) {
-          console.error('❌ Server connectivity test failed:', error);
+          console.warn('⚠️ Backend ping failed (non-blocking):', error?.message || error);
         }
       };
       
@@ -346,7 +377,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       try {
         const newSocket = io('http://localhost:5000', {
           auth: {
-            token: companyToken,
+            token: resolvedCompanyToken,
             role: 'COMPANY',
             vehicleId: parseInt(vehicleId)
           },
@@ -388,29 +419,27 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
         newSocket.on('new_message', (message) => {
           console.log('📨 Received message:', message);
-          
-          // Handle vehicle messages
-          if (message.vehicleId) {
+
+          // Vehicle chat only if it matches current vehicle
+          if (message.vehicleId && Number(message.vehicleId) === Number(vehicleId)) {
             setMessages(prev => {
-              // Check if message already exists to avoid duplicates
-              if (!prev.some(m => m.id === message.id)) {
-                return [...prev, message];
-              }
-              return prev;
+              const next = prev.some(m => m.id === message.id) ? prev : [...prev, message];
+              // sort by createdAt ascending
+              next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+              return [...next];
             });
           }
-          
-          // Handle client messages
-          if (message.clientId) {
+
+          // Individual client chat only if we're viewing that client
+          const sc = selectedClientRef.current;
+          if (message.clientId && sc && Number(message.clientId) === Number(sc.id)) {
             setClientMessages(prev => {
-              // Check if message already exists to avoid duplicates
-              if (!prev.some(m => m.id === message.id)) {
-                return [...prev, message];
-              }
-              return prev;
+              const next = prev.some(m => m.id === message.id) ? prev : [...prev, message];
+              next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+              return [...next];
             });
           }
-          
+
           scrollToBottom();
         });
 
@@ -494,7 +523,8 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
       const json = await res.json();
       if (res.ok) {
-        setMessages(json.data || []);
+        const sorted = (json.data || []).slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        setMessages(sorted);
       }
     } catch (error) {
       console.error('Error loading chat history via HTTP:', error);
@@ -506,7 +536,8 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       const res = await fetch(`http://localhost:5000/api/company/clients/${clientId}/chat-history`, { headers });
       const json = await res.json();
       if (res.ok) {
-        setClientMessages(json.data || []);
+        const sorted = (json.data || []).slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        setClientMessages(sorted);
       } else {
         console.error('Error loading client chat history:', json.message);
         setClientMessages([]);

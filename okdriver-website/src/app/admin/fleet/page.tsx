@@ -1,71 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-// Mock data for demonstration
-const mockFleetCompanies = [
-  { 
-    id: 1, 
-    name: 'City Express Logistics', 
-    email: 'contact@cityexpress.com', 
-    phone: '+1 234-567-8910', 
-    location: 'New York, NY',
-    totalDrivers: 48,
-    activeDrivers: 42,
-    plan: 'Enterprise',
-    status: 'Active',
-    registeredDate: '2023-01-10'
-  },
-  { 
-    id: 2, 
-    name: 'FastTrack Delivery', 
-    email: 'info@fasttrackdelivery.com', 
-    phone: '+1 234-567-8911', 
-    location: 'Chicago, IL',
-    totalDrivers: 35,
-    activeDrivers: 30,
-    plan: 'Enterprise',
-    status: 'Active',
-    registeredDate: '2023-02-15'
-  },
-  { 
-    id: 3, 
-    name: 'Metro Cab Services', 
-    email: 'support@metrocab.com', 
-    phone: '+1 234-567-8912', 
-    location: 'Boston, MA',
-    totalDrivers: 72,
-    activeDrivers: 65,
-    plan: 'Enterprise Plus',
-    status: 'Active',
-    registeredDate: '2023-01-22'
-  },
-  { 
-    id: 4, 
-    name: 'Golden State Transport', 
-    email: 'contact@gstransport.com', 
-    phone: '+1 234-567-8913', 
-    location: 'San Francisco, CA',
-    totalDrivers: 28,
-    activeDrivers: 25,
-    plan: 'Enterprise',
-    status: 'Inactive',
-    registeredDate: '2023-03-05'
-  },
-  { 
-    id: 5, 
-    name: 'Sunshine Delivery Co.', 
-    email: 'info@sunshinedelivery.com', 
-    phone: '+1 234-567-8914', 
-    location: 'Miami, FL',
-    totalDrivers: 54,
-    activeDrivers: 50,
-    plan: 'Enterprise Plus',
-    status: 'Active',
-    registeredDate: '2023-02-28'
-  },
-];
+async function fetchCompanies() {
+  try {
+    const res = await fetch('http://localhost:5000/api/admin/companies/list', { cache: 'no-store' });
+    const json = await res.json();
+    if (json?.ok && Array.isArray(json.data)) return json.data;
+  } catch (e) { console.error('companies load failed', e); }
+  return [] as any[];
+}
 
 // Mock data for deleted fleet companies
 const mockDeletedFleetCompanies = [
@@ -96,9 +41,24 @@ const mockDeletedFleetCompanies = [
 export default function FleetManagement() {
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        setCompanies(await fetchCompanies());
+      } catch (e) { setError('Failed to load companies'); }
+      finally { setLoading(false); }
+    };
+    load();
+  }, []);
 
   // Filter fleet companies based on search term
-  const filteredActiveFleets = mockFleetCompanies.filter(company => 
+  const filteredActiveFleets = companies.filter(company => 
     company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -160,7 +120,7 @@ export default function FleetManagement() {
             onClick={() => setActiveTab('active')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'active' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
           >
-            Active Fleet Companies ({mockFleetCompanies.length})
+            Active Fleet Companies ({companies.length})
           </button>
           <button
             onClick={() => setActiveTab('deleted')}
@@ -218,8 +178,8 @@ export default function FleetManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>
-                        <p>{company.totalDrivers} total</p>
-                        <p className="text-xs text-green-600">{company.activeDrivers} active</p>
+                        <p>{company.driversCount} total</p>
+                        <p className="text-xs text-green-600">{company.activeDriversCount} active</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

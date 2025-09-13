@@ -4,108 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-// Mock data for demonstration
-const mockFleetCompanies = [
-  { 
-    id: 1, 
-    name: 'City Express Logistics', 
-    email: 'contact@cityexpress.com', 
-    phone: '+1 234-567-8910', 
-    location: 'New York, NY',
-    address: '123 Logistics Way, New York, NY 10001',
-    website: 'www.cityexpresslogistics.com',
-    contactPerson: 'Michael Johnson',
-    contactPersonRole: 'Fleet Manager',
-    contactPersonEmail: 'michael@cityexpress.com',
-    contactPersonPhone: '+1 234-567-8920',
-    totalDrivers: 48,
-    activeDrivers: 42,
-    plan: 'Enterprise',
-    status: 'Active',
-    registeredDate: '2023-01-10',
-    subscriptionDetails: {
-      planName: 'Enterprise',
-      startDate: '2023-01-10',
-      renewalDate: '2023-07-10',
-      amount: '$499.99',
-      billingCycle: 'Monthly',
-      paymentMethod: 'Corporate Credit Card (ending in 3456)',
-      services: ['Drowsiness Monitoring System', 'Voice Assistant', 'SOS Alert', 'Advanced Analytics', 'Fleet Management Dashboard', 'API Integration']
-    },
-    fleetStats: {
-      totalTrips: 4250,
-      totalHours: 12480,
-      alertsTriggered: 87,
-      lastActivityDate: '2023-05-20',
-      avgDailyActiveDrivers: 38
-    },
-    vehicles: [
-      { type: 'Delivery Van', count: 28 },
-      { type: 'Box Truck', count: 12 },
-      { type: 'Sedan', count: 8 }
-    ]
-  },
-  { 
-    id: 2, 
-    name: 'FastTrack Delivery', 
-    email: 'info@fasttrackdelivery.com', 
-    phone: '+1 234-567-8911', 
-    location: 'Chicago, IL',
-    address: '456 Delivery Blvd, Chicago, IL 60601',
-    website: 'www.fasttrackdelivery.com',
-    contactPerson: 'Sarah Williams',
-    contactPersonRole: 'Operations Director',
-    contactPersonEmail: 'sarah@fasttrackdelivery.com',
-    contactPersonPhone: '+1 234-567-8921',
-    totalDrivers: 35,
-    activeDrivers: 30,
-    plan: 'Enterprise',
-    status: 'Active',
-    registeredDate: '2023-02-15',
-    subscriptionDetails: {
-      planName: 'Enterprise',
-      startDate: '2023-02-15',
-      renewalDate: '2023-08-15',
-      amount: '$499.99',
-      billingCycle: 'Monthly',
-      paymentMethod: 'Corporate Credit Card (ending in 7890)',
-      services: ['Drowsiness Monitoring System', 'Voice Assistant', 'SOS Alert', 'Advanced Analytics', 'Fleet Management Dashboard']
-    },
-    fleetStats: {
-      totalTrips: 3120,
-      totalHours: 9360,
-      alertsTriggered: 62,
-      lastActivityDate: '2023-05-19',
-      avgDailyActiveDrivers: 28
-    },
-    vehicles: [
-      { type: 'Delivery Van', count: 20 },
-      { type: 'Box Truck', count: 8 },
-      { type: 'Sedan', count: 7 }
-    ]
-  },
-  // Add more mock fleet companies as needed
-];
-
-// Mock payment history
-const mockPaymentHistory = [
-  { id: 1, fleetId: 1, date: '2023-05-10', amount: '$499.99', status: 'Completed', method: 'Corporate Credit Card (ending in 3456)' },
-  { id: 2, fleetId: 1, date: '2023-04-10', amount: '$499.99', status: 'Completed', method: 'Corporate Credit Card (ending in 3456)' },
-  { id: 3, fleetId: 1, date: '2023-03-10', amount: '$499.99', status: 'Completed', method: 'Corporate Credit Card (ending in 3456)' },
-  { id: 4, fleetId: 2, date: '2023-05-15', amount: '$499.99', status: 'Completed', method: 'Corporate Credit Card (ending in 7890)' },
-  { id: 5, fleetId: 2, date: '2023-04-15', amount: '$499.99', status: 'Completed', method: 'Corporate Credit Card (ending in 7890)' },
-];
-
-// Mock drivers for the fleet
-const mockFleetDrivers = [
-  { id: 101, fleetId: 1, name: 'John Smith', email: 'john@cityexpress.com', phone: '+1 234-567-1001', status: 'Active', lastActive: '2023-05-20' },
-  { id: 102, fleetId: 1, name: 'Emma Davis', email: 'emma@cityexpress.com', phone: '+1 234-567-1002', status: 'Active', lastActive: '2023-05-19' },
-  { id: 103, fleetId: 1, name: 'Robert Wilson', email: 'robert@cityexpress.com', phone: '+1 234-567-1003', status: 'Inactive', lastActive: '2023-05-10' },
-  { id: 104, fleetId: 1, name: 'Lisa Brown', email: 'lisa@cityexpress.com', phone: '+1 234-567-1004', status: 'Active', lastActive: '2023-05-20' },
-  { id: 105, fleetId: 1, name: 'David Miller', email: 'david@cityexpress.com', phone: '+1 234-567-1005', status: 'Active', lastActive: '2023-05-18' },
-  { id: 201, fleetId: 2, name: 'Jennifer Lee', email: 'jennifer@fasttrackdelivery.com', phone: '+1 234-567-2001', status: 'Active', lastActive: '2023-05-19' },
-  { id: 202, fleetId: 2, name: 'Michael Chen', email: 'michael@fasttrackdelivery.com', phone: '+1 234-567-2002', status: 'Active', lastActive: '2023-05-18' },
-];
+async function fetchCompanyDetails(id) {
+  try {
+    const res = await fetch(`http://localhost:5000/api/admin/companies/${id}`, { cache: 'no-store' });
+    const json = await res.json();
+    if (json?.ok) return json.data;
+  } catch (e) { console.error('company details failed', e); }
+  return null;
+}
 
 export default function FleetDetails() {
   const params = useParams();
@@ -114,24 +20,22 @@ export default function FleetDetails() {
   const [fleet, setFleet] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [fleetDrivers, setFleetDrivers] = useState([]);
+  const [error, setError] = useState('');
   
   useEffect(() => {
-    // In a real app, this would be an API call
     const fleetId = parseInt(params.id);
-    const fleetData = mockFleetCompanies.find(f => f.id === fleetId);
-    
-    if (fleetData) {
-      setFleet(fleetData);
-      // Get payment history for this fleet
-      const fleetPayments = mockPaymentHistory.filter(p => p.fleetId === fleetId);
-      setPaymentHistory(fleetPayments);
-      // Get drivers for this fleet
-      const drivers = mockFleetDrivers.filter(d => d.fleetId === fleetId);
-      setFleetDrivers(drivers);
-    } else {
-      // Fleet not found, redirect to fleet list
-      router.push('/admin/fleet');
-    }
+    (async () => {
+      const data = await fetchCompanyDetails(fleetId);
+      if (data?.company) {
+        setFleet(data.company);
+        setPaymentHistory(data.paymentHistory || []);
+        // Derive simple drivers list from vehicles if needed
+        setFleetDrivers((data.company.vehicles || []).map(v => ({ id: v.id, name: v.vehicleNumber, email: '', phone: '', status: v.status, lastActive: '' })));
+      } else {
+        setError('Company not found');
+        router.push('/admin/fleet');
+      }
+    })();
   }, [params.id, router]);
 
   if (!fleet) {

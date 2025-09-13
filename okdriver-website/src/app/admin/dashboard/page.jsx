@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { AdminNotification } from '../../../components/dashboard/AdminNotification';  
 
 // Mock data for drivers
 const mockDrivers = [
@@ -12,25 +13,28 @@ const mockDrivers = [
   { id: 5, name: 'Michael Wilson', email: 'michael@example.com', phone: '+91 9876543214', location: 'Hyderabad', status: 'Active', registrationDate: '2023-05-05', plan: 'Basic' },
 ];
 
-// Mock data for support tickets
-const mockTickets = [
-  { id: 'T-1001', subject: 'App not working', status: 'Open', priority: 'High', date: '2023-05-10' },
-  { id: 'T-1002', subject: 'Payment issue', status: 'In Progress', priority: 'Medium', date: '2023-05-09' },
-  { id: 'T-1003', subject: 'Feature request', status: 'Open', priority: 'Low', date: '2023-05-08' },
-  { id: 'T-1004', subject: 'Account access', status: 'Closed', priority: 'High', date: '2023-05-07' },
-  { id: 'T-1005', subject: 'Subscription question', status: 'Open', priority: 'Medium', date: '2023-05-06' },
-];
+// Ticket helpers
+const statusBadge = (s) => {
+  const map = {
+    OPEN: 'bg-yellow-100 text-yellow-800',
+    'IN PROGRESS': 'bg-blue-100 text-blue-800',
+    IN_PROGRESS: 'bg-blue-100 text-blue-800',
+    CLOSED: 'bg-green-100 text-green-800'
+  };
+  return map[s] || 'bg-gray-100 text-gray-800';
+};
 
 // Plans will be fetched from backend
 
-// Mock data for fleet companies
-const mockFleetCompanies = [
-  { id: 1, name: 'Speedy Logistics', email: 'contact@speedylogistics.com', phone: '+91 9876543220', location: 'Mumbai', status: 'Active', registrationDate: '2023-04-01', driversCount: 25, plan: 'Enterprise Fleet' },
-  { id: 2, name: 'City Movers', email: 'info@citymovers.com', phone: '+91 9876543221', location: 'Delhi', status: 'Active', registrationDate: '2023-04-15', driversCount: 18, plan: 'Corporate Fleet Plus' },
-  { id: 3, name: 'Express Delivery', email: 'support@expressdelivery.com', phone: '+91 9876543222', location: 'Bangalore', status: 'Inactive', registrationDate: '2023-05-01', driversCount: 12, plan: 'Enterprise Fleet' },
-  { id: 4, name: 'Safe Ride Co.', email: 'hello@saferide.com', phone: '+91 9876543223', location: 'Chennai', status: 'Active', registrationDate: '2023-05-10', driversCount: 30, plan: 'Corporate Fleet Plus' },
-  { id: 5, name: 'Metro Transport', email: 'contact@metrotransport.com', phone: '+91 9876543224', location: 'Hyderabad', status: 'Active', registrationDate: '2023-05-20', driversCount: 22, plan: 'Enterprise Fleet' },
-];
+// Fleet companies loaded from backend
+async function fetchFleetCompanies() {
+  try {
+    const res = await fetch('http://localhost:5000/api/admin/companies/list', { cache: 'no-store' });
+    const json = await res.json();
+    if (json?.ok && Array.isArray(json.data)) return json.data;
+  } catch (e) { console.error('load companies failed', e); }
+  return [];
+}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('drivers');
@@ -38,6 +42,18 @@ export default function AdminDashboard() {
   const [plans, setPlans] = useState([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [plansError, setPlansError] = useState('');
+  const [companies, setCompanies] = useState([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [companiesError, setCompaniesError] = useState('');
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [paymentsError, setPaymentsError] = useState('');
+  const [tickets, setTickets] = useState([]);
+  const [ticketsError, setTicketsError] = useState('');
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [ticketModal, setTicketModal] = useState(null); // selected ticket
+  const [adminResponse, setAdminResponse] = useState('');
+  const [adminStatus, setAdminStatus] = useState('IN_PROGRESS');
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -89,6 +105,56 @@ export default function AdminDashboard() {
       }
     };
     loadPlans();
+    const loadCompanies = async () => {
+      setLoadingCompanies(true);
+      setCompaniesError('');
+      try {
+        const data = await fetchFleetCompanies();
+        setCompanies(data);
+      } catch (e) {
+        console.error(e);
+        setCompaniesError('Failed to load companies');
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+    loadCompanies();
+    const loadPayments = async () => {
+      setLoadingPayments(true);
+      setPaymentsError('');
+      try {
+        const res = await fetch('http://localhost:5000/api/admin/payment/company-transactions');
+        const json = await res.json();
+        setPayments(Array.isArray(json?.data) ? json.data : []);
+      } catch (e) {
+        console.error(e);
+        setPaymentsError('Failed to load payments');
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+    loadPayments();
+    const loadTickets = async () => {
+      setLoadingTickets(true);
+      setTicketsError('');
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) {
+          headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
+        }
+        const res = await fetch('http://localhost:5000/api/admin/support/tickets', { headers });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.message || 'Failed to load tickets');
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        setTickets(rows);
+      } catch (e) {
+        console.error(e);
+        setTicketsError(e.message);
+      } finally {
+        setLoadingTickets(false);
+      }
+    };
+    loadTickets();
   }, []);
 
   // Filter plans based on selected filter
@@ -105,7 +171,8 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600">Manage drivers, subscriptions, and support tickets</p>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <AdminNotification />
             <div className="relative group">
               <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 flex items-center transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -426,13 +493,13 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {mockFleetCompanies.map((company) => (
+                    {companies.map((company) => (
                       <tr key={company.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{company.id}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{company.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.phone}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.location}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.phone || '—'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.location || '—'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
                             {company.driversCount} drivers
@@ -458,6 +525,12 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              {companiesError && (
+                <div className="mt-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">{companiesError}</div>
+              )}
+              {loadingCompanies && (
+                <div className="mt-4 text-gray-600">Loading companies...</div>
+              )}
             </div>
           )}
 
@@ -466,10 +539,15 @@ export default function AdminDashboard() {
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">Support Tickets</h2>
-                <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm transition-colors">
-                  Create Ticket
-                </button>
+                <div />
               </div>
+
+              {ticketsError && (
+                <div className="mb-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">{ticketsError}</div>
+              )}
+              {loadingTickets && (
+                <div className="mb-4 text-gray-600">Loading tickets...</div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -484,39 +562,82 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {mockTickets.map((ticket) => (
-                      <tr key={ticket.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ticket.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.subject}</td>
+                    {tickets.map((t) => (
+                      <tr key={t.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{t.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t.subject}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            ticket.status === 'Open' ? 'bg-yellow-100 text-yellow-800' : 
-                            ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {ticket.status}
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadge(t.status)}`}>
+                            {t.status === 'IN_PROGRESS' ? 'In Progress' : t.status.charAt(0) + t.status.slice(1).toLowerCase()}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            ticket.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                            ticket.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 
-                            'bg-green-100 text-green-800'
+                            t.priority === 'HIGH' ? 'bg-red-100 text-red-800' : t.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
                           }`}>
-                            {ticket.priority}
+                            {t.priority.charAt(0) + t.priority.slice(1).toLowerCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ticket.date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(t.createdAt).toISOString().slice(0,10)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                          <button className="text-blue-600 hover:text-blue-800">View</button>
-                          <button className="text-green-600 hover:text-green-800">Reply</button>
-                          <button className="text-red-600 hover:text-red-800">Close</button>
+                          <button onClick={() => { setTicketModal(t); setAdminResponse(t.adminResponse || ''); setAdminStatus(t.status || 'IN_PROGRESS'); }} className="text-blue-600 hover:text-blue-800">View</button>
+                          {t.status !== 'CLOSED' && (
+                            <button onClick={async () => {
+                              const headers = { 'Content-Type': 'application/json' };
+                              if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
+                              await fetch(`http://localhost:5000/api/admin/support/tickets/${t.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: 'CLOSED' }) });
+                              setTickets(prev => prev.map(x => x.id === t.id ? { ...x, status: 'CLOSED', resolvedAt: new Date().toISOString() } : x));
+                            }} className="text-red-600 hover:text-red-800">Close</button>
+                          )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
+              {ticketModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Ticket #{ticketModal.id}</h3>
+                      <button onClick={() => setTicketModal(null)} className="text-gray-500 hover:text-black">✕</button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-sm text-gray-500">Subject</div>
+                        <div className="text-gray-900 font-medium">{ticketModal.subject}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Description</div>
+                        <div className="text-gray-800 whitespace-pre-wrap">{ticketModal.description}</div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-sm"><span className="text-gray-500 mr-1">Status:</span><span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadge(adminStatus)}`}>{adminStatus === 'IN_PROGRESS' ? 'In Progress' : adminStatus.charAt(0) + adminStatus.slice(1).toLowerCase()}</span></div>
+                        <select value={adminStatus} onChange={(e) => setAdminStatus(e.target.value)} className="border border-gray-300 rounded px-2 py-1 text-sm">
+                          <option value="OPEN">Open</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="CLOSED">Closed</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Admin Response</label>
+                        <textarea value={adminResponse} onChange={(e) => setAdminResponse(e.target.value)} rows={5} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black" placeholder="Write your response or resolution steps..." />
+                      </div>
+                      <div className="flex justify-end space-x-3 pt-2">
+                        <button onClick={() => setTicketModal(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+                        <button onClick={async () => {
+                          const headers = { 'Content-Type': 'application/json' };
+                          if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
+                          await fetch(`http://localhost:5000/api/admin/support/tickets/${ticketModal.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: adminStatus, adminResponse }) });
+                          setTickets(prev => prev.map(x => x.id === ticketModal.id ? { ...x, status: adminStatus, adminResponse, resolvedAt: adminStatus === 'CLOSED' ? new Date().toISOString() : x.resolvedAt } : x));
+                          setTicketModal(null);
+                        }} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800">Save</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -561,6 +682,12 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {paymentsError && (
+                <div className="mb-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">{paymentsError}</div>
+              )}
+              {loadingPayments && (
+                <div className="mb-4 text-gray-600">Loading payments...</div>
+              )}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -575,81 +702,25 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TX-12345</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Premium Individual</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹999</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-15</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">View Details</button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TX-12346</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Speedy Logistics</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">Enterprise Fleet</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹1,999</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-14</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">View Details</button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TX-12347</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Jane Smith</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Basic Individual</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹499</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-10</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Failed</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">View Details</button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TX-12348</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Robert Johnson</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Day Pass</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹9.99</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-09</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">View Details</button>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">TX-12349</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">City Movers</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">Corporate Fleet Plus</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹2,999</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-05-08</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-800">View Details</button>
-                      </td>
-                    </tr>
+                    {payments.map((p) => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.transactionId}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.customer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">{p.plan}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹{p.amount}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(p.date).toISOString().slice(0,10)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Link href={`/admin/fleet/${p.customerId}`} className="text-blue-600 hover:text-blue-800">View Details</Link>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

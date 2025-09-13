@@ -13,32 +13,10 @@ const CompanySubscription = () => {
   const [error, setError] = useState(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   
-  // Load Razorpay script
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  // PayU does not require preloading JS for basic redirect flow
+  const [gatewayReady] = useState(true);
 
-  useEffect(() => {
-    // Check if Razorpay is already loaded
-    if (window.Razorpay) {
-      setRazorpayLoaded(true);
-      return;
-    }
-
-    // Load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => {
-      setRazorpayLoaded(true);
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-  }, []);
+  useEffect(() => {}, []);
 
   // Fetch the plan details when component mounts
   useEffect(() => {
@@ -78,10 +56,6 @@ const CompanySubscription = () => {
   const initializePayment = async () => {
     if (!selectedPlan) return;
     
-    if (!razorpayLoaded) {
-      alert('Payment gateway is still loading. Please try again in a moment.');
-      return;
-    }
     
     try {
       setPaymentProcessing(true);
@@ -96,7 +70,7 @@ const CompanySubscription = () => {
       
       console.log('Token found, proceeding with payment');
       
-      // Create order
+      // Create PayU params via backend
       let orderData;
       try {
         const orderResponse = await fetch('/api/payment/create-order', {
@@ -108,7 +82,8 @@ const CompanySubscription = () => {
           body: JSON.stringify({
             amount: selectedPlan.price,
             currency: 'INR',
-            receipt: `plan_purchase_${Date.now()}`
+            receipt: `plan_purchase_${Date.now()}`,
+            planId: selectedPlan.id
           })
         });
         
@@ -127,70 +102,23 @@ const CompanySubscription = () => {
         return;
       }
       
-      if (!orderData.success || !orderData.order) {
-        throw new Error('Invalid order response');
+      if (!orderData.success || !orderData.params || !orderData.action) {
+        throw new Error('Invalid payment init response');
       }
       
-      // Initialize Razorpay
-      const options = {
-        key: 'rzp_test_XR0zaefyJQI5HL', // Razorpay test key
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        name: 'OKDriver',
-        description: `Subscription for ${selectedPlan.name} Plan`,
-        order_id: orderData.order.id,
-        handler: async function (response) {
-          try {
-            // Verify payment
-            const verifyResponse = await fetch('/api/payment/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                planId: selectedPlan.id
-              })
-            });
-            
-            if (!verifyResponse.ok) {
-              throw new Error('Payment verification failed');
-            }
-            
-            // Payment successful, redirect to dashboard
-            window.location.href = '/company/subscription-success';
-          } catch (err) {
-            alert('Payment verification failed: ' + err.message);
-            setPaymentProcessing(false);
-          }
-        },
-        prefill: {
-          name: 'Company Name',
-          email: 'company@example.com'
-        },
-        theme: {
-          color: '#000000'
-        },
-        modal: {
-          ondismiss: function() {
-            setPaymentProcessing(false);
-          }
-        }
-      };
-      
-      // Log options for debugging
-      console.log('Razorpay options:', options);
-      
-      const razorpay = new window.Razorpay(options);
-      razorpay.on('payment.failed', function(response){
-        console.error('Payment failed:', response.error);
-        alert('Payment failed: ' + response.error.description);
-        setPaymentProcessing(false);
+      // Build a form and submit to PayU
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = orderData.action;
+      Object.entries(orderData.params).forEach(([k, v]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = k;
+        input.value = v;
+        form.appendChild(input);
       });
-      razorpay.open();
+      document.body.appendChild(form);
+      form.submit();
     } catch (err) {
       alert('Payment initialization failed: ' + err.message);
       setPaymentProcessing(false);
@@ -322,7 +250,7 @@ const CompanySubscription = () => {
         </div>
       </div>
       
-      {/* Razorpay Script is loaded via useEffect */}
+      {/* PayU uses server-generated form post; no script needed */}
     </div>
   );
 };

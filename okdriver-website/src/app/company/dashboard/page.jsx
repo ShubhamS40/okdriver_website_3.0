@@ -11,9 +11,11 @@ import ChatSection from './../../../components/dashboard/ChatSection';
 import Sidebar from './../../../components/dashboard/Sidebar';
 import Header from './../../../components/dashboard/Header';
 import LocationsView from './../../../components/dashboard/LocationView.jsx';
+import HelpSupportView from './../../../components/dashboard/HelpSupportView.jsx';
 import SettingsView from './../../../components/dashboard/SettingView.jsx';
 import ProfileView from './../../../components/dashboard/ProfileView';
 import ReportSection from './../../../components/dashboard/ReportSection';
+import VehicleLimitWarning from './../../../components/dashboard/VehicleLimitWarning';
 
 export default function ChatSupportDashboard() {
   // Dashboard Data State Management
@@ -257,6 +259,7 @@ export default function ChatSupportDashboard() {
       case 'dashboard':
         return (
           <div className="space-y-6">
+            <VehicleLimitWarning />
             <DashboardStats stats={dashboardStats} />
             <VehicleList 
               vehicles={vehicles} 
@@ -277,14 +280,17 @@ export default function ChatSupportDashboard() {
         );
       case 'vehicles':
         return (
-          <AddVehicleForm 
-            vehicleForm={vehicleForm} 
-            handleVehicleChange={handleVehicleChange} 
-            generateRandomPassword={generateRandomPassword} 
-            submitVehicle={submitVehicle} 
-            vehicleSubmitting={vehicleSubmitting} 
-            vehicleMsg={vehicleMsg} 
-          />
+          <div className="space-y-6">
+            <VehicleLimitWarning />
+            <AddVehicleForm 
+              vehicleForm={vehicleForm} 
+              handleVehicleChange={handleVehicleChange} 
+              generateRandomPassword={generateRandomPassword} 
+              submitVehicle={submitVehicle} 
+              vehicleSubmitting={vehicleSubmitting} 
+              vehicleMsg={vehicleMsg} 
+            />
+          </div>
         );
       case 'clients':
         return (
@@ -296,6 +302,8 @@ export default function ChatSupportDashboard() {
         return <ReportSection />;
       case 'chat':
         return <ChatSection chatRooms={chatRooms} />;
+      case 'help':
+        return <HelpSupportView />;
       case 'settings':
         return <SettingsView />;
       case 'profile':

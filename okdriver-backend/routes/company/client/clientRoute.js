@@ -13,7 +13,7 @@ const {
   getVehicleChats,sendMessageToVehicle
 } = require('./../../../controller/company/client/chatVechileController'); // SAME folder ka route.js import karo
 
-const verifyClientAuth = require('../../../middleware/verifyClientAuth');
+// const verifyClientAuth = require('../../../middleware/verifyClientAuth');
 const { verifyCompanyAuth } = require('../../../middleware/companyAuth');
 
 // List controllers
@@ -28,6 +28,7 @@ const {
   getVehicleClients
 } = require('../../../controller/company/client/listController');
 const { getVehicleListAssignments, getVehicleDetails } = require('../../../controller/company/client/listAssignmentsController');
+const verifyClientAuth = require('../../../middleware/verifyClientAuth');
 
 const router = express.Router();
 
@@ -103,6 +104,78 @@ router.get('/vehicles-list-assignments', verifyCompanyAuth, getVehicleListAssign
 
 // Vehicle details (location, lists, chats)
 router.get('/vehicle/:vehicleId/details', verifyCompanyAuth, getVehicleDetails);
+
+// -------- CLIENT ↔ VEHICLE CHAT (client token) --------
+// Send message from client to a vehicle (HTTP fallback to mirror socket behavior)
+router.post('/vehicles/:vehicleId/send-message', verifyClientAuth, async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const { message } = req.body;
+    if (!message || !message.trim()) return res.status(400).json({ success: false, message: 'Message is required' });
+    const vid = parseInt(vehicleId, 10);
+    const clientId = req.user.clientId;
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    // Check access
+    const access = await prisma.clientVehicleAccess.count({ where: { clientId, vehicleId: vid } });
+    if (!access) return res.status(403).json({ success: false, message: 'No access to vehicle' });
+
+    // Get vehicle to resolve companyId
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: vid }, select: { companyId: true } });
+    if (!vehicle) return res.status(404).json({ success: false, message: 'Vehicle not found' });
+
+    // Store in VehicleChat with senderType CLIENT
+    const chat = await prisma.vehicleChat.create({
+      data: { vehicleId: vid, companyId: vehicle.companyId, message: message.trim(), senderType: 'CLIENT', isRead: false }
+    });
+
+    // Broadcast similar to socket
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        id: chat.id,
+        message: chat.message,
+        senderType: chat.senderType,
+        createdAt: chat.createdAt,
+        vehicleId: chat.vehicleId,
+        companyId: chat.companyId,
+        clientId
+      };
+      io.to(`vehicle:${vid}`).emit('new_message', payload);
+      io.to(`company:${vehicle.companyId}`).emit('new_message', payload);
+      io.to(`client_${clientId}`).emit('new_message', payload);
+    }
+
+    res.json({ success: true, data: chat });
+  } catch (e) {
+    console.error('client→vehicle send error', e);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
+// Get client↔vehicle chat history (client token)
+router.get('/vehicles/:vehicleId/chat-history', verifyClientAuth, async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const vid = parseInt(vehicleId, 10);
+    const clientId = req.user.clientId;
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const access = await prisma.clientVehicleAccess.count({ where: { clientId, vehicleId: vid } });
+    if (!access) return res.status(403).json({ success: false, message: 'No access to vehicle' });
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const chats = await prisma.vehicleChat.findMany({
+      where: { vehicleId: vid, createdAt: { gte: oneDayAgo } },
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json({ success: true, data: chats });
+  } catch (e) {
+    console.error('client↔vehicle history error', e);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
 
 // Import chat controllers
 const {

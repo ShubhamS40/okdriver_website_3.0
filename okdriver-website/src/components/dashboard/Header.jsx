@@ -1,7 +1,7 @@
 'use client'
 import React from 'react';
 import { Menu, User } from 'lucide-react';
-import NotificationComponent from './NotificationComponent';
+import { CompanyNotification } from '../../components/dashboard/CompanyNotification';
 
 const Header = ({ setSidebarOpen, sidebarOpen }) => {
   return (
@@ -17,7 +17,7 @@ const Header = ({ setSidebarOpen, sidebarOpen }) => {
           <h1 className="text-xl font-bold text-black">Company Dashboard</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <NotificationComponent />
+          <CompanyNotification />
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
             <User className="w-5 h-5 text-white" />
           </div>

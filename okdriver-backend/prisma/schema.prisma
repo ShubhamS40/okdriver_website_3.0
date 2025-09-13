@@ -54,6 +54,19 @@ enum BillingCycle {
   CUSTOM
 }
 
+// ---------- SUPPORT TICKETS ----------
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
 // ---------- ADMIN ----------
 model Admin {
   id        Int      @id @default(autoincrement())
@@ -235,6 +248,7 @@ model Company {
   sentMessages          ChatMessage[] @relation("CompanySender")
   vehicleChats          VehicleChat[]
   clientChats           ClientChat[]
+  tickets               HelpSupportTicket[]
 
   @@index([currentPlanId])
   ClientList ClientList[]
@@ -396,6 +410,25 @@ model ClientChat {
   @@index([clientId, createdAt])
   @@index([companyId, createdAt])
   @@index([isRead])
+}
+
+// ---------- HELP & SUPPORT TICKETS ----------
+model HelpSupportTicket {
+  id          Int           @id @default(autoincrement())
+  companyId   Int
+  subject     String
+  description String
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+  adminResponse String?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+  @@index([createdAt])
 }
 
 // ---------- OTP FOR AUTHENTICATION ----------

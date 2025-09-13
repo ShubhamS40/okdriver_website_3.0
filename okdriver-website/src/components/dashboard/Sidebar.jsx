@@ -19,6 +19,7 @@ const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
     { id: 'locations', label: 'View All Locations', icon: MapPin },
     { id: 'report', label: 'Reports', icon: BarChart },
     { id: 'chat', label: 'Chat Section', icon: MessageCircle },
+    { id: 'help', label: 'Help & Support', icon: MessageCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'profile', label: 'Profile', icon: User },
   ];

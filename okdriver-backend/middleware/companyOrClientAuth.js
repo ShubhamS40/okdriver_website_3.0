@@ -15,9 +15,10 @@ module.exports = async function companyOrClientAuth(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // If token belongs to company user
-    if (decoded.companyId && !decoded.clientId) {
+    if (!decoded.clientId && (decoded.companyId || decoded.id)) {
+      const companyId = decoded.companyId || decoded.id;
       const company = await prisma.company.findUnique({
-        where: { id: decoded.companyId },
+        where: { id: companyId },
       });
       if (!company) {
         return res.status(401).json({ message: 'Company not found' });

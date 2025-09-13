@@ -135,8 +135,9 @@ const sendCompanyMessageToClient = async (req, res) => {
 
     console.log(`✅ Message created with ID: ${newMessage.id}`);
 
-    // Emit to socket for real-time delivery
+    // Emit to socket for real-time delivery (both client and company rooms)
     if (req.app.get('io')) {
+      // Notify client device
       req.app.get('io').to(`client_${clientId}`).emit('new_message', {
         id: newMessage.id,
         message: newMessage.message,
@@ -145,7 +146,16 @@ const sendCompanyMessageToClient = async (req, res) => {
         clientId: newMessage.clientId,
         companyId: newMessage.companyId,
       });
-      console.log(`📡 Message emitted to client_${clientId} room`);
+      // Echo back to company dashboard so it updates without reload
+      req.app.get('io').to(`company:${companyId}`).emit('new_message', {
+        id: newMessage.id,
+        message: newMessage.message,
+        senderType: newMessage.senderType,
+        createdAt: newMessage.createdAt,
+        clientId: newMessage.clientId,
+        companyId: newMessage.companyId,
+      });
+      console.log(`📡 Message emitted to client_${clientId} and company:${companyId} rooms`);
     }
 
     res.json({
@@ -211,8 +221,9 @@ const sendClientMessage = async (req, res) => {
 
     console.log(`✅ Message created with ID: ${newMessage.id}`);
 
-    // Emit to socket for real-time delivery
+    // Emit to socket for real-time delivery (both company and client rooms)
     if (req.app.get('io')) {
+      // Notify company dashboard/agents
       req.app.get('io').to(`company_${companyId}`).emit('new_message', {
         id: newMessage.id,
         message: newMessage.message,
@@ -221,7 +232,16 @@ const sendClientMessage = async (req, res) => {
         clientId: newMessage.clientId,
         companyId: newMessage.companyId,
       });
-      console.log(`📡 Message emitted to company_${companyId} room`);
+      // Echo to client device so they also see their own sent message
+      req.app.get('io').to(`client_${clientId}`).emit('new_message', {
+        id: newMessage.id,
+        message: newMessage.message,
+        senderType: newMessage.senderType,
+        createdAt: newMessage.createdAt,
+        clientId: newMessage.clientId,
+        companyId: newMessage.companyId,
+      });
+      console.log(`📡 Message emitted to company_${companyId} and client_${clientId} rooms`);
     }
 
     res.json({

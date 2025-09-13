@@ -4,6 +4,11 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+// Kafka/Location imports
+const { initializeProducer, initializeConsumer } = require('./config/kafka');
+const locationProcessor = require('./services/locationProcessor');
+const webSocketService = require('./services/websocketService');
+
 // Driver routes
 const otpRoutes = require('./routes/driver/DriverAuth/otpRoutes');
 const driverRegistration = require('./routes/driver/DriverAuth/driverRegistration');
@@ -14,19 +19,26 @@ const companyRoutes = require('./routes/company/CompanyAuthRoutes/companyAuthRou
 const companyChatRoutes = require('./routes/company/companyChatRoutes');
 
 dotenv.config();
+
 const app = express();
 const http = require('http').createServer(app);
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const jwt = require('jsonwebtoken');
 
-// Initialize Socket.IO
-const { initializeSocketServer } = require('./socket');
-const io = initializeSocketServer(http);
+// Initialize Socket.IO - DON'T call initializeSocketServer yet
+const { Server } = require('socket.io');
+const io = new Server(http, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Request logger
 app.use((req, res, next) => {
@@ -48,6 +60,7 @@ app.use('/api/driver/auth', driverAuthRoutes);
 
 // Company routes
 app.use('/api/company', companyRoutes);
+app.use('/api/company/help-support', require('./routes/company/help_support_ticket/createCompanyTicketRoute'));
 app.use('/api/admin/auth', require('./routes/admin/adminAuth/adminAuthRoute'));
 app.use('/api/assistant', require('./routes/driver/DriverVoiceAssistant/driverVoiceAssistant'));
 
@@ -59,17 +72,19 @@ console.log('✅ Company client routes mounted at /api/company/clients');
 app.use('/api/company/vehicles', require('./routes/company/vechile/companyVehicleRoute'));
 app.use('/api/company', require('./routes/company/companyChatRoutes'));
 
-// Admin  routes
+// Admin routes
 app.use('/api/admin/driverplan', require('./routes/admin/driver/driverPlan/driverPlanRoute'));
 app.use('/api/admin/companyplan', require('./routes/admin/company/companyPlan/planRoute'));
+app.use('/api/admin/companies', require('./routes/admin/company/companyRoute'));
+app.use('/api/admin/payment', require('./routes/admin/payment/paymentRoute'));
+app.use('/api/admin/support', require('./routes/admin/support/ticketRoute'));
 
 // Health check
 app.get('/', (req, res) => {
   res.send('Ok Driver + Company Backend Services are Running Successfully');
 });
 
-
-// ---------------- SOCKET.IO REALTIME CHAT ----------------
+// ---------------- SOCKET.IO REALTIME CHAT & LOCATION ----------------
 
 // Authentication for sockets
 io.use(async (socket, next) => {
@@ -121,12 +136,20 @@ io.on('connection', (socket) => {
     console.log(`🏢 Company ${socket.data.companyId} joined company room`);
   }
 
+  // Join client-specific room if this is a client socket
+  if (socket.data.clientId) {
+    const clientRoom = `client_${socket.data.clientId}`;
+    socket.join(clientRoom);
+    console.log(`👤 Client ${socket.data.clientId} joined room ${clientRoom}`);
+  }
+
   console.log(`🔗 Socket connected: ${socket.id}, joined room: ${room}`);
 
-  // Send chat message (updated to use VehicleChat model)
+  // ===== CHAT FUNCTIONALITY =====
+  // Send chat message (vehicle/company/client -> vehicle/company/client)
   socket.on('chat:send', async (payload, cb) => {
     try {
-      const { vehicleId, message, attachmentUrl } = payload || {};
+      const { vehicleId, message, attachmentUrl, clientId: targetClientId } = payload || {};
       const vid = Number(vehicleId || socket.data.vehicleId);
       if (!vid || !message) return cb && cb({ ok: false, error: 'missing fields' });
 
@@ -138,7 +161,6 @@ io.on('connection', (socket) => {
         vehicleId: socket.data.vehicleId,
         clientId: socket.data.clientId
       });
-      console.log(`📨 Auth handshake:`, socket.handshake.auth);
 
       // Get vehicle info to find company
       const vehicle = await prisma.vehicle.findUnique({
@@ -158,7 +180,7 @@ io.on('connection', (socket) => {
         isRead: false
       };
       
-      // Fix: Check driver first, then company
+      // Determine sender type
       if (socket.data.driver && !socket.data.companyId) {
         data.senderType = 'DRIVER';
         console.log(`📤 Message from DRIVER (vehicle ${vid})`);
@@ -172,6 +194,16 @@ io.on('connection', (socket) => {
         // Default to DRIVER if we can't determine
         data.senderType = 'DRIVER';
         console.log(`📤 Message from DRIVER (default, vehicle ${vid})`);
+      }
+
+      // If sender is CLIENT, ensure the client has access to this vehicle
+      if (socket.data.clientId) {
+        const access = await prisma.clientVehicleAccess.count({
+          where: { clientId: socket.data.clientId, vehicleId: vid }
+        });
+        if (!access) {
+          return cb && cb({ ok: false, error: 'unauthorized: no access to vehicle' });
+        }
       }
 
       // Save chat in VehicleChat table
@@ -195,6 +227,16 @@ io.on('connection', (socket) => {
       
       // Send to company room (company will receive)
       io.to(`company:${vehicle.companyId}`).emit('new_message', messageData);
+
+      // If sender is CLIENT, also emit back to that client's room so their UI updates immediately
+      if (socket.data.clientId) {
+        io.to(`client_${socket.data.clientId}`).emit('new_message', messageData);
+      }
+
+      // If sender is DRIVER and a specific target client is provided, emit to that client's room
+      if (socket.data.driver && targetClientId) {
+        io.to(`client_${Number(targetClientId)}`).emit('new_message', messageData);
+      }
       
       console.log(`📤 Message broadcasted: ${chat.senderType} -> Vehicle:${vid}, Company:${vehicle.companyId}`);
 
@@ -205,7 +247,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Fetch chat history (updated to use VehicleChat model)
+  // Fetch chat history
   socket.on('chat:history', async (vehicleId, cb) => {
     try {
       const vid = Number(vehicleId || socket.data.vehicleId);
@@ -282,6 +324,102 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ===== LOCATION FUNCTIONALITY =====
+  // Handle location updates
+  socket.on('location:update', async (payload, cb) => {
+    try {
+      const { vehicleId, latitude, longitude, speed, heading, timestamp } = payload || {};
+      const vid = Number(vehicleId || socket.data.vehicleId);
+      
+      if (!vid || !latitude || !longitude) {
+        return cb && cb({ ok: false, error: 'missing location data' });
+      }
+
+      // Only drivers can send location updates
+      if (!socket.data.driver) {
+        return cb && cb({ ok: false, error: 'unauthorized: only drivers can send location' });
+      }
+
+      const locationData = {
+        vehicleId: vid,
+        latitude,
+        longitude,
+        speed: speed || 0,
+        heading: heading || 0,
+        timestamp: timestamp || new Date().toISOString()
+      };
+
+      // Broadcast location to company room for real-time tracking
+      const vehicle = await prisma.vehicle.findUnique({
+        where: { id: vid },
+        select: { companyId: true }
+      });
+
+      if (vehicle) {
+        io.to(`company:${vehicle.companyId}`).emit('location:update', locationData);
+        
+        // Also emit to any clients who have access to this vehicle
+        const clientAccess = await prisma.clientVehicleAccess.findMany({
+          where: { vehicleId: vid },
+          select: { clientId: true }
+        });
+
+        for (const access of clientAccess) {
+          io.to(`client_${access.clientId}`).emit('location:update', locationData);
+        }
+      }
+
+      console.log(`📍 Location update broadcasted for vehicle ${vid}`);
+      cb && cb({ ok: true });
+    } catch (err) {
+      console.error('location:update error', err);
+      cb && cb({ ok: false, error: 'internal' });
+    }
+  });
+
+  // Subscribe to vehicle location updates
+  socket.on('location:subscribe', async (payload, cb) => {
+    try {
+      const { vehicleId } = payload || {};
+      const vid = Number(vehicleId);
+      
+      if (!vid) {
+        return cb && cb({ ok: false, error: 'missing vehicleId' });
+      }
+
+      // Check if user has permission to track this vehicle
+      let hasPermission = false;
+
+      if (socket.data.companyId && !socket.data.driver) {
+        // Company can track their own vehicles
+        const vehicle = await prisma.vehicle.findFirst({
+          where: { id: vid, companyId: socket.data.companyId }
+        });
+        hasPermission = !!vehicle;
+      } else if (socket.data.clientId) {
+        // Client can track vehicles they have access to
+        const access = await prisma.clientVehicleAccess.findFirst({
+          where: { clientId: socket.data.clientId, vehicleId: vid }
+        });
+        hasPermission = !!access;
+      }
+
+      if (!hasPermission) {
+        return cb && cb({ ok: false, error: 'unauthorized: no permission to track this vehicle' });
+      }
+
+      // Join location room for this vehicle
+      const locationRoom = `location:${vid}`;
+      socket.join(locationRoom);
+      console.log(`📍 Socket ${socket.id} subscribed to location updates for vehicle ${vid}`);
+      
+      cb && cb({ ok: true });
+    } catch (err) {
+      console.error('location:subscribe error', err);
+      cb && cb({ ok: false, error: 'internal' });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`❌ Socket disconnected: ${socket.id}`);
   });
@@ -310,7 +448,21 @@ setInterval(async () => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-http.listen(PORT, () => {
+http.listen(PORT, async () => {
   console.log(`✅ Server + Socket.IO started on port ${PORT}`);
   console.log(`🧹 Message cleanup scheduled every hour`);
+  
+  // DON'T initialize separate WebSocket service - it conflicts with Socket.IO chat
+  // Instead, use the integrated location handlers in the Socket.IO server above
+  
+  // Start Kafka consumer and location processor for DB persistence
+  try {
+    // Ensure producer is connected for controllers to send messages
+    await initializeProducer();
+    await initializeConsumer();
+    await locationProcessor.start();
+    console.log('✅ Kafka consumer + Location processor running');
+  } catch (err) {
+    console.error('❌ Failed to start Kafka consumer/location processor:', err);
+  }
 });
