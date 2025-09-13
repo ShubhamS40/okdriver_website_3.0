@@ -74,6 +74,8 @@ app.use('/api/company', require('./routes/company/companyChatRoutes'));
 
 // Admin routes
 app.use('/api/admin/driverplan', require('./routes/admin/driver/driverPlan/driverPlanRoute'));
+app.use('/api/admin/company/top-up-plan/vehicle-limit', require('./routes/admin/company/top-up-plan/vehicleLimitPlan/vehicleLimitRoutes'));
+app.use('/api/admin/company/top-up-plan/client-limit', require('./routes/admin/company/top-up-plan/clientLimitPlan/clientLimit.routes'));
 app.use('/api/admin/companyplan', require('./routes/admin/company/companyPlan/planRoute'));
 app.use('/api/admin/companies', require('./routes/admin/company/companyRoute'));
 app.use('/api/admin/payment', require('./routes/admin/payment/paymentRoute'));
