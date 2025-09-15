@@ -30,12 +30,11 @@ export default function CreateClientLimitPlan() {
       description: form.description,
       price: parseFloat(form.price),
       clientCount: parseInt(form.clientCount),
-      planType: 'client-limit',
       isActive: true
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/companyplan/create', {
+      const response = await fetch('http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

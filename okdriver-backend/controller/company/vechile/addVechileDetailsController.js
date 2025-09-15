@@ -22,6 +22,26 @@ const addVehicle = async (req, res) => {
     if (existingVehicle) {
       return res.status(400).json({ message: "Vehicle with this number already exists" });
     }
+    
+    // Check company's vehicle limit
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      include: {
+        currentPlan: true,
+      },
+    });
+    
+    // Count existing vehicles
+    const vehicleCount = await prisma.vehicle.count({
+      where: { companyId },
+    });
+    
+    // Check if adding this vehicle would exceed the limit
+    if (company?.currentPlan?.vehicleLimit && vehicleCount >= company.currentPlan.vehicleLimit) {
+      return res.status(400).json({ 
+        message: `Vehicle limit reached. Your current plan allows a maximum of ${company.currentPlan.vehicleLimit} vehicles. Please upgrade your plan to add more vehicles.` 
+      });
+    }
 
     // ✅ Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);

@@ -1,7 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Script from 'next/script';
 
 const CompanySubscription = () => {
   const searchParams = useSearchParams();
@@ -12,34 +11,47 @@ const CompanySubscription = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
-  
-  // PayU does not require preloading JS for basic redirect flow
-  const [gatewayReady] = useState(true);
-
-  useEffect(() => {}, []);
 
   // Fetch the plan details when component mounts
   useEffect(() => {
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/plans/list');
+        // Use the same API endpoint as login component
+        const response = await fetch('http://localhost:5000/api/admin/companyplan/list');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch plans');
+          throw new Error(`Failed to fetch plans: ${response.statusText}`);
         }
         
         const data = await response.json();
-        setPlans(data);
+        
+        // Check if response has expected structure
+        if (!data.data || !Array.isArray(data.data)) {
+          throw new Error('Invalid API response structure');
+        }
+        
+        // Filter only SUBSCRIPTION type plans that are active
+        const subscriptionPlans = data.data.filter(plan => 
+          plan.planType === 'SUBSCRIPTION' && plan.isActive === true
+        );
+        
+        console.log('All plans:', data.data);
+        console.log('Filtered subscription plans:', subscriptionPlans);
+        
+        setPlans(subscriptionPlans);
         
         // If planId is provided in URL, select that plan
         if (planId) {
-          const plan = data.find(p => p.id === parseInt(planId));
+          const plan = subscriptionPlans.find(p => p.id === parseInt(planId));
           if (plan) {
             setSelectedPlan(plan);
+          } else {
+            console.warn(`Plan with ID ${planId} not found in subscription plans`);
           }
         }
       } catch (err) {
+        console.error('Error fetching plans:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -54,8 +66,10 @@ const CompanySubscription = () => {
   };
   
   const initializePayment = async () => {
-    if (!selectedPlan) return;
-    
+    if (!selectedPlan) {
+      alert('Please select a plan first');
+      return;
+    }
     
     try {
       setPaymentProcessing(true);
@@ -69,57 +83,57 @@ const CompanySubscription = () => {
       }
       
       console.log('Token found, proceeding with payment');
+      console.log('Selected plan:', selectedPlan);
       
-      // Create PayU params via backend
-      let orderData;
-      try {
-        const orderResponse = await fetch('/api/payment/create-order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            amount: selectedPlan.price,
-            currency: 'INR',
-            receipt: `plan_purchase_${Date.now()}`,
-            planId: selectedPlan.id
-          })
-        });
-        
-        if (!orderResponse.ok) {
-          const errorData = await orderResponse.json().catch(() => ({}));
-          console.error('Order creation failed:', errorData);
-          throw new Error(`Failed to create payment order: ${errorData.message || orderResponse.statusText}`);
-        }
-        
-        console.log('Order response received');
-        orderData = await orderResponse.json();
-      } catch (error) {
-        console.error('Order creation error:', error);
-        alert(`Payment initialization failed: ${error.message}`);
-        setPaymentProcessing(false);
-        return;
+      // Create payment order via backend
+      const orderResponse = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: selectedPlan.price,
+          currency: 'INR',
+          receipt: `plan_purchase_${Date.now()}`,
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+          durationDays: selectedPlan.durationDays,
+          billingCycle: selectedPlan.billingCycle
+        })
+      });
+      
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json().catch(() => ({}));
+        console.error('Order creation failed:', errorData);
+        throw new Error(`Failed to create payment order: ${errorData.message || orderResponse.statusText}`);
       }
       
+      console.log('Order response received');
+      const orderData = await orderResponse.json();
+      
       if (!orderData.success || !orderData.params || !orderData.action) {
-        throw new Error('Invalid payment init response');
+        throw new Error('Invalid payment initialization response');
       }
       
       // Build a form and submit to PayU
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = orderData.action;
-      Object.entries(orderData.params).forEach(([k, v]) => {
+      
+      Object.entries(orderData.params).forEach(([key, value]) => {
         const input = document.createElement('input');
         input.type = 'hidden';
-        input.name = k;
-        input.value = v;
+        input.name = key;
+        input.value = value;
         form.appendChild(input);
       });
+      
       document.body.appendChild(form);
       form.submit();
+      
     } catch (err) {
+      console.error('Payment initialization error:', err);
       alert('Payment initialization failed: ' + err.message);
       setPaymentProcessing(false);
     }
@@ -130,7 +144,7 @@ const CompanySubscription = () => {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
-          <span>Loading plans...</span>
+          <span>Loading subscription plans...</span>
         </div>
       </div>
     );
@@ -140,13 +154,40 @@ const CompanySubscription = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
-          <p className="text-gray-700">{error}</p>
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Plans</h2>
+          <p className="text-gray-700 mb-4">{error}</p>
+          <div className="space-y-2">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="w-full bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.location.href = '/company/login'} 
+              className="w-full bg-gray-100 text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (plans.length === 0) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md text-center">
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">No Subscription Plans Available</h2>
+          <p className="text-yellow-600 mb-4">
+            There are no active subscription plans available at the moment. Please contact support for assistance.
+          </p>
           <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            onClick={() => window.location.href = '/company/login'} 
+            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Try Again
+            Back to Login
           </button>
         </div>
       </div>
@@ -157,6 +198,11 @@ const CompanySubscription = () => {
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xl">OK</span>
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-black mb-2">Choose Your Subscription Plan</h1>
           <p className="text-gray-600">Select the plan that best fits your company's needs</p>
         </div>
@@ -172,10 +218,17 @@ const CompanySubscription = () => {
               onClick={() => handlePlanSelect(plan)}
             >
               <div className="text-center">
+                <div className="mb-3">
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    Subscription Plan
+                  </span>
+                </div>
                 <h3 className="text-xl font-bold text-black mb-2">{plan.name}</h3>
                 <div className="text-3xl font-bold text-black mb-1">
                   ₹{plan.price}
-                  <span className="text-lg text-gray-600">/{plan.durationDays} days</span>
+                  <span className="text-lg text-gray-600">
+                    /{plan.billingCycle || `${plan.durationDays} days`}
+                  </span>
                 </div>
                 {plan.description && (
                   <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
@@ -185,24 +238,47 @@ const CompanySubscription = () => {
                 <div className="mt-6 text-left">
                   <h4 className="font-medium text-sm text-gray-500 mb-2">FEATURES</h4>
                   <ul className="space-y-2">
-                    <li className="flex items-center text-sm">
-                      <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                      </svg>
-                      {plan.maxVehicles ? `Up to ${plan.maxVehicles} vehicles` : 'Unlimited vehicles'}
-                    </li>
-                    <li className="flex items-center text-sm">
-                      <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                      </svg>
-                      24/7 Support
-                    </li>
-                    <li className="flex items-center text-sm">
-                      <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                      </svg>
-                      Real-time monitoring
-                    </li>
+                    {plan.vehicleLimit && (
+                      <li className="flex items-center text-sm">
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        Up to {plan.vehicleLimit} vehicles
+                      </li>
+                    )}
+                    {plan.storageLimitGB && (
+                      <li className="flex items-center text-sm">
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        {plan.storageLimitGB} GB Storage
+                      </li>
+                    )}
+                    {plan.durationDays && (
+                      <li className="flex items-center text-sm">
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        {plan.durationDays} days validity
+                      </li>
+                    )}
+                    {plan.keyAdvantages && plan.keyAdvantages.length > 0 ? (
+                      plan.keyAdvantages.slice(0, 2).map((advantage, index) => (
+                        <li key={index} className="flex items-center text-sm">
+                          <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                          </svg>
+                          {advantage}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="flex items-center text-sm">
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        24/7 Support
+                      </li>
+                    )}
                   </ul>
                 </div>
                 
@@ -249,8 +325,6 @@ const CompanySubscription = () => {
           </p>
         </div>
       </div>
-      
-      {/* PayU uses server-generated form post; no script needed */}
     </div>
   );
 };

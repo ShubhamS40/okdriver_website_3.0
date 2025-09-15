@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import { useVehicleLimit } from '../../../hooks/useVehicleLimit';
 import VehicleDetail from '../../../components/VechileDetail.jsx';
 import ClientManager from '@/components/ClientManager';
 
@@ -203,6 +204,9 @@ export default function ChatSupportDashboard() {
     setVehicleForm(prev => ({ ...prev, password: pwd }));
   };
 
+  // Get vehicle limit functions
+  const { canAddVehicle, getPlanDetails } = useVehicleLimit();
+
   const submitVehicle = async () => {
     setVehicleMsg('');
     const { vehicleNumber, password } = vehicleForm;
@@ -210,6 +214,14 @@ export default function ChatSupportDashboard() {
       setVehicleMsg('vehicleNumber and password are required');
       return;
     }
+    
+    // Check if adding a vehicle would exceed the limit
+    if (!canAddVehicle()) {
+      const planDetails = getPlanDetails();
+      setVehicleMsg(`Cannot add more vehicles. You have reached the maximum limit of ${planDetails?.maxVehicles || 0} vehicles for your current plan. Please upgrade your plan to add more vehicles.`);
+      return;
+    }
+    
     setVehicleSubmitting(true);
     try {
       const payload = {

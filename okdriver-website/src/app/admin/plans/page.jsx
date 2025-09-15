@@ -41,18 +41,20 @@ export default function SubscriptionPlans() {
           : [];
 
         const companyPlans = Array.isArray(companyJson?.data)
-          ? companyJson.data.map((p) => ({
-              id: `company-${p.id}`,
-              name: p.name,
-              price: Number(p.price),
-              billingCycle: p.billingCycle || 'custom',
-              description: p.description || '',
-              benefits: Array.isArray(p.keyAdvantages) ? p.keyAdvantages : [],
-              services: Array.isArray(p.services) ? p.services.map((s) => s.name || String(s)) : [],
-              status: p.isActive ? 'active' : 'inactive',
-              planType: 'Fleet Company',
-              subscribers: 0,
-            }))
+          ? companyJson.data
+              .filter((p) => p.planType === 'SUBSCRIPTION') // Only show SUBSCRIPTION type plans
+              .map((p) => ({
+                id: `company-${p.id}`,
+                name: p.name,
+                price: Number(p.price),
+                billingCycle: p.billingCycle || 'custom',
+                description: p.description || '',
+                benefits: Array.isArray(p.keyAdvantages) ? p.keyAdvantages : [],
+                services: Array.isArray(p.services) ? p.services.map((s) => s.name || String(s)) : [],
+                status: p.isActive ? 'active' : 'inactive',
+                planType: 'Fleet Company',
+                subscribers: 0,
+              }))
           : [];
 
         setPlans([...driverPlans, ...companyPlans]);
@@ -70,6 +72,9 @@ export default function SubscriptionPlans() {
   const filteredPlans = useMemo(() => {
     const term = searchTerm.toLowerCase();
     return plans.filter((plan) => {
+      // Only show Fleet Company and Individual Driver plans
+      const isValidPlanType = plan.planType === 'Fleet Company' || plan.planType === 'Individual';
+      
       const matchesSearch =
         plan.name.toLowerCase().includes(term) ||
         plan.description.toLowerCase().includes(term);
@@ -77,7 +82,8 @@ export default function SubscriptionPlans() {
         activeTab === 'all' ||
         (activeTab === 'active' && plan.status === 'active') ||
         (activeTab === 'inactive' && plan.status === 'inactive');
-      return matchesSearch && matchesTab;
+      
+      return isValidPlanType && matchesSearch && matchesTab;
     });
   }, [plans, searchTerm, activeTab]);
 
@@ -92,14 +98,14 @@ export default function SubscriptionPlans() {
             Back to Dashboard
           </Link>
           <h1 className="text-3xl font-bold">Subscription Plans</h1>
-          <p className="text-gray-600">Manage your subscription plans</p>
+          <p className="text-gray-600">Manage Fleet Company and Individual Driver subscription plans</p>
         </div>
         <Link href="/admin/plans/create" className="btn-primary">
           Create New Plan
         </Link>
       </div>
 
-      {/* Search and Filter */}
+      {/* Plan Type Filter */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div className="relative w-full md:w-64">
@@ -140,6 +146,22 @@ export default function SubscriptionPlans() {
         </div>
       </div>
 
+      {/* Plan Types Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">Individual Driver Plans</h3>
+          <p className="text-blue-600 text-sm">
+            Plans designed for individual drivers - {filteredPlans.filter(p => p.planType === 'Individual').length} plans available
+          </p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">Fleet Company Plans</h3>
+          <p className="text-green-600 text-sm">
+            Plans designed for fleet companies - {filteredPlans.filter(p => p.planType === 'Fleet Company').length} plans available
+          </p>
+        </div>
+      </div>
+
       {/* Plans Grid */}
       {loading && (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">Loading plans...</div>
@@ -154,7 +176,14 @@ export default function SubscriptionPlans() {
           <div key={plan.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-bold">{plan.name}</h2>
+                <div>
+                  <h2 className="text-xl font-bold">{plan.name}</h2>
+                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                    plan.planType === 'Individual' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {plan.planType}
+                  </span>
+                </div>
                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${plan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {plan.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
@@ -191,7 +220,7 @@ export default function SubscriptionPlans() {
               </div>
               
               <div className="text-sm text-gray-500 mb-4">
-                <span>{plan.planType ? `${plan.planType} · ` : ''}{plan.subscribers} active subscribers</span>
+                <span>{plan.subscribers} active subscribers</span>
               </div>
               
               <div className="flex space-x-2">
@@ -212,14 +241,14 @@ export default function SubscriptionPlans() {
         ))}
       </div>
       
-      {filteredPlans.length === 0 && (
+      {filteredPlans.length === 0 && !loading && (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h3 className="mt-2 text-sm font-medium text-gray-900">No plans found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating a new plan.'}
+            {searchTerm ? 'Try adjusting your search terms.' : 'No Fleet Company or Individual Driver plans available.'}
           </p>
           <div className="mt-6">
             <Link href="/admin/plans/create" className="btn-primary">

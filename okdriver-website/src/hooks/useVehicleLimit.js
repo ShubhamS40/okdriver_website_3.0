@@ -36,7 +36,13 @@ export const useVehicleLimit = () => {
 
       const data = await response.json();
       console.log('Plan data received:', data);
-      setCompanyPlan(data);
+      
+      // Handle the new API response format
+      if (data.activePlan) {
+        setCompanyPlan(data.activePlan);
+      } else {
+        setCompanyPlan(null);
+      }
     } catch (err) {
       console.error('Error fetching company plan:', err);
       setError(err.message);
@@ -72,14 +78,14 @@ export const useVehicleLimit = () => {
   // Check if adding a vehicle would exceed the limit
   const canAddVehicle = () => {
     if (!companyPlan) return false;
-    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined) return true; // Unlimited
+    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined || companyPlan.maxVehicles === 0) return true; // Unlimited
     return currentVehicleCount < companyPlan.maxVehicles;
   };
 
   // Get remaining vehicle slots
   const getRemainingSlots = () => {
     if (!companyPlan) return 0;
-    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined) return 'Unlimited';
+    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined || companyPlan.maxVehicles === 0) return 'Unlimited';
     return Math.max(0, companyPlan.maxVehicles - currentVehicleCount);
   };
 
@@ -110,15 +116,42 @@ export const useVehicleLimit = () => {
   const getPlanDetails = () => {
     if (!companyPlan) return null;
     
+    const maxVehicles = companyPlan.maxVehicles || 0;
+    const remaining = maxVehicles ? maxVehicles - currentVehicleCount : 0;
+    
     return {
-      name: companyPlan.name || 'No Plan',
+      hasPlan: companyPlan.planType !== 'FREE',
+      planName: companyPlan.planType || companyPlan.name || 'No Plan',
       price: companyPlan.price || 0,
-      maxVehicles: companyPlan.maxVehicles || 0,
+      maxVehicles: maxVehicles,
       durationDays: companyPlan.durationDays || 0,
       description: companyPlan.description || '',
       currentVehicles: currentVehicleCount,
-      remainingVehicles: getRemainingSlots()
+      remainingVehicles: maxVehicles === 0 ? 'Unlimited' : remaining,
+      startDate: companyPlan.startDate,
+      endDate: companyPlan.endDate,
+      status: companyPlan.status,
+      isVehicleLimitPlan: companyPlan.planType === 'VEHICLE_LIMIT',
+      additionalVehicleLimit: companyPlan.additionalVehicleLimit || 0,
+      baseVehicleLimit: companyPlan.baseVehicleLimit || 0,
+      totalVehicleLimit: maxVehicles
     };
+  };
+
+  // Function to refresh all vehicle limit data
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchCompanyPlan(),
+        fetchVehicleCount()
+      ]);
+    } catch (err) {
+      console.error('Error refreshing vehicle limit data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -128,7 +161,7 @@ export const useVehicleLimit = () => {
 
   return {
     companyPlan,
-    currentVehicleCount,
+    vehicleCount: currentVehicleCount,
     loading,
     error,
     canAddVehicle,
@@ -136,9 +169,6 @@ export const useVehicleLimit = () => {
     hasPlan,
     getPlanDetails,
     getCompanyDetailsFromToken,
-    refreshData: () => {
-      fetchCompanyPlan();
-      fetchVehicleCount();
-    }
+    refreshData
   };
 };

@@ -9,7 +9,6 @@ const CompanyLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [loginResponse, setLoginResponse] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,16 +71,14 @@ const CompanyLogin = () => {
         // Store token in localStorage (in real app, consider more secure storage)
         localStorage.setItem('companyToken', data.token);
         
-        setLoginResponse(data);
-        
+        // Redirect based on plan status
         if (data.hasActivePlan) {
-          // Redirect to dashboard
+          // Company has an active plan - redirect to dashboard
           window.location.href = '/company/dashboard';
         } else {
-          // If no active plan, show plan selection
-          // Component will render plan selection UI
+          // Company has no active plan or is newly registered - redirect to subscription
+          window.location.href = '/company/subscription';
         }
-        // If no active plan, component will show plan selection
       } else {
         // Handle API errors
         if (response.status === 404) {
@@ -99,71 +96,11 @@ const CompanyLogin = () => {
     }
   };
 
-  const handlePlanSelection = (planId) => {
-    // Redirect to subscription page with selected plan
-    window.location.href = `/company/subscription?planId=${planId}`;
-  };
-
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSubmit();
     }
   };
-
-  // Show plan selection if login successful but no active plan
-  if (loginResponse && !loginResponse.hasActivePlan) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl w-full space-y-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">OK</span>
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold text-black">
-              Welcome, {loginResponse.company.name}!
-            </h2>
-            <p className="mt-2 text-gray-600">
-              Choose a subscription plan to get started with OKDriver
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loginResponse.plans.map((plan) => (
-              <div key={plan.id} className="bg-gray-50 border border-gray-200 rounded-lg p-6 hover:border-black transition-all">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-black mb-2">{plan.name}</h3>
-                  <div className="text-3xl font-bold text-black mb-1">
-                    ₹{plan.price}
-                    <span className="text-lg text-gray-600">/{plan.duration}</span>
-                  </div>
-                  {plan.description && (
-                    <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
-                  )}
-                  <button
-                    onClick={() => handlePlanSelection(plan.id)}
-                    className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-                  >
-                    Select Plan
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <button
-              onClick={() => setLoginResponse(null)}
-              className="text-gray-600 hover:text-black transition-colors"
-            >
-              ← Back to Login
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -171,9 +108,9 @@ const CompanyLogin = () => {
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            {/* <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xl">OK</span>
-            </div> */}
+            </div>
           </div>
           <h2 className="text-3xl font-bold text-black">
             Company Login

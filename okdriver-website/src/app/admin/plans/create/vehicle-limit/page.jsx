@@ -30,12 +30,11 @@ export default function CreateVehicleLimitPlan() {
       description: form.description,
       price: parseFloat(form.price),
       vehicleCount: parseInt(form.vehicleCount),
-      planType: 'vehicle-limit',
       isActive: true
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/companyplan/create', {
+      const response = await fetch('http://localhost:5000/api/admin/company/top-up-plan/vehicle-limit/vehicle-limit-plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

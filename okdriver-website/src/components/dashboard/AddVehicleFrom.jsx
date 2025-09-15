@@ -1,5 +1,6 @@
 'use client'
 import React from 'react';
+import { useVehicleLimit } from '../../hooks/useVehicleLimit';
 
 const AddVehicleForm = ({ 
   vehicleForm, 
@@ -9,6 +10,10 @@ const AddVehicleForm = ({
   vehicleSubmitting, 
   vehicleMsg 
 }) => {
+  // Import useVehicleLimit hook to check if vehicle limit is reached
+  const { canAddVehicle, getPlanDetails } = useVehicleLimit();
+  const canAdd = canAddVehicle();
+  const planDetails = getPlanDetails();
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h3 className="text-lg font-semibold text-black mb-6">Add New Vehicle</h3>
@@ -84,8 +89,9 @@ const AddVehicleForm = ({
           <div className="flex items-center gap-3">
             <button 
               onClick={submitVehicle} 
-              disabled={vehicleSubmitting} 
+              disabled={vehicleSubmitting || !canAdd} 
               className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60"
+              title={!canAdd ? `Vehicle limit reached (${planDetails?.maxVehicles || 0} vehicles)` : ''}
             >
               {vehicleSubmitting ? 'Adding...' : 'Add Vehicle'}
             </button>
@@ -95,6 +101,12 @@ const AddVehicleForm = ({
               </span>
             )}
           </div>
+          {!canAdd && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <p>You have reached the maximum limit of {planDetails?.maxVehicles || 0} vehicles for your current plan.</p>
+              <p className="mt-1">Please <a href="/company/subscription" className="font-medium underline">upgrade your plan</a> to add more vehicles.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

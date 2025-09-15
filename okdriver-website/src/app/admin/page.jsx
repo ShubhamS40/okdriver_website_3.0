@@ -151,6 +151,18 @@ export default function AdminPanel() {
             </div>
           </Link>
           
+          {/* Top Up Plans Card - NEW */}
+          <Link href="/admin/plans/top-up" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
+            <h2 className="text-xl font-bold mb-2 text-gray-900">Top Up Plans</h2>
+            <p className="text-gray-600 mb-4">Manage top-up plans and credit packages</p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-purple-600">Manage Top-ups</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+          </Link>
+          
           {/* Registered Drivers Card */}
           <Link href="/admin/drivers" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
             <h2 className="text-xl font-bold mb-2 text-gray-900">Registered Drivers</h2>

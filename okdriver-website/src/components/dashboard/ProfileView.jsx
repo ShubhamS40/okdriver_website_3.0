@@ -7,6 +7,8 @@ const ProfileView = () => {
   const [companyDetails, setCompanyDetails] = useState({
     name: '',
     email: '',
+    phone: '',
+    address: '',
     details: ''
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -25,16 +27,43 @@ const ProfileView = () => {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Load company details from token or API
+  // Load company details from API
   useEffect(() => {
-    const loadCompanyDetails = () => {
-      const tokenDetails = getCompanyDetailsFromToken();
-      if (tokenDetails) {
-        setCompanyDetails({
-          name: tokenDetails.name,
-          email: tokenDetails.email,
-          details: 'Vehicle management and chat support system'
+    const loadCompanyDetails = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : null;
+        if (!token) return;
+
+        const response = await fetch('/api/company/plan', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.company) {
+            setCompanyDetails({
+              name: data.company.name,
+              email: data.company.email,
+              phone: data.company.phone || '',
+              address: data.company.address || '',
+              details: 'Vehicle management and chat support system'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading company details:', error);
+        // Fallback to token details
+        const tokenDetails = getCompanyDetailsFromToken();
+        if (tokenDetails) {
+          setCompanyDetails({
+            name: tokenDetails.name,
+            email: tokenDetails.email,
+            details: 'Vehicle management and chat support system'
+          });
+        }
       }
     };
 
@@ -98,6 +127,27 @@ const ProfileView = () => {
               onChange={handleInputChange}
               disabled={!isEditing}
               className={`w-full border border-gray-300 rounded-lg px-3 py-2 ${!isEditing ? 'bg-gray-50' : ''}`} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <input 
+              type="tel" 
+              name="phone"
+              value={companyDetails.phone}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className={`w-full border border-gray-300 rounded-lg px-3 py-2 ${!isEditing ? 'bg-gray-50' : ''}`} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <textarea 
+              name="address"
+              value={companyDetails.address}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className={`w-full border border-gray-300 rounded-lg px-3 py-2 h-20 ${!isEditing ? 'bg-gray-50' : ''}`}
             />
           </div>
           <div>
@@ -188,6 +238,19 @@ const ProfileView = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Vehicles</label>
                 <p className="text-lg font-semibold text-gray-900">
                   {planDetails.currentVehicles} / {planDetails.maxVehicles === 0 ? '∞' : planDetails.maxVehicles}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan Status</label>
+                <p className="text-lg font-semibold text-green-600">Active</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Period</label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {planDetails.startDate ? new Date(planDetails.startDate).toLocaleDateString() : 'N/A'} - {planDetails.endDate ? new Date(planDetails.endDate).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
             </div>
