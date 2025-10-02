@@ -9,27 +9,15 @@ export async function POST(request) {
     const mihpayid = formData.get('mihpayid');
     const amount = formData.get('amount');
     
-    // Verify the payment with backend
+    // Prefer auth verification; if token missing, fall back to unauth payu-return endpoint
     const token = request.cookies.get('companyToken')?.value;
-    
-    if (!token) {
-      // If no token, redirect to login
-      return NextResponse.redirect(new URL('/company/login', request.url));
-    }
-    
-    // Call backend to verify payment
-    const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/company/top-up-plan/vehicle-limit/payment/verify`, {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const endpoint = `${apiBase}/api/admin/company/top-up-plan/vehicle-limit/payment/${token ? 'verify' : 'payu-return'}`;
+    const headers = token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
+    const verifyResponse = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        txnid,
-        mihpayid,
-        status: paymentStatus,
-        amount
-      })
+      headers,
+      body: JSON.stringify({ txnid, mihpayid, status: paymentStatus, amount })
     });
     
     // Determine redirect URL based on payment status
@@ -63,27 +51,15 @@ export async function GET(request) {
   const amount = searchParams.get('amount');
   
   try {
-    // Verify the payment with backend
+    // Verify the payment with backend (fallback to unauth endpoint if token missing)
     const token = request.cookies.get('companyToken')?.value;
-    
-    if (!token) {
-      // If no token, redirect to login
-      return NextResponse.redirect(new URL('/company/login', request.url));
-    }
-    
-    // Call backend to verify payment
-    const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/company/top-up-plan/vehicle-limit/payment/verify`, {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const endpoint = `${apiBase}/api/admin/company/top-up-plan/vehicle-limit/payment/${token ? 'verify' : 'payu-return'}`;
+    const headers = token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
+    const verifyResponse = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        txnid,
-        mihpayid,
-        status,
-        amount
-      })
+      headers,
+      body: JSON.stringify({ txnid, mihpayid, status, amount })
     });
     
     // Determine redirect URL based on payment status

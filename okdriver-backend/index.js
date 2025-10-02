@@ -57,6 +57,8 @@ app.use('/audio', express.static(audioDir));
 app.use('/api/driver', otpRoutes);
 app.use('/api/drivers', driverRegistration);
 app.use('/api/driver/auth', driverAuthRoutes);
+app.use('/api/driver/payment', require('./routes/driver/payment/driverPaymentRoute'));
+app.use('/api/driver/subscription', require('./routes/driver/subscription/subscriptionRoute'));
 
 // Company routes
 app.use('/api/company', companyRoutes);

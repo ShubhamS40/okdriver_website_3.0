@@ -70,25 +70,29 @@ export default function Contact() {
       icon: MapPin,
       title: 'Our Office',
       details: 'L16-A, Dilshad Garden, New Delhi - 110095',
-      color: 'from-blue-600 to-blue-800'
+      color: 'from-blue-600 to-blue-800',
+      link: null
     },
     {
       icon: Mail,
       title: 'Email Us',
       details: 'hello@okdriver.in',
-      color: 'from-green-600 to-green-800'
+      color: 'from-green-600 to-green-800',
+      link: 'mailto:hello@okdriver.in'
     },
     {
       icon: Phone,
       title: 'Call Us',
       details: '+91-9319500121',
-      color: 'from-purple-600 to-purple-800'
+      color: 'from-purple-600 to-purple-800',
+      link: 'tel:+919319500121'
     },
     {
       icon: Headphones,
       title: '24/7 Support',
       details: 'Round-the-clock assistance',
-      color: 'from-orange-600 to-orange-800'
+      color: 'from-orange-600 to-orange-800',
+      link: null
     }
   ];
 
@@ -128,35 +132,9 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Contact Information Cards */}
+      {/* Main Contact Section */}
       <section className="bg-gray-50 py-20">
         <div className="container-custom">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {contactInfo.map((info, index) => {
-              const Icon = info.icon;
-              return (
-                <div
-                  key={index}
-                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2"
-                >
-                  <div className="relative p-8">
-                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${info.color} mb-6 transform transition-transform duration-300 group-hover:scale-110`}>
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-gray-800 transition-colors">
-                      {info.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      {info.details}
-                    </p>
-                  </div>
-                  <div className="absolute inset-0 border-2 border-transparent rounded-2xl transition-all duration-300 group-hover:border-black/20" />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Main Contact Section */}
           <div className="grid md:grid-cols-2 gap-16 items-start">
             
             {/* Contact Form */}
@@ -345,6 +323,61 @@ export default function Contact() {
         </div>
       </section>
 
+
+      {/* Contact Information Cards - Moved to Bottom */}
+      <section className="bg-gray-50 py-20">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Get In Touch
+            </h2>
+            <p className="text-xl text-gray-600">
+              Multiple ways to reach us for your convenience
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {contactInfo.map((info, index) => {
+              const Icon = info.icon;
+              const content = (
+                <div className="relative p-8">
+                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${info.color} mb-6 transform transition-transform duration-300 group-hover:scale-110`}>
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-gray-800 transition-colors">
+                    {info.title}
+                  </h3>
+                  <p className={`leading-relaxed ${info.link ? 'text-blue-600 font-semibold' : 'text-gray-600'}`}>
+                    {info.details}
+                  </p>
+                </div>
+              );
+              
+              return info.link ? (
+                <a
+                  key={index}
+                  href={info.link}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2 block relative"
+                >
+                  {content}
+                  <div className="absolute inset-0 border-2 border-transparent rounded-2xl transition-all duration-300 group-hover:border-black/20" />
+                </a>
+              ) : (
+                <div
+                  key={index}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2 relative"
+                >
+                  {content}
+                  <div className="absolute inset-0 border-2 border-transparent rounded-2xl transition-all duration-300 group-hover:border-black/20" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+
+      
       {/* Trust Indicators Section */}
       <section className="py-20 bg-black text-white">
         <div className="container-custom">

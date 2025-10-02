@@ -47,6 +47,11 @@ const verifyPayment = async (req, res) => {
     const plan = await prisma.companyPlan.findUnique({ where: { id: numericPlanId } });
     if (!plan) return res.status(404).json({ message: 'Plan not found' });
 
+    // Guardrail: Only SUBSCRIPTION-type plans should create CompanySubscription
+    if (plan.planType !== 'SUBSCRIPTION') {
+      return res.status(400).json({ success: false, message: 'Invalid plan type for subscription purchase' });
+    }
+
     const now = new Date();
     const endDate = new Date(now.getTime());
     endDate.setDate(endDate.getDate() + plan.durationDays);

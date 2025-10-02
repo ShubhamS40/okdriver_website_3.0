@@ -218,7 +218,7 @@ export default function ChatSupportDashboard() {
     // Check if adding a vehicle would exceed the limit
     if (!canAddVehicle()) {
       const planDetails = getPlanDetails();
-      setVehicleMsg(`Cannot add more vehicles. You have reached the maximum limit of ${planDetails?.maxVehicles || 0} vehicles for your current plan. Please upgrade your plan to add more vehicles.`);
+      setVehicleMsg(`Vehicle limit reached. Your current plan allows a maximum of ${planDetails?.maxVehicles || 0} vehicles. Please upgrade your plan to add more vehicles.`);
       return;
     }
     

@@ -49,7 +49,7 @@ const VehicleLimitWarning = () => {
             </p>
             <div className="mt-3">
               <button
-                onClick={() => window.location.href = '/company/subscription'}
+                onClick={() => window.location.href = '/company/top-up'}
                 className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md ${
                   isAtLimit 
                     ? 'text-red-800 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'

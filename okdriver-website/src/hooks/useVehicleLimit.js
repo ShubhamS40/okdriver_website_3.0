@@ -38,8 +38,16 @@ export const useVehicleLimit = () => {
       console.log('Plan data received:', data);
       
       // Handle the new API response format
-      if (data.activePlan) {
-        setCompanyPlan(data.activePlan);
+      if (data.summary && data.subscriptionsByStatus) {
+        // Process the new comprehensive response format
+        const enrichedPlan = {
+          summary: data.summary,
+          subscriptionsByType: data.subscriptionsByType,
+          subscriptionsByStatus: data.subscriptionsByStatus,
+          allPurchasedPlans: data.allPurchasedPlans || [],
+          company: data.company
+        };
+        setCompanyPlan(enrichedPlan);
       } else {
         setCompanyPlan(null);
       }
@@ -68,6 +76,7 @@ export const useVehicleLimit = () => {
         const data = await response.json();
         const vehicleData = data.data || data;
         const count = Array.isArray(vehicleData) ? vehicleData.length : 0;
+        console.log('Current vehicle count:', count);
         setCurrentVehicleCount(count);
       }
     } catch (err) {
@@ -75,23 +84,101 @@ export const useVehicleLimit = () => {
     }
   };
 
+  // Calculate total vehicle limit (base + top-up)
+  const calculateTotalVehicleLimit = () => {
+    if (!companyPlan) return { hasActivePlan: false, totalLimit: 0, baseLimit: 0, topUpLimit: 0 };
+    
+    const activeSubscriptions = companyPlan.subscriptionsByStatus?.active || [];
+    const basePlans = activeSubscriptions.filter(s => 
+      s.plan.planType === 'SUBSCRIPTION' && s.subscriptionStatus === 'ACTIVE'
+    );
+    const topUpPlans = activeSubscriptions.filter(s => 
+      s.plan.planType === 'VEHICLE_LIMIT' && s.subscriptionStatus === 'ACTIVE'
+    );
+    
+    // Must have at least one active base plan
+    const hasActiveBasePlan = basePlans.length > 0;
+    
+    if (!hasActiveBasePlan) {
+      return { hasActivePlan: false, totalLimit: 0, baseLimit: 0, topUpLimit: 0 };
+    }
+    
+    // Calculate limits
+    const baseVehicleLimit = basePlans.reduce((sum, plan) => {
+      const limit = plan.plan.vehicleLimit || 0;
+      console.log(`Base plan ${plan.plan.name}: ${limit} vehicles`);
+      return sum + limit;
+    }, 0);
+    
+    // Top-up plans are only valid when base plan is active
+    const topUpVehicleLimit = topUpPlans.reduce((sum, plan) => {
+      const limit = plan.plan.vehicleLimit || 0;
+      console.log(`Top-up plan ${plan.plan.name}: ${limit} vehicles`);
+      return sum + limit;
+    }, 0);
+    
+    const totalVehicleLimit = baseVehicleLimit + topUpVehicleLimit;
+    
+    console.log('Vehicle Limit Calculation:', {
+      hasActiveBasePlan,
+      baseVehicleLimit,
+      topUpVehicleLimit,
+      totalVehicleLimit,
+      currentVehicleCount
+    });
+    
+    return {
+      hasActivePlan: true,
+      totalLimit: totalVehicleLimit,
+      baseLimit: baseVehicleLimit,
+      topUpLimit: topUpVehicleLimit
+    };
+  };
+
   // Check if adding a vehicle would exceed the limit
   const canAddVehicle = () => {
-    if (!companyPlan) return false;
-    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined || companyPlan.maxVehicles === 0) return true; // Unlimited
-    return currentVehicleCount < companyPlan.maxVehicles;
+    const limitInfo = calculateTotalVehicleLimit();
+    
+    console.log('canAddVehicle check:', {
+      hasActivePlan: limitInfo.hasActivePlan,
+      totalLimit: limitInfo.totalLimit,
+      currentCount: currentVehicleCount,
+      canAdd: limitInfo.hasActivePlan && (limitInfo.totalLimit === 0 || currentVehicleCount < limitInfo.totalLimit)
+    });
+    
+    // No active plan = can't add vehicles
+    if (!limitInfo.hasActivePlan) {
+      return false;
+    }
+    
+    // Unlimited vehicles (when totalLimit is 0)
+    if (limitInfo.totalLimit === 0) {
+      return true;
+    }
+    
+    // Check if current count is less than total limit
+    return currentVehicleCount < limitInfo.totalLimit;
   };
 
   // Get remaining vehicle slots
   const getRemainingSlots = () => {
-    if (!companyPlan) return 0;
-    if (companyPlan.maxVehicles === null || companyPlan.maxVehicles === undefined || companyPlan.maxVehicles === 0) return 'Unlimited';
-    return Math.max(0, companyPlan.maxVehicles - currentVehicleCount);
+    const limitInfo = calculateTotalVehicleLimit();
+    
+    if (!limitInfo.hasActivePlan) {
+      return 0;
+    }
+    
+    if (limitInfo.totalLimit === 0) {
+      return 'Unlimited';
+    }
+    
+    return Math.max(0, limitInfo.totalLimit - currentVehicleCount);
   };
 
   // Check if company has a plan
   const hasPlan = () => {
-    return companyPlan && companyPlan.id;
+    const limitInfo = calculateTotalVehicleLimit();
+    return limitInfo.hasActivePlan;
   };
 
   // Get company details from JWT token as fallback
@@ -116,25 +203,57 @@ export const useVehicleLimit = () => {
   const getPlanDetails = () => {
     if (!companyPlan) return null;
     
-    const maxVehicles = companyPlan.maxVehicles || 0;
-    const remaining = maxVehicles ? maxVehicles - currentVehicleCount : 0;
+    const limitInfo = calculateTotalVehicleLimit();
+    const activeSubscriptions = companyPlan.subscriptionsByStatus?.active || [];
+    const basePlans = activeSubscriptions.filter(s => 
+      s.plan.planType === 'SUBSCRIPTION' && s.subscriptionStatus === 'ACTIVE'
+    );
+    const topUpPlans = activeSubscriptions.filter(s => 
+      s.plan.planType === 'VEHICLE_LIMIT' && s.subscriptionStatus === 'ACTIVE'
+    );
+    
+    // Get primary base plan (first active subscription plan)
+    const primaryBasePlan = basePlans.length > 0 ? basePlans[0] : null;
+    
+    const remaining = limitInfo.totalLimit ? limitInfo.totalLimit - currentVehicleCount : 0;
     
     return {
-      hasPlan: companyPlan.planType !== 'FREE',
-      planName: companyPlan.planType || companyPlan.name || 'No Plan',
-      price: companyPlan.price || 0,
-      maxVehicles: maxVehicles,
-      durationDays: companyPlan.durationDays || 0,
-      description: companyPlan.description || '',
+      // Summary information
+      summary: companyPlan.summary,
+      subscriptionsByType: companyPlan.subscriptionsByType,
+      company: companyPlan.company,
+      
+      // Plan details
+      name: primaryBasePlan ? primaryBasePlan.plan.name : 'No Active Plan',
+      hasPlan: limitInfo.hasActivePlan,
+      planName: primaryBasePlan ? primaryBasePlan.plan.name : 'No Plan',
+      price: primaryBasePlan ? primaryBasePlan.plan.price : 0,
+      maxVehicles: limitInfo.totalLimit,
+      durationDays: primaryBasePlan ? primaryBasePlan.plan.durationDays : 0,
+      description: primaryBasePlan ? primaryBasePlan.plan.description : '',
       currentVehicles: currentVehicleCount,
-      remainingVehicles: maxVehicles === 0 ? 'Unlimited' : remaining,
-      startDate: companyPlan.startDate,
-      endDate: companyPlan.endDate,
-      status: companyPlan.status,
-      isVehicleLimitPlan: companyPlan.planType === 'VEHICLE_LIMIT',
-      additionalVehicleLimit: companyPlan.additionalVehicleLimit || 0,
-      baseVehicleLimit: companyPlan.baseVehicleLimit || 0,
-      totalVehicleLimit: maxVehicles
+      remainingVehicles: limitInfo.totalLimit === 0 ? 'Unlimited' : remaining,
+      startDate: primaryBasePlan ? primaryBasePlan.subscriptionStartDate : null,
+      endDate: primaryBasePlan ? primaryBasePlan.subscriptionEndDate : null,
+      status: primaryBasePlan ? primaryBasePlan.subscriptionStatus : 'INACTIVE',
+      
+      // Vehicle limits breakdown
+      baseVehicleLimit: limitInfo.baseLimit,
+      topUpVehicleLimit: limitInfo.topUpLimit,
+      totalVehicleLimit: limitInfo.totalLimit,
+      
+      // Plan arrays
+      basePlans: basePlans,
+      topUpPlans: topUpPlans,
+      allActiveSubscriptions: activeSubscriptions,
+      
+      // Counts
+      subscriptionPlansCount: companyPlan.subscriptionsByType?.subscriptionPlans?.count || 0,
+      vehicleLimitPlansCount: companyPlan.subscriptionsByType?.vehicleLimitPlans?.count || 0,
+      totalActiveSubscriptions: companyPlan.summary?.totalActiveSubscriptions || 0,
+      
+      // Additional data
+      allPurchasedPlans: companyPlan.allPurchasedPlans || []
     };
   };
 
@@ -169,6 +288,8 @@ export const useVehicleLimit = () => {
     hasPlan,
     getPlanDetails,
     getCompanyDetailsFromToken,
-    refreshData
+    refreshData,
+    // Expose the calculation function for debugging
+    calculateTotalVehicleLimit
   };
 };
