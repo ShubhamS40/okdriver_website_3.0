@@ -25,7 +25,7 @@ export default function ClientManager({ companyToken }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("https://backend.okdriver.in:5000/api/company/clients/lists", { headers: authHeaders });
+      const res = await fetch("https://backend.okdriver.in/api/company/clients/lists", { headers: authHeaders });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Failed to load lists");
       setLists(Array.isArray(data) ? data : []);
@@ -44,7 +44,7 @@ export default function ClientManager({ companyToken }) {
       setVehiclesLoading(true);
       console.log('🚗 Loading vehicles...');
       
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/vehicles', {
+      const res = await fetch('https://backend.okdriver.in/api/company/vehicles', {
         headers: authHeaders
       });
       
@@ -76,7 +76,7 @@ export default function ClientManager({ companyToken }) {
   const createList = async () => {
     if (!newListName.trim()) return;
     try {
-      const res = await fetch("https://backend.okdriver.in:5000/api/company/clients/lists", {
+      const res = await fetch("https://backend.okdriver.in/api/company/clients/lists", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ name: newListName.trim() })
@@ -93,7 +93,7 @@ export default function ClientManager({ companyToken }) {
   const addEmailToSelectedList = async () => {
     if (!selectedListId || !emailInput.trim()) return;
     try {
-      const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/lists/${selectedListId}/members`, {
+      const res = await fetch(`https://backend.okdriver.in/api/company/clients/lists/${selectedListId}/members`, {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ email: emailInput.trim() })
@@ -109,7 +109,7 @@ export default function ClientManager({ companyToken }) {
 
   const removeMember = async (listId, clientId) => {
     try {
-      const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/lists/${listId}/members/${clientId}`, {
+      const res = await fetch(`https://backend.okdriver.in/api/company/clients/lists/${listId}/members/${clientId}`, {
         method: "DELETE",
         headers: authHeaders
       });
@@ -131,7 +131,7 @@ export default function ClientManager({ companyToken }) {
     
     try {
       setError("");
-      const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/lists/${selectedListId}/assign/${Number(vehicleIdForAssign)}`, {
+      const res = await fetch(`https://backend.okdriver.in/api/company/clients/lists/${selectedListId}/assign/${Number(vehicleIdForAssign)}`, {
         method: "POST",
         headers: authHeaders
       });
@@ -226,7 +226,7 @@ export default function ClientManager({ companyToken }) {
           <button 
             onClick={async () => {
               try {
-                const res = await fetch('https://backend.okdriver.in:5000/api/company/vehicles/debug', {
+                const res = await fetch('https://backend.okdriver.in/api/company/vehicles/debug', {
                   headers: authHeaders
                 });
                 const data = await res.json();
@@ -248,7 +248,7 @@ export default function ClientManager({ companyToken }) {
                 return;
               }
               try {
-                const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/test-assignment/${selectedListId}/${vehicleIdForAssign}`, {
+                const res = await fetch(`https://backend.okdriver.in/api/company/clients/test-assignment/${selectedListId}/${vehicleIdForAssign}`, {
                   headers: authHeaders
                 });
                 const data = await res.json();

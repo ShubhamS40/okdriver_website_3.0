@@ -29,8 +29,8 @@ export default function CompanyTopUpPlans() {
     
     try {
       const [vehicleResponse, clientResponse] = await Promise.all([
-        fetch('https://backend.okdriver.in:5000/api/admin/company/top-up-plan/vehicle-limit/vehicle-limit-plans'),
-        fetch('https://backend.okdriver.in:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans')
+        fetch('https://backend.okdriver.in/api/admin/company/top-up-plan/vehicle-limit/vehicle-limit-plans'),
+        fetch('https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans')
       ]);
 
       if (!vehicleResponse.ok || !clientResponse.ok) {

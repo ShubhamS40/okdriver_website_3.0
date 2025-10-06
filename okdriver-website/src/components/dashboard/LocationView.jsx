@@ -125,7 +125,7 @@ function LocationView({ vehicles = [] }) {
         
         for (const v of vehicles) {
           try {
-            const res = await fetch(`https://backend.okdriver.in:5000/api/company/vehicles/location/${encodeURIComponent(v.name)}`);
+            const res = await fetch(`https://backend.okdriver.in/api/company/vehicles/location/${encodeURIComponent(v.name)}`);
             if (!res.ok) continue;
             const { location } = await res.json();
             if (!location) continue;

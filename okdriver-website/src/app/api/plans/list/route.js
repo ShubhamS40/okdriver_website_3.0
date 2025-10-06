@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const response = await fetch('https://backend.okdriver.in:5000/api/admin/companyplan/list', {
+    const response = await fetch('https://backend.okdriver.in/api/admin/companyplan/list', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });

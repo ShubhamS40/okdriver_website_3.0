@@ -9,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Email is required' }, { status: 400 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/company/forgot-password`, {
+    const response = await fetch(`https://backend.okdriver.in/company/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

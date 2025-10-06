@@ -9,7 +9,7 @@ export async function GET(request) {
       return NextResponse.json({ success: false, message: 'Token is required' }, { status: 400 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/company/verify-reset-token?token=${token}`, {
+    const response = await fetch(`https://backend.okdriver.in/company/verify-reset-token?token=${token}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

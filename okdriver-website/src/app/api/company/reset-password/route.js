@@ -9,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Token and password are required' }, { status: 400 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/company/reset-password`, {
+    const response = await fetch(`https://backend.okdriver.in/company/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

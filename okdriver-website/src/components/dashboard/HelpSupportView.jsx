@@ -29,7 +29,7 @@ export default function HelpSupportView() {
     setSubmitting(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : '';
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/help-support/tickets', {
+      const res = await fetch('https://backend.okdriver.in/api/company/help-support/tickets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export default function HelpSupportView() {
     setLoading(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : '';
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/help-support/tickets', {
+      const res = await fetch('https://backend.okdriver.in/api/company/help-support/tickets', {
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
       const json = await res.json();

@@ -14,7 +14,7 @@ export async function GET(request) {
     const token = authHeader.split(' ')[1];
 
     // Forward the request to the backend API
-    const response = await fetch('https://backend.okdriver.in:5000/api/company/plan', {
+    const response = await fetch('https://backend.okdriver.in/api/company/plan', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 async function fetchCompanyDetails(id) {
   try {
-    const res = await fetch(`http://backend.okdriver.in:5000/api/admin/companies/${id}`, { cache: 'no-store' });
+    const res = await fetch(`https://backend.okdriver.in/api/admin/companies/${id}`, { cache: 'no-store' });
     const json = await res.json();
     if (json?.ok) return json.data;
   } catch (e) { console.error('company details failed', e); }

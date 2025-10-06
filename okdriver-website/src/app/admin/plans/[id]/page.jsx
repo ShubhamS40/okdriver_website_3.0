@@ -31,7 +31,7 @@ export default function PlanDetails() {
     setError('');
     try {
       if (isDriverPlan) {
-        const res = await fetch('http://localhost:5000/api/admin/driverplan/driver-plans');
+        const res = await fetch('https://backend.okdriver.in/api/admin/driverplan/driver-plans');
         const json = await res.json();
         const found = Array.isArray(json?.data) ? json.data.find(p => String(p.id) === rawId) : null;
         if (!found) throw new Error('Plan not found');
@@ -57,7 +57,7 @@ export default function PlanDetails() {
         setSubscribers([]);
         
       } else {
-        const res = await fetch('http://localhost:5000/api/admin/companyplan/list');
+        const res = await fetch('https://backend.okdriver.in/api/admin/companyplan/list');
         const json = await res.json();
         const found = Array.isArray(json?.data) ? json.data.find(p => String(p.id) === rawId) : null;
         if (!found) throw new Error('Plan not found');
@@ -155,7 +155,7 @@ export default function PlanDetails() {
           benefits: benefitsArray,
           storageLimitGB: Number(editedPlan.storageAllocation),
         };
-        const res = await fetch(`http://localhost:5000/api/admin/driverplan/driver-plans/${rawId}`, {
+        const res = await fetch(`https://backend.okdriver.in/api/admin/driverplan/driver-plans/${rawId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -173,7 +173,7 @@ export default function PlanDetails() {
         };
         // Company update endpoint updates selection; we need to update plan itself
         // Use dedicated update endpoint
-        const res = await fetch(`http://localhost:5000/api/admin/companyplan/update/${rawId}`, {
+        const res = await fetch(`https://backend.okdriver.in/api/admin/companyplan/update/${rawId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
@@ -204,7 +204,7 @@ export default function PlanDetails() {
     if (!confirm('Are you sure you want to delete this plan?')) return;
     try {
       if (isDriverPlan) {
-        const res = await fetch(`http://localhost:5000/api/admin/driverplan/driver-plans/${rawId}`, { method: 'DELETE' });
+        const res = await fetch(`https://backend.okdriver.in/api/admin/driverplan/driver-plans/${rawId}`, { method: 'DELETE' });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || 'Failed to delete plan');
       } else {
@@ -213,7 +213,7 @@ export default function PlanDetails() {
           alert('Admin auth required. Please login again.');
           return;
         }
-        const res = await fetch(`http://localhost:5000/api/admin/companyplan/delete/${rawId}`, {
+        const res = await fetch(`https://backend.okdriver.in/api/admin/companyplan/delete/${rawId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` },
         });

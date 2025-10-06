@@ -16,8 +16,8 @@ export default function SubscriptionPlans() {
       setError('');
       try {
         const [driverRes, companyRes] = await Promise.all([
-          fetch('http://localhost:5000/api/admin/driverplan/driver-plans'),
-          fetch('http://localhost:5000/api/admin/companyplan/list'),
+          fetch('https://backend.okdriver.in/api/admin/driverplan/driver-plans'),
+          fetch('https://backend.okdriver.in/api/admin/companyplan/list'),
         ]);
 
         const [driverJson, companyJson] = await Promise.all([

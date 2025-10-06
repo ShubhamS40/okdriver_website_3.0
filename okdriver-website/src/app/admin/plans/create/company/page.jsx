@@ -159,7 +159,7 @@ export default function CreatePlan() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/companyplan/creation', {
+      const res = await fetch('https://backend.okdriver.in/api/admin/companyplan/creation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

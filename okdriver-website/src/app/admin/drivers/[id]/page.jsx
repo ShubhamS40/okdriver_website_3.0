@@ -33,7 +33,7 @@ export default function DriverDetails() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`https://backend.okdriver.in:5000/api/admin/drivers/${params.id}`, { 
+        const res = await fetch(`https://backend.okdriver.in/api/admin/drivers/${params.id}`, { 
           cache: 'no-store',
           headers: {
             'Content-Type': 'application/json',

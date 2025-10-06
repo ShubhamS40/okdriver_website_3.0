@@ -59,7 +59,7 @@ export default function ChatSupportDashboard() {
     }
     
     try {
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/vehicles', {
+      const res = await fetch('https://backend.okdriver.in/api/company/vehicles', {
         headers: {
           'Content-Type': 'application/json',
           ...(typeof window !== 'undefined' && localStorage.getItem('companyToken') ? 
@@ -87,7 +87,7 @@ export default function ChatSupportDashboard() {
         Array.isArray(vehicleData) ? vehicleData.map(async (v) => {
           let location = 'N/A';
           try {
-            const locationRes = await fetch(`https://backend.okdriver.in:5000/api/company/vehicles/location/${encodeURIComponent(v.vehicleNumber)}`);
+            const locationRes = await fetch(`https://backend.okdriver.in/api/company/vehicles/location/${encodeURIComponent(v.vehicleNumber)}`);
             if (locationRes.ok) {
               const locationData = await locationRes.json();
               if (locationData.location) {
@@ -139,7 +139,7 @@ export default function ChatSupportDashboard() {
       if (!token) return;
       
       console.log('🔗 Loading vehicle assignments...');
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/clients/vehicles-list-assignments', {
+      const res = await fetch('https://backend.okdriver.in/api/company/clients/vehicles-list-assignments', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -239,7 +239,7 @@ export default function ChatSupportDashboard() {
       
       console.log('Submitting vehicle:', payload);
       
-      const res = await fetch('https://backend.okdriver.in:5000/api/company/vehicles', {
+      const res = await fetch('https://backend.okdriver.in/api/company/vehicles', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

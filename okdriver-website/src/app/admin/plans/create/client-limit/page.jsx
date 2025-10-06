@@ -34,7 +34,7 @@ export default function CreateClientLimitPlan() {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans', {
+      const response = await fetch('https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

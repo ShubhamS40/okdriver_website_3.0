@@ -21,7 +21,7 @@ export default function ClientLimitPlanDetail({ params }) {
   useEffect(() => {
     const fetchPlanDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`);
+        const response = await fetch(`https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch plan details');
@@ -72,7 +72,7 @@ export default function ClientLimitPlanDetail({ params }) {
         isActive: editedPlan.isActive
       };
       
-      const response = await fetch(`http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`, {
+      const response = await fetch(`https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -103,7 +103,7 @@ export default function ClientLimitPlanDetail({ params }) {
     setDeleting(true);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`, {
+      const response = await fetch(`https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans/${id}`, {
         method: 'DELETE'
       });
       

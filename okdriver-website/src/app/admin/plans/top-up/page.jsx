@@ -22,14 +22,14 @@ export default function TopUpPlans() {
     
     try {
       // Fetch vehicle limit plans
-      const vehicleResponse = await fetch('http://localhost:5000/api/admin/company/top-up-plan/vehicle-limit/vehicle-limit-plans');
+      const vehicleResponse = await fetch('https://backend.okdriver.in/api/admin/company/top-up-plan/vehicle-limit/vehicle-limit-plans');
       if (!vehicleResponse.ok) {
         throw new Error('Failed to fetch vehicle limit plans');
       }
       const vehicleData = await vehicleResponse.json();
       
       // Fetch client limit plans
-      const clientResponse = await fetch('http://localhost:5000/api/admin/company/top-up-plan/client-limit/client-limit-plans');
+      const clientResponse = await fetch('https://backend.okdriver.in/api/admin/company/top-up-plan/client-limit/client-limit-plans');
       if (!clientResponse.ok) {
         throw new Error('Failed to fetch client limit plans');
       }
