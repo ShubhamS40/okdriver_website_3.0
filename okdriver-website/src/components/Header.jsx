@@ -8,6 +8,7 @@ import logo_text_white from '../../public/assets/OkD- white_text.png';
 import logo_text_black from '../../public/assets/okdriver_logo_text_black.png'; 
 import logo_black from '../../public/assets/okdriverblack_logo.png'; 
 import Image from 'next/image';
+import { Rocket } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -143,13 +144,14 @@ export default function Header() {
             >
               <Link 
                 href="/company/login" 
-                className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 overflow-hidden hover:shadow-lg ${
+                className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 overflow-hidden hover:shadow-lg flex items-center gap-2 ${
                   isScrolled 
                     ? 'bg-black text-white hover:bg-gray-800' 
                     : 'bg-white text-black hover:bg-gray-100 backdrop-blur-md'
                 }`}
               >
-                GET STARTED
+                Company Registration
+                <Rocket className="w-4 h-4" />
               </Link>
             </motion.div>
           </div>
@@ -255,10 +257,11 @@ export default function Header() {
                     >
                       <Link 
                         href="/company/login"
-                        className="block w-full px-4 py-3 bg-black text-white font-medium text-center rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg"
+                        className="block w-full px-4 py-3 bg-black text-white font-medium text-center rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
                         onClick={closeMenu}
                       >
                         GET STARTED
+                        <Rocket className="w-4 h-4" />
                       </Link>
                     </motion.div>
                   </div>

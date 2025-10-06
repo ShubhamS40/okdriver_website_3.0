@@ -4,14 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AdminNotification } from '../../../components/dashboard/AdminNotification';  
 
-// Mock data for drivers
-const mockDrivers = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', phone: '+91 9876543210', location: 'Mumbai', status: 'Active', registrationDate: '2023-05-01', plan: 'Premium' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '+91 9876543211', location: 'Delhi', status: 'Active', registrationDate: '2023-05-02', plan: 'Basic' },
-  { id: 3, name: 'Robert Johnson', email: 'robert@example.com', phone: '+91 9876543212', location: 'Bangalore', status: 'Inactive', registrationDate: '2023-05-03', plan: 'Day Pass' },
-  { id: 4, name: 'Emily Davis', email: 'emily@example.com', phone: '+91 9876543213', location: 'Chennai', status: 'Active', registrationDate: '2023-05-04', plan: 'Premium' },
-  { id: 5, name: 'Michael Wilson', email: 'michael@example.com', phone: '+91 9876543214', location: 'Hyderabad', status: 'Active', registrationDate: '2023-05-05', plan: 'Basic' },
-];
+// Drivers will be loaded from backend
 
 // Ticket helpers
 const statusBadge = (s) => {
@@ -54,8 +47,27 @@ export default function AdminDashboard() {
   const [ticketModal, setTicketModal] = useState(null); // selected ticket
   const [adminResponse, setAdminResponse] = useState('');
   const [adminStatus, setAdminStatus] = useState('IN_PROGRESS');
+  const [drivers, setDrivers] = useState([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const [driversError, setDriversError] = useState('');
 
   useEffect(() => {
+    const loadDrivers = async () => {
+      setLoadingDrivers(true);
+      setDriversError('');
+      try {
+        const res = await fetch('http://localhost:5000/api/admin/drivers', { cache: 'no-store' });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || 'Failed to load drivers');
+        setDrivers(Array.isArray(json?.data) ? json.data : []);
+      } catch (e) {
+        console.error(e);
+        setDriversError(e.message);
+      } finally {
+        setLoadingDrivers(false);
+      }
+    };
+    loadDrivers();
     const loadPlans = async () => {
       setLoadingPlans(true);
       setPlansError('');
@@ -268,7 +280,7 @@ export default function AdminDashboard() {
           {activeTab === 'drivers' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Total Registered Drivers: {mockDrivers.length}</h2>
+                <h2 className="text-xl font-semibold">Total Registered Drivers: {drivers.length}</h2>
                 <div className="flex space-x-4">
                   <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm transition-colors">
                     Export List
@@ -292,7 +304,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {mockDrivers.map((driver) => (
+                    {drivers.map((driver) => (
                       <tr key={driver.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{driver.id}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{driver.name}</td>
@@ -317,6 +329,8 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              {driversError && (<div className="mt-4 text-red-700 bg-red-100 border border-red-200 rounded p-3">{driversError}</div>)}
+              {loadingDrivers && (<div className="mt-4 text-gray-600">Loading drivers...</div>)}
             </div>
           )}
 

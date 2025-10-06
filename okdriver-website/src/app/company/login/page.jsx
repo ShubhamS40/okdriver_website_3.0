@@ -302,7 +302,7 @@ const CompanyLogin = () => {
               </div>
 
               <div className="text-sm">
-                <a href="/forgot-password" className="text-gray-900 hover:text-gray-700 font-medium transition-colors">
+                <a href="/company/forgot-password" className="text-gray-900 hover:text-gray-700 font-medium transition-colors">
                   Forgot password?
                 </a>
               </div>
@@ -343,6 +343,15 @@ const CompanyLogin = () => {
                 </>
               )}
             </button>
+
+            {/* Registration Link */}
+            <div className="pt-2 text-center">
+              <p className="text-sm text-gray-600">Don't have an account?{' '}
+                <a href="/company/signup" className="text-gray-900 hover:text-gray-700 font-medium transition-colors">
+                  Register here
+                </a>
+              </p>
+            </div>
 
             {/* Help Section */}
             <div className="pt-2 space-y-2 text-center">

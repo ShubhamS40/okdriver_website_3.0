@@ -87,11 +87,11 @@ export async function POST(request) {
     const response = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer dbd65ef3ea28743eb9f6ed0df90a98971c5a014ec4ddbd3fca2bf087de1a73e0',
+        'Authorization': 'Bearer 3a9b6914494ea9ede6c786595a0260c2b3e85bbe434c8f9324fd1fa82a8c64d8',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
         messages: [
           {
             role: 'system',

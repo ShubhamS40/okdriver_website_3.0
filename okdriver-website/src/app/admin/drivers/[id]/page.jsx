@@ -4,85 +4,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-// Mock data for demonstration
-const mockDrivers = [
-  { 
-    id: 1, 
-    name: 'John Doe', 
-    email: 'john@example.com', 
-    phone: '+1 234-567-8901', 
-    location: 'New York, NY',
-    address: '123 Main St, New York, NY 10001',
-    plan: 'Premium', 
-    status: 'Active', 
-    registeredDate: '2023-01-15', 
-    lastActive: '2023-05-20',
-    vehicleInfo: {
-      make: 'Toyota',
-      model: 'Camry',
-      year: '2020',
-      licensePlate: 'ABC-1234'
-    },
-    subscriptionDetails: {
-      planName: 'Premium',
-      startDate: '2023-01-15',
-      renewalDate: '2023-06-15',
-      amount: '$29.99',
-      billingCycle: 'Monthly',
-      paymentMethod: 'Credit Card (ending in 4567)',
-      services: ['Drowsiness Monitoring System', 'Voice Assistant', 'SOS Alert', 'Advanced Analytics']
-    },
-    usageStats: {
-      totalDrives: 142,
-      totalHours: 215,
-      alertsTriggered: 7,
-      lastDriveDate: '2023-05-20'
-    }
-  },
-  { 
-    id: 2, 
-    name: 'Jane Smith', 
-    email: 'jane@example.com', 
-    phone: '+1 234-567-8902', 
-    location: 'Los Angeles, CA',
-    address: '456 Ocean Ave, Los Angeles, CA 90001',
-    plan: 'Basic', 
-    status: 'Active', 
-    registeredDate: '2023-02-10', 
-    lastActive: '2023-05-19',
-    vehicleInfo: {
-      make: 'Honda',
-      model: 'Civic',
-      year: '2019',
-      licensePlate: 'XYZ-7890'
-    },
-    subscriptionDetails: {
-      planName: 'Basic',
-      startDate: '2023-02-10',
-      renewalDate: '2023-06-10',
-      amount: '$9.99',
-      billingCycle: 'Monthly',
-      paymentMethod: 'PayPal',
-      services: ['Drowsiness Monitoring System', 'Basic Analytics']
-    },
-    usageStats: {
-      totalDrives: 87,
-      totalHours: 132,
-      alertsTriggered: 3,
-      lastDriveDate: '2023-05-19'
-    }
-  },
-  // Add more mock drivers as needed
-];
-
-// Mock payment history
-const mockPaymentHistory = [
-  { id: 1, driverId: 1, date: '2023-05-15', amount: '$29.99', status: 'Completed', method: 'Credit Card (ending in 4567)' },
-  { id: 2, driverId: 1, date: '2023-04-15', amount: '$29.99', status: 'Completed', method: 'Credit Card (ending in 4567)' },
-  { id: 3, driverId: 1, date: '2023-03-15', amount: '$29.99', status: 'Completed', method: 'Credit Card (ending in 4567)' },
-  { id: 4, driverId: 2, date: '2023-05-10', amount: '$9.99', status: 'Completed', method: 'PayPal' },
-  { id: 5, driverId: 2, date: '2023-04-10', amount: '$9.99', status: 'Completed', method: 'PayPal' },
-];
+// Helper function to format dates consistently
+const formatDate = (dateString) => {
+  if (!dateString) return '—';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '—';
+    return date.toISOString().slice(0, 10);
+  } catch (error) {
+    return '—';
+  }
+};
 
 export default function DriverDetails() {
   const params = useParams();
@@ -90,27 +22,90 @@ export default function DriverDetails() {
   const [activeTab, setActiveTab] = useState('overview');
   const [driver, setDriver] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
-    // In a real app, this would be an API call
-    const driverId = parseInt(params.id);
-    const driverData = mockDrivers.find(d => d.id === driverId);
-    
-    if (driverData) {
-      setDriver(driverData);
-      // Get payment history for this driver
-      const driverPayments = mockPaymentHistory.filter(p => p.driverId === driverId);
-      setPaymentHistory(driverPayments);
-    } else {
-      // Driver not found, redirect to drivers list
-      router.push('/admin/drivers');
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`http://localhost:5000/api/admin/drivers/${params.id}`, { 
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error || 'Failed to load driver');
+        }
+        
+        const json = await res.json();
+        
+        // Process driver data with consistent date formatting
+        const driverData = json.data.driver;
+        if (driverData) {
+          // Format all dates in driver data
+          if (driverData.registeredDate) {
+            driverData.registeredDate = formatDate(driverData.registeredDate);
+          }
+          if (driverData.subscriptionDetails?.startDate) {
+            driverData.subscriptionDetails.startDate = formatDate(driverData.subscriptionDetails.startDate);
+          }
+          if (driverData.subscriptionDetails?.renewalDate) {
+            driverData.subscriptionDetails.renewalDate = formatDate(driverData.subscriptionDetails.renewalDate);
+          }
+          setDriver(driverData);
+        }
+        
+        // Process payment history with consistent formatting
+        const payments = Array.isArray(json.data.paymentHistory) 
+          ? json.data.paymentHistory.map(p => ({
+              id: p.id,
+              date: formatDate(p.date),
+              amount: `₹${p.amount}`,
+              status: (p.status === 'SUCCESS' || p.status === 'Completed') ? 'Completed' : 'Failed',
+              method: p.method || '—'
+            }))
+          : [];
+        setPaymentHistory(payments);
+      } catch (error) {
+        console.error('Error loading driver:', error);
+        router.push('/admin/drivers');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (params.id) {
+      loadData();
     }
   }, [params.id, router]);
 
+  // Show loading state
+  if (isLoading || !isMounted) {
+    return (
+      <div className="container-custom py-8 flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  // Show error state if no driver data
   if (!driver) {
     return (
-      <div className="container-custom py-8 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      <div className="container-custom py-8">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Driver not found</p>
+          <Link href="/admin/drivers" className="text-black hover:underline">
+            Return to Drivers List
+          </Link>
+        </div>
       </div>
     );
   }
@@ -186,27 +181,31 @@ export default function DriverDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Full Name</p>
-                <p className="font-medium">{driver.name}</p>
+                <p className="font-medium">{driver.name || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Email Address</p>
-                <p className="font-medium">{driver.email}</p>
+                <p className="font-medium">{driver.email || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Phone Number</p>
-                <p className="font-medium">{driver.phone}</p>
+                <p className="font-medium">{driver.phone || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Location</p>
-                <p className="font-medium">{driver.location}</p>
+                <p className="font-medium">
+                  {driver.location && driver.location.lat && driver.location.lng 
+                    ? `${driver.location.lat}, ${driver.location.lng}` 
+                    : '—'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Full Address</p>
-                <p className="font-medium">{driver.address}</p>
+                <p className="font-medium">{driver.address || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Registration Date</p>
-                <p className="font-medium">{driver.registeredDate}</p>
+                <p className="font-medium">{driver.registeredDate || '—'}</p>
               </div>
             </div>
           </div>
@@ -217,19 +216,19 @@ export default function DriverDetails() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-500">Current Plan</p>
-                <p className="font-medium">{driver.subscriptionDetails.planName}</p>
+                <p className="font-medium">{driver.subscriptionDetails?.planName || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Billing Cycle</p>
-                <p className="font-medium">{driver.subscriptionDetails.billingCycle}</p>
+                <p className="font-medium">{driver.subscriptionDetails?.billingCycle || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Next Renewal</p>
-                <p className="font-medium">{driver.subscriptionDetails.renewalDate}</p>
+                <p className="font-medium">{driver.subscriptionDetails?.renewalDate || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Amount</p>
-                <p className="font-medium">{driver.subscriptionDetails.amount}</p>
+                <p className="font-medium">{driver.subscriptionDetails?.amount || '—'}</p>
               </div>
             </div>
             <button 
@@ -246,19 +245,19 @@ export default function DriverDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Make</p>
-                <p className="font-medium">{driver.vehicleInfo.make}</p>
+                <p className="font-medium">{driver.vehicleInfo?.make || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Model</p>
-                <p className="font-medium">{driver.vehicleInfo.model}</p>
+                <p className="font-medium">{driver.vehicleInfo?.model || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Year</p>
-                <p className="font-medium">{driver.vehicleInfo.year}</p>
+                <p className="font-medium">{driver.vehicleInfo?.year || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">License Plate</p>
-                <p className="font-medium">{driver.vehicleInfo.licensePlate}</p>
+                <p className="font-medium">{driver.vehicleInfo?.licensePlate || '—'}</p>
               </div>
             </div>
           </div>
@@ -268,13 +267,13 @@ export default function DriverDetails() {
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <div className="space-y-4">
               <div className="border-l-4 border-green-500 pl-3 py-1">
-                <p className="text-sm">Last active on {driver.lastActive}</p>
+                <p className="text-sm">Last active on {driver.lastActive || 'N/A'}</p>
               </div>
               <div className="border-l-4 border-blue-500 pl-3 py-1">
-                <p className="text-sm">Completed {driver.usageStats.totalDrives} drives</p>
+                <p className="text-sm">Completed {driver.usageStats?.totalDrives || 0} drives</p>
               </div>
               <div className="border-l-4 border-yellow-500 pl-3 py-1">
-                <p className="text-sm">{driver.usageStats.alertsTriggered} drowsiness alerts triggered</p>
+                <p className="text-sm">{driver.usageStats?.alertsTriggered || 0} drowsiness alerts triggered</p>
               </div>
             </div>
             <button 
@@ -288,7 +287,7 @@ export default function DriverDetails() {
       )}
 
       {/* Subscription Details Tab */}
-      {activeTab === 'subscription' && (
+      {activeTab === 'subscription' && driver.subscriptionDetails && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Current Plan */}
           <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
@@ -296,23 +295,26 @@ export default function DriverDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <p className="text-sm text-gray-500">Plan Name</p>
-                <p className="font-medium">{driver.subscriptionDetails.planName}</p>
+                <p className="font-medium">{driver.subscriptionDetails.planName || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Amount</p>
-                <p className="font-medium">{driver.subscriptionDetails.amount} / {driver.subscriptionDetails.billingCycle}</p>
+                <p className="font-medium">
+                  {driver.subscriptionDetails.amount || '—'} 
+                  {driver.subscriptionDetails.billingCycle ? ` / ${driver.subscriptionDetails.billingCycle}` : ''}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Start Date</p>
-                <p className="font-medium">{driver.subscriptionDetails.startDate}</p>
+                <p className="font-medium">{driver.subscriptionDetails.startDate || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Next Renewal</p>
-                <p className="font-medium">{driver.subscriptionDetails.renewalDate}</p>
+                <p className="font-medium">{driver.subscriptionDetails.renewalDate || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Payment Method</p>
-                <p className="font-medium">{driver.subscriptionDetails.paymentMethod}</p>
+                <p className="font-medium">{driver.subscriptionDetails.paymentMethod || '—'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Status</p>
@@ -322,7 +324,7 @@ export default function DriverDetails() {
 
             <h3 className="font-semibold mb-2">Included Services</h3>
             <ul className="space-y-2 mb-6">
-              {driver.subscriptionDetails.services.map((service, index) => (
+              {(driver.subscriptionDetails.services || []).map((service, index) => (
                 <li key={index} className="flex items-center">
                   <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
@@ -485,7 +487,9 @@ export default function DriverDetails() {
                       {payment.method}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${payment.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        payment.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
                         {payment.status}
                       </span>
                     </td>
@@ -504,7 +508,7 @@ export default function DriverDetails() {
       )}
 
       {/* Usage Statistics Tab */}
-      {activeTab === 'usage' && (
+      {activeTab === 'usage' && driver.usageStats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Usage Summary */}
           <div className="bg-white p-6 rounded-lg shadow-md col-span-3">
@@ -512,115 +516,20 @@ export default function DriverDetails() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-gray-500 text-sm font-medium mb-1">Total Drives</h3>
-                <p className="text-3xl font-bold">{driver.usageStats.totalDrives}</p>
+                <p className="text-3xl font-bold">{driver.usageStats.totalDrives || 0}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-gray-500 text-sm font-medium mb-1">Total Hours</h3>
-                <p className="text-3xl font-bold">{driver.usageStats.totalHours}</p>
+                <p className="text-3xl font-bold">{driver.usageStats.totalHours || 0}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-gray-500 text-sm font-medium mb-1">Alerts Triggered</h3>
-                <p className="text-3xl font-bold">{driver.usageStats.alertsTriggered}</p>
+                <h3 className="text-gray-500 text-sm font-medium mb-1">Avg. Drive Duration</h3>
+                <p className="text-3xl font-bold">{driver.usageStats.avgDriveDuration || 0} mins</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-gray-500 text-sm font-medium mb-1">Last Drive</h3>
-                <p className="text-3xl font-bold">{driver.usageStats.lastDriveDate}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Usage Graph Placeholder */}
-          <div className="bg-white p-6 rounded-lg shadow-md col-span-3">
-            <h2 className="text-xl font-semibold mb-4">Usage Over Time</h2>
-            <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Usage graph would be displayed here</p>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <select className="border border-gray-300 rounded-md px-3 py-1 text-sm">
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-                <option>Last 90 Days</option>
-                <option>Last Year</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Alert Details */}
-          <div className="bg-white p-6 rounded-lg shadow-md col-span-3">
-            <h2 className="text-xl font-semibold mb-4">Alert Details</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Alert Type
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Location
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      2023-05-18 14:23:45
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        Drowsiness Detected
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      12 seconds
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Highway I-95, Mile 67
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      2023-05-15 09:12:33
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        SOS Alert Triggered
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      N/A
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Main Street, Downtown
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      2023-05-10 22:45:12
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        Drowsiness Detected
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      8 seconds
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      Route 27, Suburban Area
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+           
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-}
+  )}
