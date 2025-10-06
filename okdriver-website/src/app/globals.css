@@ -30,3 +30,8 @@ body {
     @apply py-16 md:py-24;
   }
 }
+
+/* Global loading overlay */
+.okdriver-loading-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(255,255,255,0.8); }
+.okdriver-loading-logo { width: 72px; height: 72px; animation: okdriver-spin 1.2s linear infinite; }
+@keyframes okdriver-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

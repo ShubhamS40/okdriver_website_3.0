@@ -8,6 +8,8 @@ import ChatBot from '@/components/Chatbot';
 import LoadingBar from '@/components/LoadingBar';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import GlobalLoadingOverlay from '@/components/GlobalOverlayLoading';
+import { FetchProvider, useFetch } from '@/components/FetchProviders';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -280,22 +282,26 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
       </head>
       <body className={`${inter.className} bg-white text-black flex flex-col min-h-screen`}>
-        {/* Show Loading Component when page is loading */}
-        {/* {isPageLoading && <LoadingBar isVisible={true} />} */}
-        
-        {/* Show actual page content only when loading is complete */}
-        {showPage && (
-          <>
-            {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Header />}
-            
-            <main className="flex-grow">{children}</main>
-            
-            {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Footer />}
-            
-            <ChatBot />
-          </>
-        )}
+        <FetchProvider>
+          <OverlayGate />
+          {showPage && (
+            <>
+              {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Header />}
+              
+              <main className="flex-grow">{children}</main>
+              
+              {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Footer />}
+              
+              <ChatBot />
+            </>
+          )}
+        </FetchProvider>
       </body>
     </html>
   );
+}
+
+function OverlayGate() {
+  const { activeRequests } = useFetch();
+  return <GlobalLoadingOverlay visible={activeRequests > 0} />;
 }

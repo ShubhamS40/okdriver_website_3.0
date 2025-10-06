@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useFetch } from '@/components/FetchProviders';
 import { AdminNotification } from '../../../components/dashboard/AdminNotification';  
 
 // Drivers will be loaded from backend
@@ -50,16 +51,16 @@ export default function AdminDashboard() {
   const [drivers, setDrivers] = useState([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [driversError, setDriversError] = useState('');
+  const { fetchJson } = useFetch();
 
   useEffect(() => {
     const loadDrivers = async () => {
       setLoadingDrivers(true);
       setDriversError('');
       try {
-        const res = await fetch('http://localhost:5000/api/admin/drivers', { cache: 'no-store' });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || 'Failed to load drivers');
-        setDrivers(Array.isArray(json?.data) ? json.data : []);
+        const { res, data } = await fetchJson('http://localhost:5000/api/admin/drivers', { cache: 'no-store' });
+        if (!res.ok) throw new Error(data?.error || 'Failed to load drivers');
+        setDrivers(Array.isArray(data?.data) ? data.data : []);
       } catch (e) {
         console.error(e);
         setDriversError(e.message);
