@@ -3,13 +3,25 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-async function fetchCompanies() {
+type AdminCompany = {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  location: string;
+  driversCount: number;
+  activeDriversCount: number;
+  plan: string;
+  status: string;
+};
+
+async function fetchCompanies(): Promise<AdminCompany[]> {
   try {
     const res = await fetch('http://localhost:5000/api/admin/companies/list', { cache: 'no-store' });
     const json = await res.json();
-    if (json?.ok && Array.isArray(json.data)) return json.data;
-  } catch (e) { console.error('companies load failed', e); }
-  return [] as any[];
+    if (json?.ok && Array.isArray(json.data)) return json.data as AdminCompany[];
+  } catch (err) { console.error('companies load failed', err); }
+  return [];
 }
 
 // Mock data for deleted fleet companies
@@ -41,7 +53,7 @@ const mockDeletedFleetCompanies = [
 export default function FleetManagement() {
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<AdminCompany[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,7 +63,9 @@ export default function FleetManagement() {
       setError('');
       try {
         setCompanies(await fetchCompanies());
-      } catch (e) { setError('Failed to load companies'); }
+      } catch {
+        setError('Failed to load companies');
+      }
       finally { setLoading(false); }
     };
     load();
@@ -134,6 +148,8 @@ export default function FleetManagement() {
       {/* Active Fleet Companies Tab */}
       {activeTab === 'active' && (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {error && (<div className="p-3 text-red-700 bg-red-100 border border-red-200">{error}</div>)}
+          {loading && (<div className="p-3 text-gray-600">Loading companies...</div>)}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
