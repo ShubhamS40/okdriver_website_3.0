@@ -1,8 +1,8 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-const CompanySubscription = () => {
+const CompanySubscriptionContent = () => {
   const searchParams = useSearchParams();
   const planId = searchParams.get('planId');
   
@@ -329,4 +329,17 @@ const CompanySubscription = () => {
   );
 };
 
-export default CompanySubscription;
+export default function CompanySubscription() {
+  return (
+    <Suspense fallback={(
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+          <span>Loading...</span>
+        </div>
+      </div>
+    )}>
+      <CompanySubscriptionContent />
+    </Suspense>
+  );
+}
