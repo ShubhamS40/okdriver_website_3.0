@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useVehicleLimit } from '../../../hooks/useVehicleLimit';
 
-export default function VehicleLimitSuccess() {
+function VehicleLimitSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -100,5 +100,20 @@ export default function VehicleLimitSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VehicleLimitSuccess() {
+  return (
+    <Suspense fallback={(
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-black">Loading...</p>
+        </div>
+      </div>
+    )}>
+      <VehicleLimitSuccessContent />
+    </Suspense>
   );
 }
