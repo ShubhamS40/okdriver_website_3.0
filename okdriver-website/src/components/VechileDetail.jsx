@@ -46,7 +46,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`http://localhost:5000/api/company/clients/vehicle/${vehicleId}/details`, { headers });
+      const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/vehicle/${vehicleId}/details`, { headers });
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json?.message || 'Failed to load vehicle details');
@@ -55,7 +55,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       // Fetch company lists with members to populate emails for assigned lists
       let listsWithMembers = [];
       try {
-        const listsRes = await fetch('http://localhost:5000/api/company/clients/lists', { headers });
+        const listsRes = await fetch('https://backend.okdriver.in:5000/api/company/clients/lists', { headers });
         if (listsRes.ok) {
           const listsJson = await listsRes.json();
           listsWithMembers = Array.isArray(listsJson) ? listsJson : [];
@@ -287,7 +287,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
         if (!Number.isFinite(cid)) {
           throw new Error('Invalid client id');
         }
-        const response = await fetch(`http://localhost:5000/api/company/clients/${cid}/send-message`, {
+        const response = await fetch(`https://backend.okdriver.in:5000/api/company/clients/${cid}/send-message`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -314,7 +314,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   const sendMessageHTTP = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/send-message`, {
+      const response = await fetch(`https://backend.okdriver.in:5000/api/company/vehicles/${vehicleId}/send-message`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -365,7 +365,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       // Optional: lightweight ping without assuming JSON route exists
       const testServerConnectivity = async () => {
         try {
-          const response = await fetch('http://localhost:5000/', { method: 'GET' });
+          const response = await fetch('https://backend.okdriver.in:5000/', { method: 'GET' });
           console.log('✅ Backend reachable:', response.ok, response.status);
         } catch (error) {
           console.warn('⚠️ Backend ping failed (non-blocking):', error?.message || error);
@@ -375,7 +375,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
       testServerConnectivity();
       
       try {
-        const newSocket = io('http://localhost:5000', {
+        const newSocket = io('https://backend.okdriver.in:5000', {
           auth: {
             token: resolvedCompanyToken,
             role: 'COMPANY',
@@ -520,7 +520,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   const loadChatHistoryHTTP = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
+      const res = await fetch(`https://backend.okdriver.in:5000/api/company/vehicles/${vehicleId}/chat-history`, { headers });
       const json = await res.json();
       if (res.ok) {
         const sorted = (json.data || []).slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -533,7 +533,7 @@ export default function VehicleDetail({ vehicleId, companyToken, onClose }) {
 
   const loadClientChatHistory = async (clientId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/company/clients/${clientId}/chat-history`, { headers });
+      const res = await fetch(`https://backend.okdriver.in:5000/api/company/clients/${clientId}/chat-history`, { headers });
       const json = await res.json();
       if (res.ok) {
         const sorted = (json.data || []).slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());

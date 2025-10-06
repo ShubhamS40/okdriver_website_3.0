@@ -11,7 +11,7 @@ export async function POST(request) {
     
     // Prefer auth verification; if token missing, fall back to unauth payu-return endpoint
     const token = request.cookies.get('companyToken')?.value;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in:5000';
     const endpoint = `${apiBase}/api/admin/company/top-up-plan/vehicle-limit/payment/${token ? 'verify' : 'payu-return'}`;
     const headers = token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
     const verifyResponse = await fetch(endpoint, {
@@ -53,7 +53,7 @@ export async function GET(request) {
   try {
     // Verify the payment with backend (fallback to unauth endpoint if token missing)
     const token = request.cookies.get('companyToken')?.value;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in:5000';
     const endpoint = `${apiBase}/api/admin/company/top-up-plan/vehicle-limit/payment/${token ? 'verify' : 'payu-return'}`;
     const headers = token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
     const verifyResponse = await fetch(endpoint, {

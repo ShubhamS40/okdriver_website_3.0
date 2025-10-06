@@ -5,7 +5,7 @@ export async function POST(request) {
     const body = await request.json();
     
     // Forward the request to the backend API
-    const response = await fetch('http://localhost:5000/api/company/login', {
+    const response = await fetch('https://backend.okdriver.in:5000/api/company/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

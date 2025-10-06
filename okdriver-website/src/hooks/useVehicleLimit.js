@@ -65,7 +65,7 @@ export const useVehicleLimit = () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('companyToken') : null;
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/company/vehicles', {
+      const response = await fetch('https://backend.okdriver.in:5000/api/company/vehicles', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

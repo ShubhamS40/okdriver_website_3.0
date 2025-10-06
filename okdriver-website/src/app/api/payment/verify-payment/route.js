@@ -16,7 +16,7 @@ export async function POST(request) {
     console.log('Verifying payment with data:', body);
     console.log('Using token:', token.substring(0, 10) + '...');
     
-    const response = await fetch('http://localhost:5000/api/admin/companyplan/payment/verify', {
+    const response = await fetch('https://backend.okdriver.in:5000/api/admin/companyplan/payment/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

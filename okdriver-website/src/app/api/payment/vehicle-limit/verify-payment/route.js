@@ -16,7 +16,7 @@ export async function POST(request) {
     console.log('Verifying vehicle limit payment with data:', body);
     console.log('Using token:', token.substring(0, 10) + '...');
     
-    const response = await fetch('http://localhost:5000/api/admin/company/top-up-plan/vehicle-limit/payment/verify', {
+    const response = await fetch('https://backend.okdriver.in:5000/api/admin/company/top-up-plan/vehicle-limit/payment/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

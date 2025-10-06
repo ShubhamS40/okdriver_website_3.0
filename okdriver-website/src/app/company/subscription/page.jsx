@@ -18,7 +18,7 @@ const CompanySubscriptionContent = () => {
       try {
         setLoading(true);
         // Use the same API endpoint as login component
-        const response = await fetch('http://localhost:5000/api/admin/companyplan/list');
+        const response = await fetch('https://backend.okdriver.in:5000/api/admin/companyplan/list');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch plans: ${response.statusText}`);

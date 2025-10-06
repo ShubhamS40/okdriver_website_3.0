@@ -17,7 +17,7 @@ type AdminCompany = {
 
 async function fetchCompanies(): Promise<AdminCompany[]> {
   try {
-    const res = await fetch('http://localhost:5000/api/admin/companies/list', { cache: 'no-store' });
+    const res = await fetch('https://backend.okdriver.in:5000/api/admin/companies/list', { cache: 'no-store' });
     const json = await res.json();
     if (json?.ok && Array.isArray(json.data)) return json.data as AdminCompany[];
   } catch (err) { console.error('companies load failed', err); }
