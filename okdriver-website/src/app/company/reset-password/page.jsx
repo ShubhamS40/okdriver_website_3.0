@@ -1,12 +1,12 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import logo_white from '../../../../public/assets/OKDriverWhite_logo.png'; 
 import logo_text_white from '../../../../public/assets/OkD- white_text.png'; 
 import Image from 'next/image';
 
-const ResetPassword = () => {
+const ResetPasswordContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -437,4 +437,14 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={(
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-900"></div>
+      </div>
+    )}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
