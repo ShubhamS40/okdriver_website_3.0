@@ -70,6 +70,16 @@ const CompanyLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Save JWT for authenticated actions (payments, dashboard APIs)
+        if (data && data.token) {
+          try {
+            localStorage.setItem('companyToken', data.token);
+            localStorage.setItem('companyLoggedIn', 'true');
+          } catch (e) {
+            console.error('Token storage failed:', e);
+          }
+        }
+
         if (data.hasActivePlan) {
           window.location.href = '/company/dashboard';
         } else {
