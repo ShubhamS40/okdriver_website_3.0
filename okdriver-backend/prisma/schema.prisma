@@ -313,6 +313,10 @@ model Company {
   type                  CompanyType   @default(OTHER)
   status                CompanyStatus @default(ACTIVE)
 
+  // Password Reset Fields - ADD THESE TWO LINES
+  resetToken            String?       @unique
+  resetTokenExpiry      DateTime?
+
   currentPlanId         Int?
   currentPlan           CompanyPlan?  @relation("CurrentPlanRelation", fields: [currentPlanId], references: [id])
   subscriptionExpiresAt DateTime?
@@ -338,7 +342,6 @@ model Company {
   @@index([currentPlanId])
   ClientList ClientList[]
 }
-
 // ---------- VEHICLES (credentials live here) ----------
 model Vehicle {
   id             Int           @id @default(autoincrement())
