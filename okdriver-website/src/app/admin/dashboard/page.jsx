@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       setLoadingDrivers(true);
       setDriversError('');
       try {
-        const { res, data } = await fetchJson('http://backend.okdriver.in/api/admin/drivers', { cache: 'no-store' });
+        const { res, data } = await fetchJson('https://backend.okdriver.in/api/admin/drivers', { cache: 'no-store' });
         if (!res.ok) throw new Error(data?.error || 'Failed to load drivers');
         setDrivers(Array.isArray(data?.data) ? data.data : []);
       } catch (e) {
@@ -74,8 +74,8 @@ export default function AdminDashboard() {
       setPlansError('');
       try {
         const [driverRes, companyRes] = await Promise.all([
-          fetch('http://backend.okdriver.in/api/admin/driverplan/driver-plans'),
-          fetch('http://backend.okdriver.in/api/admin/companyplan/list'),
+          fetch('https://backend.okdriver.in/api/admin/driverplan/driver-plans'),
+          fetch('https://backend.okdriver.in/api/admin/companyplan/list'),
         ]);
         const [driverJson, companyJson] = await Promise.all([
           driverRes.json().catch(() => ({ data: [] })),
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       setLoadingPayments(true);
       setPaymentsError('');
       try {
-        const res = await fetch('http://backend.okdriver.in/api/admin/payment/company-transactions');
+        const res = await fetch('https://backend.okdriver.in/api/admin/payment/company-transactions');
         const json = await res.json();
         setPayments(Array.isArray(json?.data) ? json.data : []);
       } catch (e) {
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
         if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) {
           headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
         }
-        const res = await fetch('http://backend.okdriver.in/api/admin/support/tickets', { headers });
+        const res = await fetch('https://backend.okdriver.in/api/admin/support/tickets', { headers });
         const json = await res.json();
         if (!res.ok) throw new Error(json?.message || 'Failed to load tickets');
         const rows = Array.isArray(json?.data) ? json.data : [];
@@ -600,7 +600,7 @@ export default function AdminDashboard() {
                             <button onClick={async () => {
                               const headers = { 'Content-Type': 'application/json' };
                               if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
-                              await fetch(`http://backend.okdriver.in/api/admin/support/tickets/${t.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: 'CLOSED' }) });
+                              await fetch(`https://backend.okdriver.in/api/admin/support/tickets/${t.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: 'CLOSED' }) });
                               setTickets(prev => prev.map(x => x.id === t.id ? { ...x, status: 'CLOSED', resolvedAt: new Date().toISOString() } : x));
                             }} className="text-red-600 hover:text-red-800">Close</button>
                           )}
@@ -644,7 +644,7 @@ export default function AdminDashboard() {
                         <button onClick={async () => {
                           const headers = { 'Content-Type': 'application/json' };
                           if (typeof window !== 'undefined' && localStorage.getItem('adminToken')) headers.Authorization = `Bearer ${localStorage.getItem('adminToken')}`;
-                          await fetch(`http://backend.okdriver.in/api/admin/support/tickets/${ticketModal.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: adminStatus, adminResponse }) });
+                          await fetch(`https://backend.okdriver.in/api/admin/support/tickets/${ticketModal.id}`, { method: 'PUT', headers, body: JSON.stringify({ status: adminStatus, adminResponse }) });
                           setTickets(prev => prev.map(x => x.id === ticketModal.id ? { ...x, status: adminStatus, adminResponse, resolvedAt: adminStatus === 'CLOSED' ? new Date().toISOString() : x.resolvedAt } : x));
                           setTicketModal(null);
                         }} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800">Save</button>
