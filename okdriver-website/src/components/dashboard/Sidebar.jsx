@@ -8,7 +8,8 @@ import {
   Settings, 
   User,
   Menu,
-  BarChart
+  BarChart,
+  Key
 } from 'lucide-react';
 
 const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
@@ -16,6 +17,7 @@ const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
     { id: 'dashboard', label: 'Dashboard', icon: Menu },
     { id: 'vehicles', label: 'Add Vehicle', icon: Car },
     { id: 'clients', label: 'Add Client', icon: Users },
+    { id: 'api-keys', label: 'API Keys', icon: Key },
     { id: 'locations', label: 'View All Locations', icon: MapPin },
     { id: 'report', label: 'Reports', icon: BarChart },
     { id: 'chat', label: 'Chat Section', icon: MessageCircle },

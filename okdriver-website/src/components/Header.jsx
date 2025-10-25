@@ -8,12 +8,16 @@ import logo_text_white from '../../public/assets/OkD- white_text.png';
 import logo_text_black from '../../public/assets/okdriver_logo_text_black.png'; 
 import logo_black from '../../public/assets/okdriverblack_logo.png'; 
 import Image from 'next/image';
-import { Rocket } from 'lucide-react';
+import { ChevronDown, LogIn } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const headerRef = useRef(null);
+  const moreRef = useRef(null);
+  const loginRef = useRef(null);
   const pathname = usePathname();
 
   // Handle scroll effect with proper hydration
@@ -27,6 +31,21 @@ export default function Header() {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        setIsMoreOpen(false);
+      }
+      if (loginRef.current && !loginRef.current.contains(event.target)) {
+        setIsLoginOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
   // Disable body scroll when mobile menu is open
@@ -53,13 +72,50 @@ export default function Header() {
     return false;
   };
 
+  // More dropdown items (Terms, Privacy, Careers)
+  const moreDropdown = [
+    { 
+      href: '/terms', 
+      label: 'Terms & Conditions',
+      description: 'Our terms of service',
+      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+    },
+    { 
+      href: '/privacy', 
+      label: 'Privacy Policy',
+      description: 'How we protect your data',
+      icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+    },
+    { 
+      href: '/careers', 
+      label: 'Careers',
+      description: 'Join our team',
+      icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0h-8m8 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6h12z'
+    }
+  ];
+
+  // Login dropdown items
+  const loginDropdown = [
+    { 
+      href: '/company/login', 
+      label: 'Fleet Operator Login',
+      description: 'For fleet managers',
+      icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0'
+    },
+    { 
+      href: '/user/login', 
+      label: 'API Platform',
+      description: 'Developer access',
+      icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4'
+    }
+  ];
+
   // Navigation items
   const navItems = [
     { href: '/', label: 'HOME', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { href: '/about', label: 'ABOUT US', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { href: '/services', label: 'SERVICES', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-    { href: '/terms', label: 'TERMS', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { href: '/privacy', label: 'PRIVACY', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+    { href: '/services', label: 'SERVICES', icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
+    { href: '/developer', label: 'DEVELOPER API', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { href: '/contact', label: 'CONTACT US', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' }
   ];
 
@@ -78,7 +134,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-20">
           
-          {/* Logo - Enhanced for hero section visibility with dynamic logo switching */}
+          {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center group">
               <div className="relative">
@@ -87,7 +143,6 @@ export default function Header() {
                     ? 'bg-black shadow-lg' 
                     : 'bg-white/20 backdrop-blur-md border border-white/30 shadow-lg'
                 }`}>
-                  {/* Dynamic logo based on scroll state */}
                   <Image 
                     src={isScrolled ? logo_white : logo_white} 
                     alt="OKDriver" 
@@ -97,7 +152,6 @@ export default function Header() {
                 </div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-300 blur-sm"></div>
               </div>
-              {/* Dynamic logo text based on scroll state */}
               <span className={`ml-3 text-2xl font-bold tracking-tight transition-colors duration-300`}>
                 <Image 
                   src={isScrolled ? logo_text_black : logo_text_white} 
@@ -109,7 +163,7 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Desktop Navigation - With Active State */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => {
               const isActive = isActivePage(item.href);
@@ -134,29 +188,127 @@ export default function Header() {
                 </Link>
               );
             })}
+
+            {/* More Dropdown */}
+            <div 
+              ref={moreRef}
+              className="relative"
+              onMouseEnter={() => setIsMoreOpen(true)}
+              onMouseLeave={() => setIsMoreOpen(false)}
+            >
+              <button
+                className={`px-4 py-2 font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 flex items-center gap-1 ${
+                  isActivePage('/terms') || isActivePage('/privacy') || isActivePage('/careers')
+                    ? (isScrolled 
+                        ? 'text-white bg-black rounded-full shadow-lg' 
+                        : 'text-black bg-white/90 backdrop-blur-md rounded-full shadow-lg'
+                      )
+                    : (isScrolled 
+                        ? 'text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg hover:shadow-md' 
+                        : 'text-white hover:text-gray-200 hover:bg-white/10 backdrop-blur-md rounded-lg hover:shadow-md'
+                      )
+                }`}
+              >
+                MORE
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isMoreOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
+                  >
+                    {moreDropdown.map((item, index) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-6 py-4 hover:bg-gray-50 transition-colors duration-200 ${
+                          index !== moreDropdown.length - 1 ? 'border-b border-gray-100' : ''
+                        }`}
+                        onClick={() => setIsMoreOpen(false)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex-shrink-0">
+                            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 mb-1">{item.label}</div>
+                            <div className="text-sm text-gray-600">{item.description}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
-          {/* CTA Button - Enhanced for hero section */}
+          {/* Login Button with Dropdown */}
           <div className="hidden lg:block">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <div 
+              ref={loginRef}
+              className="relative"
+              onMouseEnter={() => setIsLoginOpen(true)}
+              onMouseLeave={() => setIsLoginOpen(false)}
             >
-              <Link 
-                href="/company/login" 
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className={`relative px-6 py-3 rounded-full font-medium transition-all duration-300 overflow-hidden hover:shadow-lg flex items-center gap-2 ${
                   isScrolled 
                     ? 'bg-black text-white hover:bg-gray-800' 
                     : 'bg-white text-black hover:bg-gray-100 backdrop-blur-md'
                 }`}
               >
-                Company Registration
-                <Rocket className="w-4 h-4" />
-              </Link>
-            </motion.div>
+                Login
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isLoginOpen ? 'rotate-180' : ''}`} />
+              </motion.button>
+
+              <AnimatePresence>
+                {isLoginOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
+                  >
+                    {loginDropdown.map((item, index) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`block px-6 py-4 hover:bg-gray-50 transition-colors duration-200 ${
+                          index !== loginDropdown.length - 1 ? 'border-b border-gray-100' : ''
+                        }`}
+                        onClick={() => setIsLoginOpen(false)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex-shrink-0">
+                            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 mb-1">{item.label}</div>
+                            <div className="text-sm text-gray-600">{item.description}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Mobile Menu Button - Color adaptive */}
+          {/* Mobile Menu Button */}
           <motion.button 
             whileTap={{ scale: 0.9 }}
             className={`lg:hidden p-2 rounded-md transition-all duration-200 ${
@@ -187,7 +339,7 @@ export default function Header() {
           </motion.button>
         </div>
 
-        {/* Mobile Navigation - With Active State */}
+        {/* Mobile Navigation */}
         <AnimatePresence>
           {isMenuOpen && (
             <>
@@ -249,21 +401,61 @@ export default function Header() {
                     );
                   })}
 
-                  {/* Mobile CTA Button */}
-                  <div className="md:col-span-2 p-4 border-t border-gray-200">
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
+                  {/* Mobile More Section */}
+                  <div className="md:col-span-2 border-t border-gray-200 pt-3 mt-2">
+                    <p className="px-4 text-xs font-semibold text-gray-500 mb-2">MORE</p>
+                    {moreDropdown.map((item) => {
+                      const isActive = isActivePage(item.href);
+                      return (
+                        <Link 
+                          key={item.href}
+                          href={item.href} 
+                          className={`block px-4 py-3 rounded-lg mb-2 transition-all duration-300 ${
+                            isActive 
+                              ? 'bg-black text-white shadow-lg' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                          onClick={closeMenu}
+                        >
+                          <div className="flex items-start gap-3">
+                            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                            </svg>
+                            <div>
+                              <div className="font-medium">{item.label}</div>
+                              <div className={`text-xs mt-1 ${isActive ? 'text-gray-300' : 'text-gray-500'}`}>
+                                {item.description}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mobile Login Section */}
+                  <div className="md:col-span-2 border-t border-gray-200 pt-3 mt-2">
+                    <p className="px-4 text-xs font-semibold text-gray-500 mb-2">LOGIN</p>
+                    {loginDropdown.map((item) => (
                       <Link 
-                        href="/company/login"
-                        className="block w-full px-4 py-3 bg-black text-white font-medium text-center rounded-full hover:bg-gray-800 transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+                        key={item.href}
+                        href={item.href} 
+                        className="block px-4 py-3 rounded-lg mb-2 text-gray-700 hover:bg-gray-50 transition-all duration-300"
                         onClick={closeMenu}
                       >
-                        GET STARTED
-                        <Rocket className="w-4 h-4" />
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                          </svg>
+                          <div>
+                            <div className="font-medium">{item.label}</div>
+                            <div className="text-xs mt-1 text-gray-500">
+                              {item.description}
+                            </div>
+                          </div>
+                        </div>
                       </Link>
-                    </motion.div>
+                    ))}
                   </div>
                 </nav>
               </motion.div>

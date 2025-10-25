@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function clearDriverSubscription() {
-  await prisma.driverSubscription.deleteMany({});
+  await prisma.admin.deleteMany({});
   console.log("All records deleted from DriverSubscription table");
 }
 
