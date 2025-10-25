@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GlobalLoadingOverlay from '@/components/GlobalOverlayLoading';
 import { FetchProvider, useFetch } from '@/components/FetchProviders';
+import { SessionProvider } from 'next-auth/react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -266,6 +267,7 @@ export default function RootLayout({
   // Define routes where header and footer should be hidden
   const isCompanyDashboardRoute = pathname?.startsWith('/company');
   const isAdminDashboardRoute = pathname?.startsWith('/admin');
+  const isUserDashboardRoute = pathname?.startsWith('/user');
 
   return (
     <html lang="en">
@@ -282,20 +284,22 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
       </head>
       <body className={`${inter.className} bg-white text-black flex flex-col min-h-screen`}>
-        <FetchProvider>
-          <OverlayGate />
-          {showPage && (
-            <>
-              {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Header />}
-              
-              <main className="flex-grow">{children}</main>
-              
-              {!isCompanyDashboardRoute && !isAdminDashboardRoute && <Footer />}
-              
-              <ChatBot />
-            </>
-          )}
-        </FetchProvider>
+        <SessionProvider>
+          <FetchProvider>
+            <OverlayGate />
+            {showPage && (
+              <>
+                {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Header />}
+                
+                <main className="flex-grow">{children}</main>
+                
+                {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Footer />}
+                
+                <ChatBot />
+              </>
+            )}
+          </FetchProvider>
+        </SessionProvider>
       </body>
     </html>
   );

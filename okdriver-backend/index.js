@@ -35,6 +35,9 @@ const io = new Server(http, {
   }
 });
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -73,6 +76,10 @@ console.log('✅ Company client routes mounted at /api/company/clients');
 
 app.use('/api/company/vehicles', require('./routes/company/vechile/companyVehicleRoute'));
 app.use('/api/company', require('./routes/company/companyChatRoutes'));
+
+// User routes (Google Auth)
+app.use('/api/user', require('./routes/user/userAuthRoute'));
+app.use('/api/user', require('./routes/user/userChatRoute'));
 
 // Admin routes
 app.use('/api/admin/driverplan', require('./routes/admin/driver/driverPlan/driverPlanRoute'));

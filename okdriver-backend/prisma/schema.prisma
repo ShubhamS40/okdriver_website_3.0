@@ -94,6 +94,43 @@ model Admin {
   updatedAt DateTime @updatedAt
 }
 
+// ---------- USER (Google Auth) ----------
+model User {
+  id            String   @id @default(uuid())
+  googleId      String   @unique
+  email         String   @unique
+  name          String
+  picture       String?
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  apiKeys       UserApiKey[]
+  
+  @@index([googleId])
+  @@index([email])
+}
+
+// ---------- USER API KEYS ----------
+model UserApiKey {
+  id          String   @id @default(uuid())
+  userId      String
+  keyName     String
+  apiKey      String   @unique
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([apiKey])
+  @@index([expiresAt])
+}
+
 // ---------- INDIVIDUAL DRIVER SECTION ----------
 model Driver {
   id                String   @id @default(uuid())
