@@ -80,6 +80,7 @@ app.use('/api/company', require('./routes/company/companyChatRoutes'));
 // User routes (Google Auth)
 app.use('/api/user', require('./routes/user/userAuthRoute'));
 app.use('/api/user', require('./routes/user/userChatRoute'));
+app.use('/api/user/payment', require('./routes/user/paymentRoute'));
 
 // Admin routes
 app.use('/api/admin/driverplan', require('./routes/admin/driver/driverPlan/driverPlanRoute'));
@@ -90,6 +91,7 @@ app.use('/api/admin/companies', require('./routes/admin/company/companyRoute'));
 app.use('/api/admin/drivers', require('./routes/admin/driver/driverRoute'));
 app.use('/api/admin/payment', require('./routes/admin/payment/paymentRoute'));
 app.use('/api/admin/support', require('./routes/admin/support/ticketRoute'));
+app.use('/api/admin/api-plans', require('./routes/admin/apiPlan/apiPlanRoute'));
 
 // Health check
 app.get('/', (req, res) => {

@@ -52,6 +52,17 @@ enum PaymentStatus {
   FAILED
 }
 
+enum ApiTxnType {
+  CREDIT
+  DEBIT
+}
+
+enum ApiTxnStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 enum BillingCycle {
   DAILY
   MONTHLY
@@ -107,6 +118,7 @@ model User {
   
   // Relations
   apiKeys       UserApiKey[]
+  subscriptions UserApiSubscription[]
   
   @@index([googleId])
   @@index([email])
@@ -116,9 +128,11 @@ model User {
 model UserApiKey {
   id          String   @id @default(uuid())
   userId      String
+  userEmail   String   // Store user email for easy access
   keyName     String
   apiKey      String   @unique
   isActive    Boolean  @default(true)
+  revoked     Boolean  @default(false)  // New field for revoked status
   lastUsedAt  DateTime?
   createdAt   DateTime @default(now())
   expiresAt   DateTime?
@@ -127,8 +141,10 @@ model UserApiKey {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+  @@index([userEmail])
   @@index([apiKey])
   @@index([expiresAt])
+  @@index([revoked])
 }
 
 // ---------- INDIVIDUAL DRIVER SECTION ----------
@@ -265,6 +281,45 @@ model CompanyPlan {
   // Top-up plan relations
   vehicleTopUps  VehicleLimitTopUp[]
   clientTopUps   ClientLimitTopUp[]
+}
+
+// ---------- API PLANS (for public API usage/pricing) ----------
+model ApiPlan {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10,2)
+  currency    String    @default("INR") // Default to Indian Rupees
+  features    String[]
+  isActive    Boolean   @default(true)
+  daysValidity Int      // Number of days plan is valid after purchase
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // New relation
+  subscriptions UserApiSubscription[]
+}
+
+model UserApiSubscription {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  planId     Int
+  startAt    DateTime @default(now())
+  endAt      DateTime
+  status     SubscriptionStatus @default(ACTIVE)
+  createdAt  DateTime @default(now())
+  
+  // PayU transaction fields
+  paymentRef String?   // PayU transaction ID
+  paymentStatus PaymentStatus @default(PENDING)
+  payuMihpayid String?  // PayU payment ID
+  paymentAmount Decimal? @db.Decimal(10,2)
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       ApiPlan  @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+  @@index([endAt])
 }
 
 // ---------- TOP-UP PLANS ----------

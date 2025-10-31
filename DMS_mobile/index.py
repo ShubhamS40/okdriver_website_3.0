@@ -7,7 +7,7 @@ import os
 import base64
 import json
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +15,7 @@ import uvicorn
 from typing import Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
+from api_key_middleware import verify_api_key, optional_api_key_auth, init_database, cleanup_database
 
 app = FastAPI(title="Drowsiness Detection API")
 
@@ -26,6 +27,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    await init_database()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await cleanup_database()
 
 # Global variables for models
 interpreter = None
@@ -381,13 +391,25 @@ active_connections: list[WebSocket] = []
 
 # API 1: Image Upload Endpoint
 @app.post("/api/detect-image")
-async def detect_image(file: UploadFile = File(...)):
+async def detect_image(file: UploadFile | bytes | str = File(...), user: dict = Depends(verify_api_key)):
     """
     Upload an image file to detect drowsiness or yawning
     """
     try:
-        # Read uploaded file
-        contents = await file.read()
+        # Read uploaded content in a tolerant way (UploadFile, raw bytes, or base64 str)
+        contents: bytes | None = None
+        if hasattr(file, "read"):
+            # UploadFile case
+            maybe = file.read()
+            contents = await maybe if asyncio.iscoroutine(maybe) else maybe
+        elif isinstance(file, (bytes, bytearray)):
+            contents = bytes(file)
+        elif isinstance(file, str):
+            # Treat as base64 data URL or base64 string
+            b64 = file.split(',')[1] if ',' in file else file
+            contents = base64.b64decode(b64)
+        else:
+            raise ValueError("Unsupported file payload type")
         
         # Convert to base64
         base64_image = base64.b64encode(contents).decode('utf-8')
@@ -404,7 +426,7 @@ async def detect_image(file: UploadFile = File(...)):
         )
 
 @app.post("/api/detect-base64")
-async def detect_base64(data: ImageData):
+async def detect_base64(data: ImageData, user: dict = Depends(verify_api_key)):
     """
     Send base64 encoded image to detect drowsiness or yawning
     """

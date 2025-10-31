@@ -1,11 +1,20 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function clearDriverSubscription() {
-  await prisma.admin.deleteMany({});
-  console.log("All records deleted from DriverSubscription table");
+async function fixNullDaysValidity() {
+  try {
+    const result = await prisma.$executeRawUnsafe(`
+      UPDATE "ApiPlan"
+      SET "daysValidity" = 30
+      WHERE "daysValidity" IS NULL;
+    `);
+
+    console.log(`✅ Fixed ${result} record(s) where daysValidity was NULL.`);
+  } catch (error) {
+    console.error("❌ Error while updating records:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-clearDriverSubscription()
-  .catch(e => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+fixNullDaysValidity();

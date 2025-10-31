@@ -88,6 +88,9 @@ const getUserProfile = async (req, res) => {
       });
     }
 
+    // Aggregate API usage count - skip this since apiUsage table doesn't exist
+    const apiCalls = 0; // Default to 0 since the table doesn't exist
+
     res.status(200).json({
       success: true,
       user: {
@@ -97,7 +100,8 @@ const getUserProfile = async (req, res) => {
         picture: user.picture,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
-        apiKeys: user.apiKeys
+        apiKeys: user.apiKeys,
+        apiCalls
       }
     });
   } catch (error) {
@@ -145,6 +149,7 @@ const createApiKey = async (req, res) => {
     const newApiKey = await prisma.userApiKey.create({
       data: {
         userId,
+        userEmail: user.email,
         keyName,
         apiKey,
         expiresAt
@@ -225,7 +230,10 @@ const deactivateApiKey = async (req, res) => {
 
     await prisma.userApiKey.update({
       where: { id: keyId },
-      data: { isActive: false }
+      data: { 
+        isActive: false,
+        revoked: true
+      }
     });
 
     res.status(200).json({
@@ -289,11 +297,75 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// Get user's current subscription (latest active)
+const getUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const now = new Date();
+    // Get latest not-expired subscription
+    const sub = await prisma.userApiSubscription.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        endAt: { gte: now },
+      },
+      orderBy: { endAt: 'desc' },
+      include: { plan: true },
+    });
+    if (!sub) {
+      return res.json({ ok: true, data: null });
+    }
+    res.json({ ok: true, data: sub });
+  } catch (err) {
+    console.error('getUserSubscription error:', err);
+    res.status(500).json({ ok: false, error: 'internal' });
+  }
+};
+
+// Subscribe (buy) an API plan
+const subscribeToApiPlan = async (req, res) => {
+  try {
+    const { userId, planId } = req.body;
+    if (!userId || !planId) return res.status(400).json({ ok: false, error: 'userId and planId required' });
+    const plan = await prisma.apiPlan.findUnique({ where: { id: Number(planId) } });
+    if (!plan || !plan.isActive) return res.status(404).json({ ok: false, error: 'Plan not found or inactive' });
+    // Expire any other active subscription
+    await prisma.userApiSubscription.updateMany({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        endAt: { gte: new Date() },
+      },
+      data: { status: 'EXPIRED' },
+    });
+    // Create new subscription
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(start.getDate() + plan.daysValidity);
+    const newSub = await prisma.userApiSubscription.create({
+      data: {
+        userId,
+        planId: plan.id,
+        startAt: start,
+        endAt: end,
+        status: 'ACTIVE'
+      },
+      include: { plan: true },
+    });
+    res.json({ ok: true, data: newSub });
+  } catch (err) {
+    console.error('subscribeToApiPlan error:', err);
+    res.status(500).json({ ok: false, error: 'internal' });
+  }
+};
+
 module.exports = {
   saveUserFromGoogle,
   getUserProfile,
   createApiKey,
   getUserApiKeys,
   deactivateApiKey,
-  updateUserProfile
+  updateUserProfile,
+  getUserSubscription,
+  subscribeToApiPlan
 };

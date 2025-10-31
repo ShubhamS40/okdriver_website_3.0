@@ -6,7 +6,9 @@ const {
   createApiKey,
   getUserApiKeys,
   deactivateApiKey,
-  updateUserProfile
+  updateUserProfile,
+  getUserSubscription,
+  subscribeToApiPlan
 } = require('../../controller/user/userAuthController');
 
 // Save user from Google authentication
@@ -22,9 +24,13 @@ router.put('/profile/:userId', updateUserProfile);
 router.post('/api-key/:userId', createApiKey);
 
 // Get user's API keys
-router.get('/api-keys/:userId', getUserApiKeys);
+router.get('/api-key/:userId', getUserApiKeys);
 
 // Deactivate API key
 router.put('/api-key/:userId/:keyId/deactivate', deactivateApiKey);
+
+// Subscription routes
+router.get('/subscription/:userId', getUserSubscription);
+router.post('/subscribe', subscribeToApiPlan);
 
 module.exports = router;

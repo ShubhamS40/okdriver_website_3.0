@@ -5,69 +5,36 @@ import { Plus, Edit, Trash2, Check } from 'lucide-react';
 export default function ApiPlansPage() {
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Mock plans
-  const mockPlans = [
-    {
-      id: 1,
-      name: 'Starter',
-      description: 'Perfect for small businesses getting started with driver management',
-      price: 29,
-      period: '/month',
-      features: [
-        'Basic DMS API access',
-        'Driver management',
-        'Vehicle tracking',
-        'Email support',
-        'Basic analytics',
-      ],
-      createdAt: '2024-01-15',
-    },
-    {
-      id: 2,
-      name: 'Professional',
-      description: 'Ideal for growing companies with moderate API usage',
-      price: 99,
-      period: '/month',
-      features: [
-        'Full DMS API access',
-        'OKDriver Assistant API',
-        'Advanced analytics',
-        'Priority support',
-        'Webhook support',
-        'Custom integrations',
-      ],
-      createdAt: '2024-01-10',
-    },
-    {
-      id: 3,
-      name: 'Enterprise',
-      description: 'For large organizations with high-volume API requirements',
-      price: 299,
-      period: '/month',
-      features: [
-        'Unlimited API access',
-        'Custom rate limits',
-        'Dedicated support',
-        'SLA guarantee',
-        'Custom integrations',
-        'Advanced security',
-        'White-label options',
-      ],
-      createdAt: '2024-01-05',
-    },
-  ];
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    setTimeout(() => {
-      setPlans(mockPlans);
-      setIsLoading(false);
-    }, 800);
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/admin/api-plans');
+        if (!res.ok) throw new Error('Failed to fetch api plans');
+        const json = await res.json();
+        setPlans(json.data || []);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlans();
   }, []);
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this API plan?')) {
-      setPlans(prev => prev.filter(plan => plan.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this API plan?')) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '';
+      const res = await fetch(`http://localhost:5000/api/admin/api-plans/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      setPlans(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      alert(e.message);
     }
   };
 
@@ -116,13 +83,23 @@ export default function ApiPlansPage() {
                   <p className="text-gray-500 text-sm mt-1">{plan.description}</p>
                 </div>
                 <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
-                  Active
+                  {plan.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
               <div className="mt-4 mb-2">
-                <span className="text-4xl font-bold"> ${plan.price}</span>
-                <span className="text-gray-500 ml-1">{plan.period}</span>
+                <span className="text-4xl font-bold"> ₹{Number(plan.price)}</span>
+              </div>
+
+              {/* Duration Badge */}
+              <div className="mt-2 mb-4">
+                <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                  {plan.daysValidity === 30 && 'Monthly Plan'}
+                  {plan.daysValidity === 90 && 'Quarterly Plan'}
+                  {plan.daysValidity === 180 && '6 Months Plan'}
+                  {plan.daysValidity === 365 && 'Yearly Plan'}
+                  {![30, 90, 180, 365].includes(plan.daysValidity) && `${plan.daysValidity} Days`}
+                </span>
               </div>
 
               <p className="text-sm text-gray-600 mb-4">
@@ -136,10 +113,10 @@ export default function ApiPlansPage() {
 
               <h4 className="text-sm font-semibold mb-3">FEATURES</h4>
               <ul className="space-y-2 mb-6">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start text-gray-700 text-sm">
-                    <Check className="w-4 h-4 text-green-600 mt-0.5 mr-2" />
-                    {f}
+                {(plan.features || []).map((feature, idx) => (
+                  <li key={idx} className="flex items-start text-gray-700 text-sm">
+                    <Check className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
