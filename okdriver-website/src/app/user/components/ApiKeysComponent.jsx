@@ -33,7 +33,7 @@ export default function ApiKeysComponent({
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/user/api-key/${session.user.backendId}`, {
+      const response = await fetch(`https://backend.okdriver.in/api/user/api-key/${session.user.backendId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,7 +79,7 @@ export default function ApiKeysComponent({
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/user/api-key/${session.user.backendId}/${keyId}/deactivate`, {
+      const response = await fetch(`https://backend.okdriver.in/api/user/api-key/${session.user.backendId}/${keyId}/deactivate`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });

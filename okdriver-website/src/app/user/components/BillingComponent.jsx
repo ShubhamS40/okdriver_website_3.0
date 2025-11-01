@@ -24,7 +24,7 @@ export default function BillingComponent({
     
     try {
       // Create order on backend
-      const orderResponse = await fetch('http://localhost:5000/api/user/payment/order', {
+      const orderResponse = await fetch('https://backend.okdriver.in/api/user/payment/order', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
