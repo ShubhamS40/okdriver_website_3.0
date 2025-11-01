@@ -60,7 +60,7 @@ export default function UserDashboard() {
 
   const fetchUserData = async () => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
       const response = await fetch(`${apiBaseUrl}/api/user/profile/${session.user.backendId}`);
       const data = await response.json();
       
@@ -81,7 +81,7 @@ export default function UserDashboard() {
   const fetchApiPlans = async () => {
     try {
       setLoadingPlans(true);
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
       const res = await fetch(`${apiBaseUrl}/api/admin/api-plans`);
       const json = await res.json();
       if (json.ok && json.data) {
@@ -98,7 +98,7 @@ export default function UserDashboard() {
     if (!session?.user?.backendId) return;
     
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
       const res = await fetch(`${apiBaseUrl}/api/user/subscription/${session.user.backendId}`);
       const json = await res.json();
       
