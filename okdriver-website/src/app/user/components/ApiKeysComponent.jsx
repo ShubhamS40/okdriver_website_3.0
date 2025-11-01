@@ -33,11 +33,10 @@ export default function ApiKeysComponent({
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/user/api-keys', {
+      const response = await fetch(`http://localhost:5000/api/user/api-key/${session.user.backendId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: session.user.backendId,
           keyName: newKeyName
         })
       });
@@ -80,10 +79,9 @@ export default function ApiKeysComponent({
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/user/api-keys/${keyId}/revoke`, {
+      const response = await fetch(`http://localhost:5000/api/user/api-key/${session.user.backendId}/${keyId}/deactivate`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: session.user.backendId })
+        headers: { 'Content-Type': 'application/json' }
       });
       
       const data = await response.json();

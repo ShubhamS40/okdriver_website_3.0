@@ -64,7 +64,7 @@ export default function CreateAPIPlan() {
         return;
       }
       
-      const response = await fetch('http://localhost:5000/api/admin/api-plans', {
+      const response = await fetch('https://backend.okdriver.in/api/admin/api-plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

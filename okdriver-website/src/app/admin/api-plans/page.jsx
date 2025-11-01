@@ -10,7 +10,7 @@ export default function ApiPlansPage() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/api-plans');
+        const res = await fetch('https://backend.okdriver.in/api/admin/api-plans');
         if (!res.ok) throw new Error('Failed to fetch api plans');
         const json = await res.json();
         setPlans(json.data || []);
@@ -27,7 +27,7 @@ export default function ApiPlansPage() {
     if (!window.confirm('Are you sure you want to delete this API plan?')) return;
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '';
-      const res = await fetch(`http://localhost:5000/api/admin/api-plans/${id}`, {
+      const res = await fetch(`https://backend.okdriver.in/api/admin/api-plans/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -1,13 +1,32 @@
 'use client'
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, MapPin, Clock, Users, TrendingUp, Heart, Star, ArrowRight, Filter, Search } from 'lucide-react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { Briefcase, MapPin, Clock, Users, TrendingUp, Heart, Star, ArrowRight, Filter, Search, Sparkles } from 'lucide-react';
+import { color } from 'framer-motion';
 
 export default function CareersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const handleComingSoon = () => {
+    setShowComingSoon(true);
+    setTimeout(() => setShowComingSoon(false), 3000);
+  };
 
   const departments = [
     { id: 'all', label: 'All Departments' },
@@ -28,128 +47,8 @@ export default function CareersPage() {
     { id: 'singapore', label: 'Singapore' }
   ];
 
-  const jobOpenings = [
-    {
-      id: 'senior-frontend-engineer',
-      title: 'Senior Frontend Engineer',
-      department: 'engineering',
-      location: 'remote',
-      type: 'Full-time',
-      experience: '5+ years',
-      salary: '$120k - $160k',
-      description: 'We are looking for a Senior Frontend Engineer to join our team and help build the next generation of driver management tools.',
-      requirements: [
-        '5+ years of experience with React, Vue, or Angular',
-        'Strong TypeScript/JavaScript skills',
-        'Experience with modern build tools and CI/CD',
-        'Knowledge of responsive design principles',
-        'Experience with testing frameworks'
-      ],
-      benefits: ['Health insurance', '401k matching', 'Flexible PTO', 'Remote work'],
-      postedDate: '2024-01-15',
-      applicants: 45
-    },
-    {
-      id: 'product-manager',
-      title: 'Product Manager',
-      department: 'product',
-      location: 'san-francisco',
-      type: 'Full-time',
-      experience: '3+ years',
-      salary: '$130k - $170k',
-      description: 'Join our product team to drive the vision and strategy for OKDriver\'s core platform features.',
-      requirements: [
-        '3+ years of product management experience',
-        'Experience with B2B SaaS products',
-        'Strong analytical and problem-solving skills',
-        'Experience with agile development methodologies',
-        'Excellent communication and leadership skills'
-      ],
-      benefits: ['Health insurance', '401k matching', 'Stock options', 'Learning budget'],
-      postedDate: '2024-01-12',
-      applicants: 32
-    },
-    {
-      id: 'ux-designer',
-      title: 'UX Designer',
-      department: 'design',
-      location: 'new-york',
-      type: 'Full-time',
-      experience: '4+ years',
-      salary: '$100k - $140k',
-      description: 'Design intuitive and beautiful user experiences for our driver management platform.',
-      requirements: [
-        '4+ years of UX design experience',
-        'Proficiency in Figma, Sketch, or Adobe XD',
-        'Experience with user research and testing',
-        'Strong portfolio demonstrating design thinking',
-        'Experience with mobile and web design'
-      ],
-      benefits: ['Health insurance', '401k matching', 'Design tools budget', 'Conference attendance'],
-      postedDate: '2024-01-10',
-      applicants: 28
-    },
-    {
-      id: 'backend-engineer',
-      title: 'Backend Engineer',
-      department: 'engineering',
-      location: 'london',
-      type: 'Full-time',
-      experience: '4+ years',
-      salary: '£80k - £110k',
-      description: 'Build scalable backend services and APIs that power our driver management platform.',
-      requirements: [
-        '4+ years of backend development experience',
-        'Proficiency in Node.js, Python, or Go',
-        'Experience with databases (PostgreSQL, MongoDB)',
-        'Knowledge of microservices architecture',
-        'Experience with cloud platforms (AWS, GCP)'
-      ],
-      benefits: ['Health insurance', 'Pension scheme', 'Flexible working', 'Learning budget'],
-      postedDate: '2024-01-08',
-      applicants: 38
-    },
-    {
-      id: 'marketing-manager',
-      title: 'Marketing Manager',
-      department: 'marketing',
-      location: 'remote',
-      type: 'Full-time',
-      experience: '3+ years',
-      salary: '$90k - $120k',
-      description: 'Lead our marketing efforts to grow OKDriver\'s presence in the logistics industry.',
-      requirements: [
-        '3+ years of B2B marketing experience',
-        'Experience with digital marketing channels',
-        'Knowledge of marketing automation tools',
-        'Strong analytical and creative skills',
-        'Experience in the logistics/transportation industry'
-      ],
-      benefits: ['Health insurance', '401k matching', 'Marketing budget', 'Remote work'],
-      postedDate: '2024-01-05',
-      applicants: 22
-    },
-    {
-      id: 'sales-engineer',
-      title: 'Sales Engineer',
-      department: 'sales',
-      location: 'singapore',
-      type: 'Full-time',
-      experience: '2+ years',
-      salary: 'S$80k - S$120k',
-      description: 'Help potential customers understand how OKDriver can solve their driver management challenges.',
-      requirements: [
-        '2+ years of sales engineering experience',
-        'Technical background in software or logistics',
-        'Excellent presentation and communication skills',
-        'Experience with CRM systems',
-        'Ability to travel for customer meetings'
-      ],
-      benefits: ['Health insurance', 'Commission structure', 'Travel allowance', 'Learning budget'],
-      postedDate: '2024-01-03',
-      applicants: 18
-    }
-  ];
+  // Empty job openings array - no positions available
+  const jobOpenings = [];
 
   const companyStats = [
     { label: 'Team Members', value: '150+', icon: Users },
@@ -190,167 +89,198 @@ export default function CareersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Animated Background Grid */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}></div>
+      </div>
+
+      {/* Cursor Glow Effect */}
+      <div 
+        className="fixed pointer-events-none z-50 transition-opacity duration-300"
+        style={{
+          left: mousePosition.x,
+          top: mousePosition.y,
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+
+      {/* Coming Soon Toast */}
+      {showComingSoon && (
+       <div  
+  className="fixed top-5 left-1/2 transform -translate-x-1/2 animate-slideDown"
+  style={{ zIndex: 9999 }}
+>
+  <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-8 py-4 shadow-2xl flex items-center space-x-3">
+    <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+    <span className="text-white font-semibold text-lg">Coming Soon!</span>
+  </div>
+</div>
+
+      )}
+
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Join Our <span className="text-yellow-300">Team</span>
+          <div className="text-center transform transition-all duration-1000" style={{
+            opacity: isLoaded ? 1 : 0,
+            transform: isLoaded ? 'translateY(0)' : 'translateY(20px)'
+          }}>
+            <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent animate-pulse">
+              Join Our <span className="text-white">Team</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed">
               Build the future of driver management with us. We're looking for passionate individuals to join our mission.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+            <div className="flex flex-wrap justify-center gap-6">
+              <button 
+                onClick={handleComingSoon}
+                className="group relative bg-white text-black px-8 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-white/20 cursor-pointer"
               >
-                <Briefcase className="w-5 h-5 inline mr-2" />
-                View Open Positions
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+                <span className="relative z-10 flex items-center">
+                  <Briefcase className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" />
+                  View Open Positions
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </button>
+              <button 
+                onClick={handleComingSoon}
+                className="group relative border-2 border-white/20 backdrop-blur-md bg-white/5 text-white px-8 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:border-white hover:bg-white/10 cursor-pointer"
               >
-                <Heart className="w-5 h-5 inline mr-2" />
-                Learn About Culture
-              </motion.button>
+                <span className="relative z-10 flex items-center">
+                  <Heart className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" />
+                  Learn About Culture
+                </span>
+              </button>
             </div>
-          </motion.div>
+          </div>
         </div>
+
+        {/* Floating Elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 border border-white/10 rounded-full animate-bounce" style={{ animationDuration: '3s' }}></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 border border-white/10 rounded-lg animate-spin" style={{ animationDuration: '10s' }}></div>
       </section>
 
       {/* Company Stats */}
-      <section className="py-16 bg-white">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-16 transform transition-all duration-700">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Why Work at OKDriver?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               We're building the future of driver management technology
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {companyStats.map((stat, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-lg transition-shadow"
+                className="group relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 transition-all duration-500 hover:bg-white/10 hover:border-white/30 hover:scale-105 hover:shadow-2xl hover:shadow-white/10 cursor-pointer"
+                style={{
+                  transitionDelay: `${index * 100}ms`
+                }}
               >
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-white" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-white to-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-6 transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <stat.icon className="w-8 h-8 text-black" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-2 transition-colors">
+                    {stat.value}
+                  </h3>
+                  <p className="text-gray-400 transition-colors group-hover:text-gray-300">
+                    {stat.label}
+                  </p>
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                  {stat.value}
-                </h3>
-                <p className="text-gray-600">
-                  {stat.label}
-                </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Culture Values */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Our Culture & Values
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-400">
               The principles that guide everything we do
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {cultureValues.map((value, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6 rounded-xl bg-white hover:shadow-lg transition-shadow"
+                className="group relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 transition-all duration-500 hover:bg-white/10 hover:border-white/30 hover:scale-105 hover:shadow-2xl hover:shadow-white/10 cursor-pointer"
+                style={{
+                  transitionDelay: `${index * 100}ms`
+                }}
               >
-                <div className="text-4xl mb-4">{value.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {value.title}
-                </h3>
-                <p className="text-gray-600">
-                  {value.description}
-                </p>
-              </motion.div>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-500"></div>
+                <div className="relative z-10 text-center">
+                  <div className="text-5xl mb-6 transform transition-all duration-500 group-hover:scale-125">{value.icon}</div>
+                  <h3 className="text-xl font-semibold text-white mb-3 transition-colors">
+                    {value.title}
+                  </h3>
+                  <p className="text-gray-400 transition-colors group-hover:text-gray-300">
+                    {value.description}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Job Openings */}
-      <section className="py-16 bg-white">
+      <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Open Positions
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-400">
               Find your next opportunity with us
             </p>
-          </motion.div>
+          </div>
 
           {/* Filters */}
-          <div className="mb-8 bg-gray-50 p-6 rounded-lg">
+          <div className="mb-8 backdrop-blur-xl bg-white/5 border border-white/10 p-6 rounded-2xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search jobs..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-white/30 focus:border-white/30 transition-all cursor-pointer"
                 />
               </div>
 
               {/* Department Filter */}
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 <select
                   value={selectedDepartment}
                   onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                  className="w-full pl-12 pr-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-white/30 focus:border-white/30 appearance-none transition-all cursor-pointer"
                 >
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
+                    <option key={dept.id} value={dept.id} className="bg-black">
                       {dept.label}
                     </option>
                   ))}
@@ -359,14 +289,14 @@ export default function CareersPage() {
 
               {/* Location Filter */}
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                  className="w-full pl-12 pr-4 py-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-white/30 focus:border-white/30 appearance-none transition-all cursor-pointer"
                 >
                   {locations.map((location) => (
-                    <option key={location.id} value={location.id}>
+                    <option key={location.id} value={location.id} className="bg-black">
                       {location.label}
                     </option>
                   ))}
@@ -375,124 +305,96 @@ export default function CareersPage() {
             </div>
           </div>
 
-          {/* Job Listings */}
-          <div className="space-y-6">
-            {filteredJobs.map((job, index) => (
-              <motion.div
-                key={job.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                        {job.type}
-                      </span>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 mb-3 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {job.location.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {job.experience}
-                      </div>
-                      <div className="flex items-center">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        {job.salary}
-                      </div>
-                    </div>
-
-                    <p className="text-gray-700 mb-4">{job.description}</p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {job.benefits.slice(0, 3).map((benefit, benefitIndex) => (
-                        <span key={benefitIndex} className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
-                          {benefit}
-                        </span>
-                      ))}
-                      {job.benefits.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                          +{job.benefits.length - 3} more
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span>Posted {job.postedDate}</span>
-                      <span className="mx-2">•</span>
-                      <span>{job.applicants} applicants</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 lg:mt-0 lg:ml-6">
-                    <Link href={`/careers/apply/${job.id}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
-                      >
-                        Apply Now
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </motion.button>
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No jobs found</h3>
-              <p className="text-gray-600">Try adjusting your search criteria</p>
+          {/* No Jobs Available Message */}
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-16 text-center">
+            <div className="max-w-2xl mx-auto">
+              <div className="w-24 h-24 bg-gradient-to-br from-white/20 to-white/5 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                <Briefcase className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-3xl font-bold text-white mb-4">
+                No Current Openings
+              </h3>
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                We don't have any open positions at the moment, but we're always looking for talented individuals. Submit your resume and we'll reach out when the right opportunity comes along.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <button 
+                  onClick={handleComingSoon}
+                  className="group relative bg-white text-black px-8 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-white/20 cursor-pointer"
+                >
+                  <span className="relative z-10 flex items-center">
+                    <Heart className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
+                    Submit Resume
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+                <button 
+                  onClick={handleComingSoon}
+                  className="group relative border-2 border-white/20 backdrop-blur-md bg-white/5 text-white px-8 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:border-white hover:bg-white/10 cursor-pointer"
+                >
+                  <span className="relative z-10 flex items-center">
+                    <Star className="w-5 h-5 mr-2 transition-transform group-hover:rotate-180" />
+                    Join Talent Pool
+                  </span>
+                </button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Don't See Your Role?
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-white/10"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-12 shadow-2xl">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              Stay Connected
             </h2>
-            <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
-              We're always looking for talented individuals. Send us your resume and we'll keep you in mind for future opportunities.
+            <p className="text-xl mb-10 text-gray-400 max-w-2xl mx-auto">
+              Don't miss out on future opportunities. Follow us on social media and be the first to know when new positions open up.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+            <div className="flex flex-wrap justify-center gap-6">
+              <button 
+                onClick={handleComingSoon}
+                className="group relative bg-white text-black px-10 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-white/20 cursor-pointer"
               >
-                <Briefcase className="w-5 h-5 inline mr-2" />
-                Submit Resume
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+                <span className="relative z-10 flex items-center">
+                  <Briefcase className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" />
+                  Get Job Alerts
+                  <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-2" />
+                </span>
+              </button>
+              <button 
+                onClick={handleComingSoon}
+                className="group relative border-2 border-white/20 backdrop-blur-md bg-white/5 text-white px-10 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:border-white hover:bg-white/10 cursor-pointer"
               >
-                <Heart className="w-5 h-5 inline mr-2" />
-                Learn More
-              </motion.button>
+                <span className="relative z-10 flex items-center">
+                  <Heart className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
+                  Follow Us
+                </span>
+              </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
+
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -100%);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+        
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
