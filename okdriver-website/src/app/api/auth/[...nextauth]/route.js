@@ -1,18 +1,18 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-export const authOptions = {
+ const authOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID || '57469493249-ketlh6odhp1u6rbt34rgpgnvip3jk77o.apps.googleusercontent.com',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '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',
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
       try {
         // Send user data to backend (Express)
-        const response = await fetch("http://localhost:5000/api/user/save-user", {
+        const response = await fetch("https://backend.okdriver.in/api/user/save-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
