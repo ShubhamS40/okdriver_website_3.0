@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -14,6 +14,7 @@ import BillingComponent from '../components/BillingComponent';
 export default function UserDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
   const [userProfile, setUserProfile] = useState(null);
   const [apiKeys, setApiKeys] = useState([]);
@@ -22,23 +23,6 @@ export default function UserDashboard() {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [apiPlans, setApiPlans] = useState([]);
   const [paymentStatus, setPaymentStatus] = useState(null);
-  
-  // SearchParamsWrapper component to handle useSearchParams with Suspense
-  function SearchParamsWrapper() {
-    const searchParams = useSearchParams();
-    
-    React.useEffect(() => {
-      // Check for payment status in URL
-      const payment = searchParams.get('payment');
-      if (payment) {
-        setPaymentStatus(payment);
-        // Refresh subscription data after payment
-        fetchSubscription();
-      }
-    }, [searchParams]);
-    
-    return null;
-  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -48,8 +32,16 @@ export default function UserDashboard() {
 
     if (session?.user?.backendId) {
       fetchUserData();
+      
+      // Check for payment status in URL
+      const payment = searchParams.get('payment');
+      if (payment) {
+        setPaymentStatus(payment);
+        // Refresh subscription data after payment
+        fetchSubscription();
+      }
     }
-  }, [session, status, router]);
+  }, [session, status, router, searchParams]);
 
   // Fetch API plans when billing tab is active
   useEffect(() => {
@@ -60,8 +52,7 @@ export default function UserDashboard() {
 
   const fetchUserData = async () => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
-      const response = await fetch(`${apiBaseUrl}/api/user/profile/${session.user.backendId}`);
+      const response = await fetch(`https://backend.okdriver.in/api/user/profile/${session.user.backendId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -81,8 +72,7 @@ export default function UserDashboard() {
   const fetchApiPlans = async () => {
     try {
       setLoadingPlans(true);
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
-      const res = await fetch(`${apiBaseUrl}/api/admin/api-plans`);
+      const res = await fetch('https://backend.okdriver.in/api/admin/api-plans');
       const json = await res.json();
       if (json.ok && json.data) {
         setApiPlans(json.data.filter(plan => plan.isActive));
@@ -98,8 +88,7 @@ export default function UserDashboard() {
     if (!session?.user?.backendId) return;
     
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.okdriver.in';
-      const res = await fetch(`${apiBaseUrl}/api/user/subscription/${session.user.backendId}`);
+      const res = await fetch(`https://backend.okdriver.in/api/user/subscription/${session.user.backendId}`);
       const json = await res.json();
       
       if (json.success && json.subscription) {
@@ -125,11 +114,6 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Suspense boundary for useSearchParams */}
-      <Suspense fallback={<div>Loading...</div>}>
-        <SearchParamsWrapper />
-      </Suspense>
-      
       {/* Payment notification */}
       {paymentStatus && (
         <div 
