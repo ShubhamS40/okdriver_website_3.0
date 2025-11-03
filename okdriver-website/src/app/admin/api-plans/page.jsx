@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Check } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function ApiPlansPage() {
   const [plans, setPlans] = useState([]);
@@ -10,7 +11,8 @@ export default function ApiPlansPage() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch('https://backend.okdriver.in/api/admin/api-plans');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
+        const res = await fetch(`${apiUrl}/api/admin/api-plans`);
         if (!res.ok) throw new Error('Failed to fetch api plans');
         const json = await res.json();
         setPlans(json.data || []);
@@ -27,14 +29,44 @@ export default function ApiPlansPage() {
     if (!window.confirm('Are you sure you want to delete this API plan?')) return;
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '';
-      const res = await fetch(`https://backend.okdriver.in/api/admin/api-plans/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
+      // Backend expects DELETE /api/admin/api-plans/:id (path param). Fallback supports body id too.
+      const res = await fetch(`${apiUrl}/api/admin/api-plans/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        // Some deployments may still read id from body; keeping for safety
+        body: JSON.stringify({ id })
       });
-      if (!res.ok) throw new Error('Failed to delete');
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        if (data.error === 'constraint_violation') {
+          toast.error(data.message || 'Cannot delete this plan because it has active subscriptions');
+        } else if (data.error === 'not_found') {
+          toast.error('Plan not found or already deleted');
+        } else if (data.error === 'invalid_id') {
+          toast.error('Invalid plan id');
+        } else {
+          toast.error('Failed to delete API plan');
+        }
+        return;
+      }
+      // If backend archived instead of hard delete
+      if (data.archived) {
+        // Remove from list to match "deleted" behavior in UI
+        setPlans(prev => prev.filter(p => p.id !== id));
+        toast.success('Plan archived (it had subscriptions). It is removed from list.');
+        return;
+      }
+
       setPlans(prev => prev.filter(p => p.id !== id));
+      toast.success('API Plan deleted successfully');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message || 'Failed to delete API plan');
     }
   };
 

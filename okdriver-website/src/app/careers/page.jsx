@@ -51,9 +51,9 @@ export default function CareersPage() {
   const jobOpenings = [];
 
   const companyStats = [
-    { label: 'Team Members', value: '150+', icon: Users },
-    { label: 'Countries', value: '12', icon: MapPin },
-    { label: 'Years Founded', value: '5', icon: TrendingUp },
+    { label: 'Team Members', value: '5+', icon: Users },
+    { label: 'Countries', value: '6+', icon: MapPin },
+    { label: 'Years Founded', value: '2025', icon: TrendingUp },
     { label: 'Employee Satisfaction', value: '4.8/5', icon: Star }
   ];
 

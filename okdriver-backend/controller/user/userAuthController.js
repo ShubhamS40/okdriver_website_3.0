@@ -313,12 +313,13 @@ const getUserSubscription = async (req, res) => {
       include: { plan: true },
     });
     if (!sub) {
-      return res.json({ ok: true, data: null });
+      return res.json({ success: true, subscription: null });
     }
-    res.json({ ok: true, data: sub });
+    // Align response with frontend expectations
+    return res.json({ success: true, subscription: sub });
   } catch (err) {
     console.error('getUserSubscription error:', err);
-    res.status(500).json({ ok: false, error: 'internal' });
+    return res.status(500).json({ success: false, message: 'internal' });
   }
 };
 

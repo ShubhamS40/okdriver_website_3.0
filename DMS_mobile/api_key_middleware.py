@@ -95,16 +95,20 @@ async def verify_api_key(
             u."emailVerified"       AS email_verified,
             s.id                     AS subscription_id,
             s.status                 AS subscription_status,
-            s."expiresAt"           AS subscription_expires_at,
-            s."planName"            AS plan_name
+            s."endAt"               AS subscription_expires_at,
+            p."name"                AS plan_name
         FROM "UserApiKey" uak
         JOIN "User" u ON uak."userId" = u.id
-        LEFT JOIN (
-            SELECT * FROM "UserApiSubscription" 
-            WHERE status = 'ACTIVE' 
-            ORDER BY "expiresAt" DESC 
+        LEFT JOIN LATERAL (
+            SELECT sus.*
+            FROM "UserApiSubscription" sus
+            WHERE sus."userId" = u.id 
+              AND sus.status = 'ACTIVE'
+              AND sus."endAt" >= NOW()
+            ORDER BY sus."endAt" DESC
             LIMIT 1
-        ) s ON s."userId" = u.id
+        ) s ON TRUE
+        LEFT JOIN "ApiPlan" p ON p.id = s."planId"
         WHERE uak."apiKey" = $1
         """
         

@@ -84,15 +84,15 @@ const verifyApiKey = async (req, res, next) => {
       }
     });
 
-    // Check for active subscription
-    const subscription = await prisma.subscription.findFirst({
+    // Check for active subscription (UserApiSubscription with endAt)
+    const subscription = await prisma.userApiSubscription.findFirst({
       where: {
         userId: userApiKey.user.id,
         status: 'ACTIVE',
-        expiresAt: { gte: new Date() }
+        endAt: { gte: new Date() }
       },
       orderBy: {
-        expiresAt: 'desc'
+        endAt: 'desc'
       }
     });
     

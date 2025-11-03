@@ -9,13 +9,17 @@ import json
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Depends
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from typing import Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
-from api_key_middleware import verify_api_key, optional_api_key_auth, init_database, cleanup_database
+from api_key_middleware import verify_api_key, optional_api_key_auth, init_database, cleanup_database, db_manager
+import api_key_middleware
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Drowsiness Detection API")
 
@@ -27,6 +31,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static files (alarm.wav, etc.)
+try:
+    app.mount("/static", StaticFiles(directory="."), name="static")
+except Exception as e:
+    logger.warning(f"Could not mount static files: {e}")
+
+# Direct file serving for alarm.wav
+@app.get("/alarm.wav")
+async def get_alarm():
+    """Serve alarm.wav file"""
+    try:
+        return FileResponse("alarm.wav", media_type="audio/wav")
+    except FileNotFoundError:
+        logger.warning("alarm.wav not found")
+        from fastapi.responses import Response
+        return Response(status_code=404)
 
 # Startup and shutdown events
 @app.on_event("startup")
@@ -442,6 +463,100 @@ async def detect_base64(data: ImageData, user: dict = Depends(verify_api_key)):
 # API 2: WebSocket Endpoint for Continuous Detection
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # Get API key from query parameters or headers
+    api_key = websocket.query_params.get("api_key") or websocket.headers.get("x-api-key")
+    
+    # Also check Authorization header (Bearer token)
+    if not api_key:
+        auth_header = websocket.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            api_key = auth_header.replace("Bearer ", "")
+    
+    # Verify API key before accepting connection
+    if not api_key:
+        await websocket.close(code=4001, reason="API key required. Provide it as query parameter 'api_key', header 'x-api-key', or 'Authorization: Bearer <key>'")
+        print(f"WebSocket connection rejected: No API key provided")
+        return
+    
+    # Verify the API key using the database
+    try:
+        query = """
+        SELECT 
+            uak."id"                AS id,
+            uak."keyName"           AS key_name,
+            uak."apiKey"            AS api_key,
+            uak."isActive"          AS is_active,
+            uak."revoked"           AS revoked,
+            uak."expiresAt"         AS expires_at,
+            u.id                     AS user_id,
+            s.id                     AS subscription_id,
+            s.status                 AS subscription_status,
+            s."endAt"               AS subscription_expires_at
+        FROM "UserApiKey" uak
+        JOIN "User" u ON uak."userId" = u.id
+        LEFT JOIN LATERAL (
+            SELECT sus.*
+            FROM "UserApiSubscription" sus
+            WHERE sus."userId" = u.id 
+              AND sus.status = 'ACTIVE'
+              AND sus."endAt" >= NOW()
+            ORDER BY sus."endAt" DESC
+            LIMIT 1
+        ) s ON TRUE
+        WHERE uak."apiKey" = $1
+        """
+        
+        result = await db_manager.execute_query(query, api_key)
+        
+        if not result:
+            await websocket.close(code=4003, reason="Invalid API key")
+            print(f"WebSocket connection rejected: Invalid API key")
+            return
+        
+        # Check if API key is active and not revoked
+        if not result['is_active'] or result['revoked']:
+            await websocket.close(code=4003, reason="API key inactive or revoked")
+            print(f"WebSocket connection rejected: API key inactive or revoked")
+            return
+        
+        # Check if API key has expired
+        from datetime import timezone
+        expires_at_utc = api_key_middleware._to_aware_utc(result['expires_at']) if result['expires_at'] else None
+        if expires_at_utc and expires_at_utc < datetime.now(timezone.utc):
+            await websocket.close(code=4003, reason="API key expired")
+            print(f"WebSocket connection rejected: API key expired")
+            return
+        
+        # Check if user has an active subscription
+        if not result['subscription_id']:
+            await websocket.close(code=4002, reason="No active subscription")
+            print(f"WebSocket connection rejected: No active subscription")
+            return
+        
+        # Check if subscription is expired
+        sub_expires_at = api_key_middleware._to_aware_utc(result['subscription_expires_at']) if result['subscription_expires_at'] else None
+        if sub_expires_at and sub_expires_at < datetime.now(timezone.utc):
+            await websocket.close(code=4002, reason="Subscription expired")
+            print(f"WebSocket connection rejected: Subscription expired")
+            return
+        
+        # Update last used timestamp
+        update_query = """
+        UPDATE "UserApiKey" 
+        SET "lastUsedAt" = NOW() 
+        WHERE id = $1
+        """
+        await db_manager.execute_query(update_query, result['id'])
+        
+        print(f"WebSocket authenticated for user: {result['user_id']}")
+        
+    except Exception as e:
+        logger.error(f"WebSocket API key verification error: {e}")
+        await websocket.close(code=4000, reason="Authentication error")
+        print(f"WebSocket connection rejected: Authentication error: {e}")
+        return
+    
+    # Accept the connection after successful authentication
     await websocket.accept()
     active_connections.append(websocket)
     print(f"Client connected. Total connections: {len(active_connections)}")
@@ -502,564 +617,22 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/")
 async def get_index():
-    return HTMLResponse("""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Drowsiness Detection System</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                min-height: 100vh;
-            }
-            
-            .container {
-                max-width: 1400px;
-                margin: 0 auto;
-            }
-            
-            h1 {
-                text-align: center;
-                margin-bottom: 30px;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            }
-            
-            .mode-selector {
-                display: flex;
-                justify-content: center;
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-            
-            .mode-btn {
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-                border: 2px solid white;
-                padding: 15px 30px;
-                border-radius: 25px;
-                cursor: pointer;
-                font-size: 16px;
-                transition: all 0.3s;
-            }
-            
-            .mode-btn.active {
-                background: white;
-                color: #667eea;
-            }
-            
-            .detection-mode {
-                display: none;
-            }
-            
-            .detection-mode.active {
-                display: block;
-            }
-            
-            .grid-layout {
-                display: grid;
-                grid-template-columns: 1fr 350px;
-                gap: 20px;
-            }
-            
-            .section {
-                background: rgba(255, 255, 255, 0.1);
-                padding: 20px;
-                border-radius: 15px;
-                backdrop-filter: blur(10px);
-            }
-            
-            video, canvas, img {
-                width: 100%;
-                max-width: 640px;
-                border-radius: 10px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            }
-            
-            .upload-area {
-                border: 2px dashed white;
-                border-radius: 10px;
-                padding: 40px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.3s;
-                margin-bottom: 20px;
-            }
-            
-            .upload-area:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-            
-            .upload-area.dragover {
-                background: rgba(255, 255, 255, 0.2);
-                border-color: #4ade80;
-            }
-            
-            #preview {
-                max-width: 100%;
-                margin-top: 20px;
-                display: none;
-            }
-            
-            .status-card {
-                background: rgba(255, 255, 255, 0.2);
-                padding: 15px;
-                margin: 10px 0;
-                border-radius: 10px;
-                border-left: 4px solid;
-            }
-            
-            .status-alert { border-left-color: #4ade80; }
-            .status-yawning { border-left-color: #fbbf24; }
-            .status-drowsy { border-left-color: #ef4444; }
-            .status-critical { border-left-color: #dc2626; animation: pulse 1s infinite; }
-            
-            @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.02); }
-            }
-            
-            .metrics {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-top: 15px;
-            }
-            
-            .metric {
-                background: rgba(255, 255, 255, 0.1);
-                padding: 10px;
-                border-radius: 8px;
-                text-align: center;
-            }
-            
-            .metric-label {
-                font-size: 12px;
-                opacity: 0.8;
-            }
-            
-            .metric-value {
-                font-size: 18px;
-                font-weight: bold;
-                margin-top: 5px;
-            }
-            
-            button {
-                background: linear-gradient(45deg, #667eea, #764ba2);
-                color: white;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 25px;
-                cursor: pointer;
-                font-size: 16px;
-                margin: 5px;
-                transition: transform 0.2s;
-            }
-            
-            button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            }
-            
-            button:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-                transform: none;
-            }
-            
-            .connection-status {
-                text-align: center;
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: 15px;
-            }
-            
-            .connected {
-                background: rgba(74, 222, 128, 0.2);
-                color: #4ade80;
-            }
-            
-            .disconnected {
-                background: rgba(239, 68, 68, 0.2);
-                color: #ef4444;
-            }
-            
-            input[type="file"] {
-                display: none;
-            }
-            
-            @media (max-width: 768px) {
-                .grid-layout {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🔍 Drowsiness Detection System</h1>
-            
-            <div class="mode-selector">
-                <button class="mode-btn active" onclick="switchMode('upload')">📤 Image Upload</button>
-                <button class="mode-btn" onclick="switchMode('realtime')">📹 Real-time Detection</button>
-            </div>
-            
-            <!-- Image Upload Mode -->
-            <div id="uploadMode" class="detection-mode active">
-                <div class="grid-layout">
-                    <div class="section">
-                        <h2>Upload Image</h2>
-                        <div class="upload-area" id="uploadArea">
-                            <p style="font-size: 48px; margin: 0;">📁</p>
-                            <p>Click to upload or drag & drop an image</p>
-                            <p style="font-size: 12px; opacity: 0.7;">Supports: JPG, PNG, WebP</p>
-                        </div>
-                        <input type="file" id="fileInput" accept="image/*">
-                        <img id="preview" alt="Preview">
-                    </div>
-                    
-                    <div class="section">
-                        <h2>Detection Result</h2>
-                        <div id="uploadStatus" class="status-card status-alert">
-                            <div style="font-size: 18px; font-weight: bold;">Status: WAITING</div>
-                            <div style="font-size: 14px; margin-top: 5px;">Upload an image to analyze</div>
-                        </div>
-                        
-                        <div class="metrics">
-                            <div class="metric">
-                                <div class="metric-label">EAR</div>
-                                <div class="metric-value" id="uploadEar">-</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">MAR</div>
-                                <div class="metric-value" id="uploadMar">-</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">CNN</div>
-                                <div class="metric-value" id="uploadCnn">-</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">RF Model</div>
-                                <div class="metric-value" id="uploadRf">-</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Real-time Detection Mode -->
-            <div id="realtimeMode" class="detection-mode">
-                <div class="grid-layout">
-                    <div class="section">
-                        <h2>Live Camera Feed</h2>
-                        <video id="video" autoplay muted playsinline></video>
-                        <canvas id="canvas" style="display: none;"></canvas>
-                        <div style="text-align: center; margin-top: 15px;">
-                            <button id="startBtn">Start Detection</button>
-                            <button id="stopBtn" disabled>Stop Detection</button>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div id="connectionStatus" class="connection-status disconnected">
-                            📡 Disconnected
-                        </div>
-                        
-                        <div id="statusCard" class="status-card status-alert">
-                            <div style="font-size: 18px; font-weight: bold;">Status: WAITING</div>
-                            <div style="font-size: 14px; margin-top: 5px;">Click Start Detection</div>
-                        </div>
-                        
-                        <div class="metrics">
-                            <div class="metric">
-                                <div class="metric-label">EAR</div>
-                                <div class="metric-value" id="earValue">0.000</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">MAR</div>
-                                <div class="metric-value" id="marValue">0.000</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">CNN Conf</div>
-                                <div class="metric-value" id="cnnValue">0.00</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-label">Events</div>
-                                <div class="metric-value" id="eventsValue">0</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-            let currentMode = 'upload';
-            let ws = null;
-            let isDetecting = false;
-            let detectionInterval;
-            
-            function switchMode(mode) {
-                currentMode = mode;
-                document.getElementById('uploadMode').classList.toggle('active', mode === 'upload');
-                document.getElementById('realtimeMode').classList.toggle('active', mode === 'realtime');
-                
-                document.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                event.target.classList.add('active');
-                
-                if (mode === 'realtime' && !ws) {
-                    connectWebSocket();
-                    initCamera();
-                }
-            }
-            
-            // Image Upload Logic
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-            const preview = document.getElementById('preview');
-            
-            uploadArea.addEventListener('click', () => fileInput.click());
-            
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-            
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    handleImageUpload(file);
-                }
-            });
-            
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    handleImageUpload(file);
-                }
-            });
-            
-            async function handleImageUpload(file) {
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-                
-                // Upload to API
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                try {
-                    const response = await fetch('/api/detect-image', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
-                    displayUploadResult(result);
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    alert('Failed to analyze image');
-                }
-            }
-            
-            function displayUploadResult(data) {
-                const statusCard = document.getElementById('uploadStatus');
-                
-                if (!data.success) {
-                    statusCard.className = 'status-card status-alert';
-                    statusCard.innerHTML = `
-                        <div style="font-size: 18px; font-weight: bold;">Error</div>
-                        <div style="font-size: 14px; margin-top: 5px;">${data.error || 'Failed to process image'}</div>
-                    `;
-                    return;
-                }
-                
-                if (!data.face_detected) {
-                    statusCard.className = 'status-card status-alert';
-                    statusCard.innerHTML = `
-                        <div style="font-size: 18px; font-weight: bold;">No Face Detected</div>
-                        <div style="font-size: 14px; margin-top: 5px;">${data.message}</div>
-                    `;
-                    return;
-                }
-                
-                let statusClass = 'status-alert';
-                if (data.alert_level >= 3) statusClass = 'status-drowsy';
-                else if (data.alert_level >= 2) statusClass = 'status-yawning';
-                
-                statusCard.className = `status-card ${statusClass}`;
-                statusCard.innerHTML = `
-                    <div style="font-size: 18px; font-weight: bold;">Status: ${data.status}</div>
-                    <div style="font-size: 14px; margin-top: 5px;">${data.message}</div>
-                `;
-                
-                // Update metrics
-                if (data.metrics) {
-                    document.getElementById('uploadEar').textContent = data.metrics.ear;
-                    document.getElementById('uploadMar').textContent = data.metrics.mar;
-                    document.getElementById('uploadCnn').textContent = data.metrics.cnn_prediction;
-                    document.getElementById('uploadRf').textContent = data.metrics.rf_prediction;
-                }
-            }
-            
-            // Real-time WebSocket Logic
-            let video, canvas, ctx;
-            
-            function connectWebSocket() {
-                const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const wsUrl = `${protocol}//${location.host}/ws`;
-                
-                ws = new WebSocket(wsUrl);
-                
-                ws.onopen = function() {
-                    document.getElementById('connectionStatus').textContent = '📡 Connected';
-                    document.getElementById('connectionStatus').className = 'connection-status connected';
-                    console.log('WebSocket connected');
-                };
-                
-                ws.onmessage = function(event) {
-                    const message = JSON.parse(event.data);
-                    
-                    if (message.type === 'detection_result') {
-                        handleDetectionResult(message.data);
-                    }
-                };
-                
-                ws.onclose = function() {
-                    document.getElementById('connectionStatus').textContent = '📡 Disconnected';
-                    document.getElementById('connectionStatus').className = 'connection-status disconnected';
-                    console.log('WebSocket disconnected');
-                    
-                    setTimeout(connectWebSocket, 3000);
-                };
-                
-                ws.onerror = function(error) {
-                    console.error('WebSocket error:', error);
-                };
-            }
-            
-            function handleDetectionResult(data) {
-                if (data.error) {
-                    console.error('Error:', data.error);
-                    return;
-                }
-                
-                const statusCard = document.getElementById('statusCard');
-                let statusClass = 'status-alert';
-                
-                if (data.alert_level >= 4) statusClass = 'status-critical';
-                else if (data.alert_level >= 3) statusClass = 'status-drowsy';
-                else if (data.alert_level >= 2) statusClass = 'status-yawning';
-                
-                statusCard.className = `status-card ${statusClass}`;
-                statusCard.innerHTML = `
-                    <div style="font-size: 18px; font-weight: bold;">Status: ${data.status}</div>
-                    <div style="font-size: 14px; margin-top: 5px;">${data.message}</div>
-                `;
-                
-                if (data.metrics) {
-                    document.getElementById('earValue').textContent = data.metrics.ear;
-                    document.getElementById('marValue').textContent = data.metrics.mar;
-                    document.getElementById('cnnValue').textContent = data.metrics.cnn_confidence;
-                    document.getElementById('eventsValue').textContent = data.metrics.drowsy_events;
-                }
-            }
-            
-            async function initCamera() {
-                video = document.getElementById('video');
-                canvas = document.getElementById('canvas');
-                ctx = canvas.getContext('2d');
-                
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { 
-                            width: 640, 
-                            height: 480,
-                            facingMode: 'user'
-                        }
-                    });
-                    
-                    video.srcObject = stream;
-                    video.onloadedmetadata = function() {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        console.log('Camera initialized');
-                    };
-                } catch (err) {
-                    console.error('Camera access denied:', err);
-                    alert('Please allow camera access to use this application');
-                }
-            }
-            
-            function captureFrame() {
-                if (!video.videoWidth || !video.videoHeight) return null;
-                
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                return canvas.toDataURL('image/jpeg', 0.8);
-            }
-            
-            function startDetection() {
-                if (!ws || ws.readyState !== WebSocket.OPEN) {
-                    alert('WebSocket not connected. Please wait and try again.');
-                    return;
-                }
-                
-                isDetecting = true;
-                document.getElementById('startBtn').disabled = true;
-                document.getElementById('stopBtn').disabled = false;
-                
-                detectionInterval = setInterval(() => {
-                    if (isDetecting && ws.readyState === WebSocket.OPEN) {
-                        const frameData = captureFrame();
-                        if (frameData) {
-                            ws.send(JSON.stringify({
-                                type: 'frame',
-                                data: frameData
-                            }));
-                        }
-                    }
-                }, 200);
-            }
-            
-            function stopDetection() {
-                isDetecting = false;
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('stopBtn').disabled = true;
-                
-                if (detectionInterval) {
-                    clearInterval(detectionInterval);
-                }
-                
-                document.getElementById('statusCard').className = 'status-card status-alert';
-                document.getElementById('statusCard').innerHTML = `
-                    <div style="font-size: 18px; font-weight: bold;">Status: STOPPED</div>
-                    <div style="font-size: 14px; margin-top: 5px;">Detection stopped</div>
-                `;
-            }
-            
-            document.getElementById('startBtn').addEventListener('click', startDetection);
-            document.getElementById('stopBtn').addEventListener('click', stopDetection);
-        </script>
-    </body>
-    </html>
-    """)
+    """Serve the index.html file"""
+    try:
+        # Read the index.html file
+        with open("index.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError as e:
+        logger.error(f"index.html not found: {e}")
+        return HTMLResponse("""
+        <html>
+            <body>
+                <h1>Error: index.html not found</h1>
+                <p>Please ensure index.html exists in the same directory as index.py</p>
+            </body>
+        </html>
+        """, status_code=404)
 
 @app.get("/health")
 async def health_check():
