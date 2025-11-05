@@ -72,25 +72,42 @@ export default function Header() {
     return false;
   };
 
-  // More dropdown items (Terms, Privacy, Careers)
+  // More dropdown items (About, Terms, Privacy, Careers, Demo)
   const moreDropdown = [
+    { 
+      href: '/about', 
+      label: 'About Us',
+      description: 'Learn about OKDriver',
+      icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+      isExternal: false
+    },
+    { 
+      href: 'https://dms.okdriver.in', 
+      label: 'Live DMS Demo',
+      description: 'Try our driver monitoring system',
+      icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+      isExternal: true
+    },
     { 
       href: '/terms', 
       label: 'Terms & Conditions',
       description: 'Our terms of service',
-      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+      isExternal: false
     },
     { 
       href: '/privacy', 
       label: 'Privacy Policy',
       description: 'How we protect your data',
-      icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+      icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+      isExternal: false
     },
     { 
       href: '/careers', 
       label: 'Careers',
       description: 'Join our team',
-      icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0h-8m8 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6h12z'
+      icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0h-8m8 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6h12z',
+      isExternal: false
     }
   ];
 
@@ -113,7 +130,7 @@ export default function Header() {
   // Navigation items
   const navItems = [
     { href: '/', label: 'HOME', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { href: '/about', label: 'ABOUT US', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { href: '/plans', label: 'PLANS', icon: 'M3 3h18v4H3zM3 9h18v12H3z' },
     { href: '/services', label: 'SERVICES', icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
     { href: '/developer', label: 'DEVELOPER API', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { href: '/contact', label: 'CONTACT US', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' }
@@ -198,7 +215,7 @@ export default function Header() {
             >
               <button
                 className={`px-4 py-2 font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 flex items-center gap-1 ${
-                  isActivePage('/terms') || isActivePage('/privacy') || isActivePage('/careers')
+                  isActivePage('/about') || isActivePage('/terms') || isActivePage('/privacy') || isActivePage('/careers')
                     ? (isScrolled 
                         ? 'text-white bg-black rounded-full shadow-lg' 
                         : 'text-black bg-white/90 backdrop-blur-md rounded-full shadow-lg'
@@ -222,28 +239,46 @@ export default function Header() {
                     transition={{ duration: 0.2 }}
                     className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100"
                   >
-                    {moreDropdown.map((item, index) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`block px-6 py-4 hover:bg-gray-50 transition-colors duration-200 ${
-                          index !== moreDropdown.length - 1 ? 'border-b border-gray-100' : ''
-                        }`}
-                        onClick={() => setIsMoreOpen(false)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 flex-shrink-0">
-                            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                            </svg>
+                    {moreDropdown.map((item, index) => {
+                      const LinkComponent = item.isExternal ? 'a' : Link;
+                      const linkProps = item.isExternal ? {
+                        href: item.href,
+                        target: "_blank",
+                        rel: "noopener noreferrer"
+                      } : {
+                        href: item.href
+                      };
+
+                      return (
+                        <LinkComponent
+                          key={item.href}
+                          {...linkProps}
+                          className={`block px-6 py-4 hover:bg-gray-50 transition-colors duration-200 ${
+                            index !== moreDropdown.length - 1 ? 'border-b border-gray-100' : ''
+                          }`}
+                          onClick={() => setIsMoreOpen(false)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 flex-shrink-0">
+                              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                                {item.label}
+                                {item.isExternal && (
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-600">{item.description}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-semibold text-gray-900 mb-1">{item.label}</div>
-                            <div className="text-sm text-gray-600">{item.description}</div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                        </LinkComponent>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -406,10 +441,19 @@ export default function Header() {
                     <p className="px-4 text-xs font-semibold text-gray-500 mb-2">MORE</p>
                     {moreDropdown.map((item) => {
                       const isActive = isActivePage(item.href);
+                      const LinkComponent = item.isExternal ? 'a' : Link;
+                      const linkProps = item.isExternal ? {
+                        href: item.href,
+                        target: "_blank",
+                        rel: "noopener noreferrer"
+                      } : {
+                        href: item.href
+                      };
+
                       return (
-                        <Link 
+                        <LinkComponent 
                           key={item.href}
-                          href={item.href} 
+                          {...linkProps}
                           className={`block px-4 py-3 rounded-lg mb-2 transition-all duration-300 ${
                             isActive 
                               ? 'bg-black text-white shadow-lg' 
@@ -421,14 +465,21 @@ export default function Header() {
                             <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                             </svg>
-                            <div>
-                              <div className="font-medium">{item.label}</div>
+                            <div className="flex-1">
+                              <div className={`font-medium flex items-center gap-2`}>
+                                {item.label}
+                                {item.isExternal && (
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                )}
+                              </div>
                               <div className={`text-xs mt-1 ${isActive ? 'text-gray-300' : 'text-gray-500'}`}>
                                 {item.description}
                               </div>
                             </div>
                           </div>
-                        </Link>
+                        </LinkComponent>
                       );
                     })}
                   </div>

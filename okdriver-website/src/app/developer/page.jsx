@@ -272,6 +272,17 @@ const chatWithAssistant = async (message) => {
                   View Documentation
                 </span>
               </button>
+              <a
+                href="https://dms.okdriver.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative border-2 border-white/20 backdrop-blur-md bg-white/5 text-white px-8 py-4 rounded-full font-semibold overflow-hidden transition-all duration-300 hover:scale-105 hover:border-white hover:bg-white/10 cursor-pointer"
+              >
+                <span className="relative z-10 flex items-center">
+                  <Globe className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" />
+                  Live DMS Demo
+                </span>
+              </a>
             </div>
           </div>
         </div>
