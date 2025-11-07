@@ -72,13 +72,13 @@ export default function Header() {
     return false;
   };
 
-  // More dropdown items (About, Terms, Privacy, Careers, Demo)
+  // More dropdown items (Plans, Terms, Privacy, Careers, Demo)
   const moreDropdown = [
     { 
-      href: '/about', 
-      label: 'About Us',
-      description: 'Learn about OKDriver',
-      icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+      href: '/plans', 
+      label: 'Plans',
+      description: 'View our pricing plans',
+      icon: 'M3 3h18v4H3zM3 9h18v12H3z',
       isExternal: false
     },
     { 
@@ -130,7 +130,7 @@ export default function Header() {
   // Navigation items
   const navItems = [
     { href: '/', label: 'HOME', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { href: '/plans', label: 'PLANS', icon: 'M3 3h18v4H3zM3 9h18v12H3z' },
+    { href: '/about', label: 'ABOUT US', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { href: '/services', label: 'SERVICES', icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
     { href: '/developer', label: 'DEVELOPER API', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { href: '/contact', label: 'CONTACT US', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' }
@@ -215,7 +215,7 @@ export default function Header() {
             >
               <button
                 className={`px-4 py-2 font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 flex items-center gap-1 ${
-                  isActivePage('/about') || isActivePage('/terms') || isActivePage('/privacy') || isActivePage('/careers')
+                  isActivePage('/plans') || isActivePage('/terms') || isActivePage('/privacy') || isActivePage('/careers')
                     ? (isScrolled 
                         ? 'text-white bg-black rounded-full shadow-lg' 
                         : 'text-black bg-white/90 backdrop-blur-md rounded-full shadow-lg'

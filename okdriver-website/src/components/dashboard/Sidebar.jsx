@@ -9,7 +9,8 @@ import {
   User,
   Menu,
   BarChart,
-  Key
+  MessagesSquare,
+  HelpCircle
 } from 'lucide-react';
 
 const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
@@ -17,11 +18,10 @@ const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
     { id: 'dashboard', label: 'Dashboard', icon: Menu },
     { id: 'vehicles', label: 'Add Vehicle', icon: Car },
     { id: 'clients', label: 'Add Client', icon: Users },
-    { id: 'api-keys', label: 'API Keys', icon: Key },
     { id: 'locations', label: 'View All Locations', icon: MapPin },
     { id: 'report', label: 'Reports', icon: BarChart },
-    { id: 'chat', label: 'Chat Section', icon: MessageCircle },
-    { id: 'help', label: 'Help & Support', icon: MessageCircle },
+    { id: 'chat', label: 'Chat Section', icon: MessagesSquare },
+    { id: 'help', label: 'Help & Support', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'profile', label: 'Profile', icon: User },
   ];
@@ -36,10 +36,10 @@ const Sidebar = ({ activeSection, setActiveSection, sidebarOpen }) => {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-all duration-200 cursor-pointer ${
                   activeSection === item.id
-                    ? 'bg-black text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-black text-white shadow-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm hover:translate-x-1'
                 }`}
               >
                 <IconComponent className="w-5 h-5" />

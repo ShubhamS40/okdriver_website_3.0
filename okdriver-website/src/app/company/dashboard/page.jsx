@@ -17,7 +17,6 @@ import SettingsView from './../../../components/dashboard/SettingView.jsx';
 import ProfileView from './../../../components/dashboard/ProfileView';
 import ReportSection from './../../../components/dashboard/ReportSection';
 import VehicleLimitWarning from './../../../components/dashboard/VehicleLimitWarning';
-import ApiKeysView from '../../../components/dashboard/ApiKeysView.jsx';
 
 export default function ChatSupportDashboard() {
   // Dashboard Data State Management
@@ -309,8 +308,6 @@ export default function ChatSupportDashboard() {
         return (
           <ClientManager companyToken={typeof window !== 'undefined' ? localStorage.getItem('companyToken') : ''} />
         );
-      case 'api-keys':
-        return <ApiKeysView />;
       case 'locations':
         return <LocationsView vehicles={vehicles} />;
       case 'report':
