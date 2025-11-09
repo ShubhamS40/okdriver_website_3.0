@@ -1,19 +1,24 @@
 'use client';
-import { signIn, useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import logo_black from '../../../../public/assets/okdriverblack_logo.png';
 
-export default function UserLoginPage() {
+export default function UserRegisterPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,22 +27,43 @@ export default function UserLoginPage() {
     }
   }, [session, router]);
 
-  const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/user/dashboard' });
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleEmailLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend.okdriver.in';
-      const response = await fetch(`${apiBaseUrl}/api/user/login`, {
+  
+      const response = await fetch(`${apiBaseUrl}/api/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await response.json();
@@ -59,14 +85,14 @@ export default function UserLoginPage() {
           toast.error('Authentication failed. Please try again.');
           console.error('SignIn error:', result.error);
         } else {
-          toast.success('Login successful!');
+          toast.success('Registration successful!');
           router.push('/user/dashboard');
         }
       } else {
-        toast.error(data.message || 'Login failed');
+        toast.error(data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Registration error:', error);
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -97,7 +123,7 @@ export default function UserLoginPage() {
         Back
       </button>
 
-      {/* Login Card */}
+      {/* Register Card */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,22 +149,37 @@ export default function UserLoginPage() {
         </motion.div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome Back 👋
+          Create Account 🚀
         </h1>
         <p className="text-gray-600 mb-8">
-          Sign in to continue to your OKDriver account
+          Sign up to get started with OKDriver
         </p>
 
-        {/* Email/Password Login Form */}
-        <form onSubmit={handleEmailLogin} className="mb-6">
+        {/* Registration Form */}
+        <form onSubmit={handleRegister} className="mb-6">
+          <div className="mb-4">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
           <div className="mb-4">
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="email"
+                name="email"
                 placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleInputChange}
                 required
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
               />
@@ -149,10 +190,12 @@ export default function UserLoginPage() {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleInputChange}
                 required
+                minLength={6}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
               />
               <button
@@ -164,6 +207,28 @@ export default function UserLoginPage() {
               </button>
             </div>
           </div>
+          <div className="mb-4">
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                minLength={6}
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
           <motion.button
             type="submit"
             disabled={loading}
@@ -171,7 +236,7 @@ export default function UserLoginPage() {
             whileTap={{ scale: loading ? 1 : 0.98 }}
             className="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </motion.button>
         </form>
 
@@ -186,7 +251,7 @@ export default function UserLoginPage() {
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
-          onClick={handleGoogleSignIn}
+          onClick={() => signIn('google', { callbackUrl: '/user/dashboard' })}
           className="w-full cursor-pointer flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mb-4"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -198,17 +263,17 @@ export default function UserLoginPage() {
           <span className="text-gray-800 font-medium">Continue with Google</span>
         </motion.button>
 
-        {/* Register Link */}
+        {/* Login Link */}
         <p className="text-center text-sm text-gray-600 mt-4">
-          Don't have an account?{' '}
-          <a href="/user/register" className="text-black font-medium hover:underline">
-            Sign up
+          Already have an account?{' '}
+          <a href="/user/login" className="text-black font-medium hover:underline">
+            Sign in
           </a>
         </p>
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-8">
-          By continuing, you agree to OKDriver’s{' '}
+          By continuing, you agree to OKDriver's{' '}
           <a href="/terms" className="underline hover:text-black">Terms of Service</a> and{' '}
           <a href="/privacy" className="underline hover:text-black">Privacy Policy</a>.
         </p>
@@ -216,3 +281,4 @@ export default function UserLoginPage() {
     </div>
   );
 }
+
