@@ -110,13 +110,13 @@ const About = () => {
     },
     {
       name: "Shubham Singh",
-      role: "Chief Technology Officer",
+      role: "Software Developer",
       image: cto,
       color: "from-green-500 to-teal-600",
       bgColor: "from-green-100 via-teal-50 to-blue-100",
       description: "Software developer building the app's brains (AI and backend). Expert in mobile development and AI integration.",
       link: "/about/cto",
-      badge: "CTO"
+      badge: "Software Developer"
     }
   ];
 

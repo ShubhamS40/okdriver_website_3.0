@@ -54,7 +54,7 @@ const CTOProfile = () => {
               <span>About</span>
             </Link>
             <ChevronRight size={14} className="flex-shrink-0" />
-            <span className="text-gray-300">CTO</span>
+            <span className="text-gray-300">Software Developer</span>
           </motion.div>
           
           <motion.div 
@@ -64,7 +64,7 @@ const CTOProfile = () => {
             transition={{ delay: 0.4, duration: 0.6 }}
           >
             <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 tracking-tight leading-tight px-2">
-              CHIEF TECHNOLOGY OFFICER
+              SOFTWARE DEVELOPER
             </h1>
             <div className="w-16 sm:w-24 h-0.5 sm:h-1 bg-white mx-auto rounded-full"></div>
           </motion.div>
@@ -91,7 +91,7 @@ const CTOProfile = () => {
                 <div className="w-full h-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
                   <Image 
                     src={cto} 
-                    alt="CTO Image" 
+                    alt="Software Developer Image" 
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
                     style={{ objectFit: "cover" }}
@@ -105,7 +105,7 @@ const CTOProfile = () => {
                     viewport={{ once: true }}
                     transition={{ delay: 0.5, duration: 0.5 }}
                   >
-                    <span className="whitespace-nowrap">Chief Technology Officer</span>
+                    <span className="whitespace-nowrap">Software Developer</span>
                   </motion.div>
                 </div>
               </motion.div>
@@ -121,7 +121,7 @@ const CTOProfile = () => {
             >
               <motion.div className="mb-4 sm:mb-6" variants={fadeIn}>
                 <p className="text-black font-semibold text-sm sm:text-base lg:text-lg mb-2 opacity-80">
-                  CTO, okDriver Smart Dashcams Private Limited
+                  Software Developer, okDriver Smart Dashcams Private Limited
                 </p>
                 <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold text-black mb-4 leading-tight break-words">
                   SHUBHAM SINGH
@@ -131,7 +131,7 @@ const CTOProfile = () => {
               {/* Bio Content */}
               <motion.div className="space-y-3 sm:space-y-4 md:space-y-6 text-gray-700 leading-relaxed" variants={fadeIn}>
                 <p className="text-sm sm:text-base lg:text-lg">
-                  Shubham Singh is the Chief Technology Officer at okDriver Smart Dashcams Private Limited. With his expertise in 
+                  Shubham Singh is a Software Developer at okDriver Smart Dashcams Private Limited. With his expertise in 
                   <span className="font-semibold text-black"> mobile development</span> and 
                   <span className="font-semibold text-black"> AI integration</span>, he leads the technical vision 
                   and development of our innovative driver management platform.
