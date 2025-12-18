@@ -289,11 +289,38 @@ export default function RootLayout({
             <OverlayGate />
             {showPage && (
               <>
-                {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Header />}
+                {/* {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Header />} */}
                 
-                <main className="flex-grow">{children}</main>
+                <main className="flex-grow">
+              <body style={{ margin: 0 }}>
+        <main
+          className="flex-grow"
+          style={{
+            minHeight: "100vh",
+            backgroundColor: "#000",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "Arial, Helvetica, sans-serif",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <h1 style={{ fontSize: "36px", marginBottom: "10px" }}>
+              Site is Under Maintenance
+            </h1>
+            <p style={{ fontSize: "16px", opacity: 0.8 }}>
+              We’ll be back soon. Thank you for your patience.
+            </p>
+          </div>
+
+          {/* Agar baad me site live karni ho to ye use karo */}
+          {/* {children} */}
+        </main>
+      </body>
+                </main>
                 
-                {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Footer />}
+                {/* {!isCompanyDashboardRoute && !isAdminDashboardRoute && !isUserDashboardRoute  && <Footer />} */}
                 
                 <ChatBot />
               </>
