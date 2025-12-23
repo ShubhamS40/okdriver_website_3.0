@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   saveUserFromGoogle,
+  registerUser,
+  loginUser,
   getUserProfile,
   createApiKey,
   getUserApiKeys,
@@ -10,6 +12,12 @@ const {
   getUserSubscription,
   subscribeToApiPlan
 } = require('../../controller/user/userAuthController');
+
+// User registration with email/password
+router.post('/register', registerUser);
+
+// User login with email/password
+router.post('/login', loginUser);
 
 // Save user from Google authentication
 router.post('/save-user', saveUserFromGoogle);

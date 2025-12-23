@@ -76,16 +76,17 @@ exports.verifyOTP = async (req, res) => {
       driver = existingDriver;
     } else {
       // 🆕 New user, save phone with blank values
-      driver = await prisma.driver.create({
-        data: {
-          phone: phone,
-          firstName: '',
-          lastName: '',
-          email: '',
-          latitude: 0.0,
-          longitude: 0.0,
-        }
-      });
+     driver = await prisma.driver.create({
+  data: {
+    phone: phone,
+    firstName: null,
+    lastName: null,
+    email: null,   // ✅ FIX
+    latitude: 0.0,
+    longitude: 0.0,
+  }
+});
+
       isNewUser = true;
     }
 

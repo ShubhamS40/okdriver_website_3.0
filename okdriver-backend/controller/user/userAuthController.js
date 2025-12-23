@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
@@ -15,13 +17,13 @@ const saveUserFromGoogle = async (req, res) => {
       });
     }
 
-    // Check if user already exists
+    // Check if user already exists by googleId
     let user = await prisma.user.findUnique({
       where: { googleId }
     });
 
     if (user) {
-      // Update existing user
+      // Update existing Google user
       user = await prisma.user.update({
         where: { googleId },
         data: {
@@ -33,16 +35,35 @@ const saveUserFromGoogle = async (req, res) => {
         }
       });
     } else {
-      // Create new user
-      user = await prisma.user.create({
-        data: {
-          googleId,
-          email,
-          name,
-          picture,
-          emailVerified
-        }
+      // Check if user exists with same email (email/password user)
+      const existingUserByEmail = await prisma.user.findUnique({
+        where: { email }
       });
+
+      if (existingUserByEmail) {
+        // Update existing email/password user to add Google ID
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            googleId,
+            name,
+            picture,
+            emailVerified,
+            updatedAt: new Date()
+          }
+        });
+      } else {
+        // Create new user
+        user = await prisma.user.create({
+          data: {
+            googleId,
+            email,
+            name,
+            picture,
+            emailVerified
+          }
+        });
+      }
     }
 
     res.status(200).json({
@@ -360,8 +381,173 @@ const subscribeToApiPlan = async (req, res) => {
   }
 };
 
+// Register user with email and password
+const registerUser = async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+
+    // Validation
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: email, password, name'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        emailVerified: false
+      }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        backendId: user.id 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        emailVerified: user.emailVerified
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Login user with email and password
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check if user has a password (email/password user)
+    if (!user.password) {
+      return res.status(401).json({
+        success: false,
+        message: 'This account was created with Google. Please use Google sign-in.'
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        backendId: user.id 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        emailVerified: user.emailVerified
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   saveUserFromGoogle,
+  registerUser,
+  loginUser,
   getUserProfile,
   createApiKey,
   getUserApiKeys,
